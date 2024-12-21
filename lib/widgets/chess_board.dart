@@ -104,6 +104,18 @@ class _ChessBoardView extends StatelessWidget {
                                 foregroundColor: Colors.black,
                               ),
                             ),
+                            const SizedBox(width: 20),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                context.read<ChessBloc>().add(ToggleHintMode());
+                              },
+                              icon: Icon(state.hintMode ? Icons.lightbulb : Icons.lightbulb_outline),
+                              label: Text(state.hintMode ? '关闭提示' : '开启提示'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: state.hintMode ? Colors.yellow[100] : Colors.grey[100],
+                                foregroundColor: Colors.black,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -206,7 +218,7 @@ class _ChessBoardView extends StatelessWidget {
                                                       fit: BoxFit.contain,
                                                     ),
                                                   ),
-                                                if (isValidMove)
+                                                if (state.hintMode && isValidMove)
                                                   Center(
                                                     child: Container(
                                                       width: 16,
@@ -219,7 +231,7 @@ class _ChessBoardView extends StatelessWidget {
                                                       ),
                                                     ),
                                                   ),
-                                                if (isSelected || (state.isCheck ? isMovablePiece : !isMovablePiece))
+                                                if (isSelected || (state.hintMode && (state.isCheck ? isMovablePiece : !isMovablePiece)))
                                                   Container(
                                                     color: isSelected
                                                         ? Colors.blue.withOpacity(0.3)

@@ -13,6 +13,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     on<RedoMove>(_onRedoMove);
     on<SaveGame>(_onSaveGame);
     on<LoadGame>(_onLoadGame);
+    on<ToggleHintMode>(_onToggleHintMode);
   }
 
   void _onInitializeGame(InitializeGame event, Emitter<GameState> emit) {
@@ -286,7 +287,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isCheckmate: isCheckmate,
       isStalemate: isStalemate,
       undoStates: newUndoStates,
-      redoStates: [], // 清空重做列表
+      redoStates: [], // 清空��做列表
     ));
   }
 
@@ -546,7 +547,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     final nextState = state.redoStates.last;
     final newRedoStates = List<GameState>.from(state.redoStates)..removeLast();
 
-    // 将当前状态添加到撤销列表
+    // 将当���状态添加到撤销列表
     final newUndoStates = List<GameState>.from(state.undoStates)..add(state);
 
     emit(nextState.copyWith(
@@ -563,5 +564,11 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
 
   void _onLoadGame(LoadGame event, Emitter<GameState> emit) {
     // TODO: 实现加载游戏功能
+  }
+
+  void _onToggleHintMode(ToggleHintMode event, Emitter<GameState> emit) {
+    emit(state.copyWith(
+      hintMode: !state.hintMode,
+    ));
   }
 }

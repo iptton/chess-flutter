@@ -60,4 +60,8 @@ class LoadGame extends ChessEvent {
 
   @override
   List<Object?> get props => [gameId];
+}
+
+class ToggleHintMode extends ChessEvent {
+  const ToggleHintMode();
 } 
