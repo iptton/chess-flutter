@@ -130,7 +130,7 @@ class ChessRules {
     }
 
     // 吃过路兵
-    if (lastPawnDoubleMoved != null && 
+    if (lastPawnDoubleMoved != null &&
         lastPawnDoubleMovedNumber == currentMoveNumber! - 1 &&
         position.row == (color == PieceColor.white ? 3 : 4) &&
         (position.col - lastPawnDoubleMoved.col).abs() == 1 &&
@@ -285,8 +285,8 @@ class ChessRules {
     }
 
     // 王车易位
-    if (hasKingMoved != null && 
-        hasRookMoved != null && 
+    if (hasKingMoved != null &&
+        hasRookMoved != null &&
         !hasKingMoved[color]!) {
       final row = color == PieceColor.white ? 7 : 0;
 
@@ -394,7 +394,7 @@ class ChessRules {
         }
       }
     }
-    return true;  // 没有找到任何可以���除将军的移动，是将死
+    return true;  // 没有找到任何可以解除将军的移动，是将死
   }
 
   // 检查是否是和棋（无子可动）
@@ -456,4 +456,4 @@ class ChessRules {
         return _getKingMoves(board, position, piece.color);
     }
   }
-} 
+}

@@ -28,7 +28,7 @@ void main() {
         board,
         Position(row: 3, col: 4), // 白方兵的位置 e5
         lastPawnDoubleMoved: Position(row: 3, col: 3), // 黑方兵的位置 d5
-        lastMoveNumber: 0,
+        lastPawnDoubleMovedNumber: 0,
         currentMoveNumber: 1,
       );
 
@@ -56,7 +56,7 @@ void main() {
         board,
         Position(row: 3, col: 4),
         lastPawnDoubleMoved: Position(row: 3, col: 3),
-        lastMoveNumber: 0,
+        lastPawnDoubleMovedNumber: 0,
         currentMoveNumber: 2, // 已经过了一步
       );
 
@@ -106,7 +106,7 @@ void main() {
       final to = Position(row: 2, col: 3);   // d6
       final capturedPawnPos = Position(row: 3, col: 3); // d5
 
-      // 验证被吃的��是否还在原位置
+      // 验证被吃的兵是否还在原位置
       expect(
         state.board[capturedPawnPos.row][capturedPawnPos.col],
         isNotNull,
@@ -159,7 +159,7 @@ void main() {
         state.board,
         from,
         lastPawnDoubleMoved: state.lastPawnDoubleMoved,
-        lastMoveNumber: state.lastMoveNumber,
+        lastPawnDoubleMovedNumber: state.lastMoveNumber,
         currentMoveNumber: state.currentMoveNumber,
       );
 
@@ -236,7 +236,7 @@ void main() {
         state.board,
         from,
         lastPawnDoubleMoved: state.lastPawnDoubleMoved,
-        lastMoveNumber: state.lastMoveNumber,
+        lastPawnDoubleMovedNumber: state.lastMoveNumber,
         currentMoveNumber: state.currentMoveNumber,
       );
 
@@ -285,7 +285,7 @@ void main() {
         newBoard,
         Position(row: 3, col: 4), // e5
         lastPawnDoubleMoved: Position(row: 3, col: 3), // d5
-        lastMoveNumber: 0,
+        lastPawnDoubleMovedNumber: 0,
         currentMoveNumber: 1,
       );
 
@@ -307,7 +307,7 @@ void main() {
         newBoard,
         Position(row: 3, col: 4), // e5
         lastPawnDoubleMoved: Position(row: 3, col: 3), // d5
-        lastMoveNumber: 0,
+        lastPawnDoubleMovedNumber: 0,
         currentMoveNumber: 2, // 已经过了一步
       );
 
@@ -326,7 +326,7 @@ void main() {
         newBoard,
         Position(row: 3, col: 4), // e5
         lastPawnDoubleMoved: Position(row: 3, col: 3), // d5
-        lastMoveNumber: 0,
+        lastPawnDoubleMovedNumber: 0,
         currentMoveNumber: 3, // 黑方已经走了下一步
       );
 
@@ -379,7 +379,7 @@ void main() {
         state.board,
         from,
         lastPawnDoubleMoved: state.lastPawnDoubleMoved,
-        lastMoveNumber: state.lastMoveNumber,
+        lastPawnDoubleMovedNumber: state.lastMoveNumber,
         currentMoveNumber: state.currentMoveNumber,
       );
 
