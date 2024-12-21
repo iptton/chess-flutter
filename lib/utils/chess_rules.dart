@@ -73,6 +73,7 @@ class ChessRules {
 
       // 如果在起始位置，可以前进两步
       if (position.row == startRow &&
+          _isValidPosition(position.row + 2 * direction, position.col) &&
           board[position.row + 2 * direction][position.col] == null) {
         moves.add(Position(row: position.row + 2 * direction, col: position.col));
       }
@@ -94,7 +95,9 @@ class ChessRules {
     if (lastPawnDoubleMoved != null && 
         lastMoveNumber == currentMoveNumber! - 1 &&
         position.row == (color == PieceColor.white ? 3 : 4) &&
-        (position.col - lastPawnDoubleMoved.col).abs() == 1) {
+        (position.col - lastPawnDoubleMoved.col).abs() == 1 &&
+        board[lastPawnDoubleMoved.row][lastPawnDoubleMoved.col]?.type == PieceType.pawn &&
+        board[lastPawnDoubleMoved.row][lastPawnDoubleMoved.col]?.color != color) {
       moves.add(Position(
         row: position.row + direction,
         col: lastPawnDoubleMoved.col,

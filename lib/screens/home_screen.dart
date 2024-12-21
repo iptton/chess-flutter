@@ -41,10 +41,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
-            label: '��置',
+            label: '设置',
           ),
         ],
       ),
     );
   }
-} 
+}

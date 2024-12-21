@@ -96,19 +96,55 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       return;
     }
 
-    // 处理吃过路兵
-    if (movingPiece.type == PieceType.pawn && 
-        state.lastPawnDoubleMoved != null &&
-        event.from.col != event.to.col && 
-        capturedPiece == null) {
-      newBoard[state.lastPawnDoubleMoved!.row][state.lastPawnDoubleMoved!.col] = null;
-    }
-
     // 记录双步移动的兵
     Position? newLastPawnDoubleMoved;
     if (movingPiece.type == PieceType.pawn && 
         (event.from.row - event.to.row).abs() == 2) {
       newLastPawnDoubleMoved = event.to;
+    }
+
+    // 处理吃过路兵
+    if (movingPiece.type == PieceType.pawn && 
+        state.lastPawnDoubleMoved != null &&
+        event.from.col != event.to.col && 
+        capturedPiece == null &&
+        state.lastMoveNumber == state.currentMoveNumber - 1 &&
+        ((movingPiece.color == PieceColor.white && event.from.row == 3) ||
+         (movingPiece.color == PieceColor.black && event.from.row == 4)) &&
+        (event.from.col - event.to.col).abs() == 1) {
+      // 记录被吃的兵
+      final capturedPawn = state.board[state.lastPawnDoubleMoved!.row][state.lastPawnDoubleMoved!.col];
+      
+      // 移除被吃的兵（在被吃方的位置）
+      newBoard[state.lastPawnDoubleMoved!.row][state.lastPawnDoubleMoved!.col] = null;
+      
+      // 执行移动
+      newBoard[event.to.row][event.to.col] = movingPiece;
+      newBoard[event.from.row][event.from.col] = null;
+
+      // 发出新状态
+      emit(state.copyWith(
+        board: newBoard,
+        currentPlayer: state.currentPlayer == PieceColor.white 
+            ? PieceColor.black 
+            : PieceColor.white,
+        selectedPosition: null,
+        validMoves: [],
+        lastPawnDoubleMoved: newLastPawnDoubleMoved,
+        lastMoveNumber: state.currentMoveNumber,
+        currentMoveNumber: state.currentMoveNumber + 1,
+        moveHistory: [
+          ...state.moveHistory,
+          ChessMove(
+            from: event.from,
+            to: event.to,
+            piece: movingPiece,
+            capturedPiece: capturedPawn,
+            isEnPassant: true,
+          ),
+        ],
+      ));
+      return;
     }
 
     // 处理兵的升变
@@ -120,6 +156,9 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
         board: newBoard,
         selectedPosition: null,
         validMoves: [],
+        lastPawnDoubleMoved: newLastPawnDoubleMoved,
+        lastMoveNumber: state.currentMoveNumber,
+        currentMoveNumber: state.currentMoveNumber + 1,
         moveHistory: [
           ...state.moveHistory,
           ChessMove(
