@@ -68,8 +68,9 @@ class _ChessBoardView extends StatelessWidget {
                         style: const TextStyle(fontSize: 20),
                       ),
                       const SizedBox(height: spacing),
-                      SizedBox(
+                      Container(
                         height: specialMoveHeight,
+                        alignment: Alignment.center,
                         child: _buildSpecialMoveIndicator(state),
                       ),
                       const SizedBox(height: spacing),
@@ -149,8 +150,8 @@ class _ChessBoardView extends StatelessWidget {
   }
 
   Widget _buildSpecialMoveIndicator(GameState state) {
-    if (state.lastMove == null) {
-      return const SizedBox.shrink();
+    if (state.lastMove == null || state.specialMoveMessage == null) {
+      return const SizedBox(height: 50);
     }
 
     return Container(

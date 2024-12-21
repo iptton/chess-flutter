@@ -122,7 +122,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       hasKingMoved: newHasKingMoved,
       currentMoveNumber: state.currentMoveNumber + 1,
       moveHistory: [...state.moveHistory, move],
-      specialMoveMessage: '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}进行${isKingside ? "王翼" : "后翼"}易位',
+      specialMoveMessage: '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}王从${_getPositionName(event.from)}进行${isKingside ? "王翼" : "后翼"}易位到${_getPositionName(event.to)}',
       lastMove: move,
     ));
   }
@@ -198,7 +198,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       lastPawnDoubleMovedNumber: newLastPawnDoubleMovedNumber,
       currentMoveNumber: state.currentMoveNumber + 1,
       moveHistory: [...state.moveHistory, move],
-      specialMoveMessage: '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}吃过路兵',
+      specialMoveMessage: '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}兵从${_getPositionName(event.from)}吃过路兵到${_getPositionName(event.to)}',
       lastMove: move,
     ));
   }
@@ -231,7 +231,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       lastPawnDoubleMovedNumber: newLastPawnDoubleMovedNumber,
       currentMoveNumber: state.currentMoveNumber + 1,
       moveHistory: [...state.moveHistory, move],
-      specialMoveMessage: '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}兵升变',
+      specialMoveMessage: '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}兵从${_getPositionName(event.from)}升变到${_getPositionName(event.to)}',
       lastMove: move,
     ));
   }
@@ -274,6 +274,14 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isEnPassant: false,
     );
 
+    // 生成移动提示信息
+    String message;
+    if (capturedPiece != null) {
+      message = '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}${_getPieceTypeName(movingPiece.type)}(${_getPositionName(event.from)})吃掉${capturedPiece.color == PieceColor.white ? "白方" : "黑方"}${_getPieceTypeName(capturedPiece.type)}(${_getPositionName(event.to)})';
+    } else {
+      message = '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}${_getPieceTypeName(movingPiece.type)}从${_getPositionName(event.from)}移动到${_getPositionName(event.to)}';
+    }
+
     emit(state.copyWith(
       board: newBoard,
       currentPlayer: state.currentPlayer == PieceColor.white
@@ -286,11 +294,32 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       lastPawnDoubleMovedNumber: newLastPawnDoubleMovedNumber,
       currentMoveNumber: state.currentMoveNumber + 1,
       moveHistory: [...state.moveHistory, move],
-      specialMoveMessage: capturedPiece != null
-          ? '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}吃掉${capturedPiece.color == PieceColor.white ? "白方" : "黑方"}'
-          : null,
+      specialMoveMessage: message,
       lastMove: move,
     ));
+  }
+
+  String _getPositionName(Position position) {
+    final col = String.fromCharCode('A'.codeUnitAt(0) + position.col);
+    final row = 8 - position.row;
+    return '$col$row';
+  }
+
+  String _getPieceTypeName(PieceType type) {
+    switch (type) {
+      case PieceType.king:
+        return "王";
+      case PieceType.queen:
+        return "后";
+      case PieceType.bishop:
+        return "象";
+      case PieceType.knight:
+        return "马";
+      case PieceType.rook:
+        return "车";
+      case PieceType.pawn:
+        return "兵";
+    }
   }
 
   void _onPromotePawn(PromotePawn event, Emitter<GameState> emit) {
