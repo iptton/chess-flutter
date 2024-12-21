@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../services/settings_service.dart';
 
 enum PieceType {
   king,
@@ -179,7 +180,12 @@ class GameState extends Equatable {
     );
   }
 
-  static GameState initial() {
+  static Future<GameState> initialFromPrefs() async {
+    final defaultHintMode = await SettingsService.getDefaultHintMode();
+    return initial(hintMode: defaultHintMode);
+  }
+
+  static GameState initial({bool hintMode = false}) {
     final board = List.generate(
       8,
       (i) => List.generate(8, (j) => null as ChessPiece?),
@@ -230,6 +236,7 @@ class GameState extends Equatable {
         PieceColor.white: -1,
         PieceColor.black: -1,
       },
+      hintMode: hintMode,
     );
   }
 

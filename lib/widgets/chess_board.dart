@@ -7,6 +7,7 @@ import '../blocs/chess_event.dart';
 import '../models/chess_models.dart';
 import '../screens/game_screen.dart';
 import '../utils/chess_rules.dart';
+import '../services/settings_service.dart';
 
 class ChessBoard extends StatelessWidget {
   final GameMode gameMode;
@@ -18,9 +19,15 @@ class ChessBoard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => ChessBloc()..add(const InitializeGame()),
-      child: _ChessBoardView(gameMode: gameMode),
+    return FutureBuilder<bool>(
+      future: SettingsService.getDefaultHintMode(),
+      builder: (context, snapshot) {
+        final defaultHintMode = snapshot.data ?? false;
+        return BlocProvider(
+          create: (context) => ChessBloc()..add(InitializeGame(defaultHintMode)),
+          child: _ChessBoardView(gameMode: gameMode),
+        );
+      },
     );
   }
 }

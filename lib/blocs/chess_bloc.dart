@@ -16,8 +16,9 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     on<ToggleHintMode>(_onToggleHintMode);
   }
 
-  void _onInitializeGame(InitializeGame event, Emitter<GameState> emit) {
-    emit(GameState.initial());
+  void _onInitializeGame(InitializeGame event, Emitter<GameState> emit) async {
+    final initialState = await GameState.initialFromPrefs();
+    emit(initialState);
   }
 
   void _onSelectPiece(SelectPiece event, Emitter<GameState> emit) {
@@ -311,7 +312,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     final newLastPawnDoubleMoved = Map<PieceColor, Position?>.from(state.lastPawnDoubleMoved);
     final newLastPawnDoubleMovedNumber = Map<PieceColor, int>.from(state.lastPawnDoubleMovedNumber);
 
-    // 保存当前状态到撤销列表
+    // 保��当前状态到撤销列表
     final newUndoStates = List<GameState>.from(state.undoStates)..add(state);
 
     emit(state.copyWith(

@@ -9,7 +9,12 @@ abstract class ChessEvent extends Equatable {
 }
 
 class InitializeGame extends ChessEvent {
-  const InitializeGame();
+  final bool defaultHintMode;
+
+  const InitializeGame([this.defaultHintMode = false]);
+
+  @override
+  List<Object?> get props => [defaultHintMode];
 }
 
 class SelectPiece extends ChessEvent {
