@@ -107,6 +107,8 @@ class GameState extends Equatable {
   final int lastMoveNumber;
   final int currentMoveNumber;
   final List<ChessMove> moveHistory;
+  final String? specialMoveMessage;
+  final ChessMove? lastMove;
 
   const GameState({
     required this.board,
@@ -119,6 +121,8 @@ class GameState extends Equatable {
     this.lastMoveNumber = 0,
     this.currentMoveNumber = 0,
     this.moveHistory = const [],
+    this.specialMoveMessage,
+    this.lastMove,
   });
 
   GameState copyWith({
@@ -132,27 +136,22 @@ class GameState extends Equatable {
     int? lastMoveNumber,
     int? currentMoveNumber,
     List<ChessMove>? moveHistory,
+    String? specialMoveMessage,
+    ChessMove? lastMove,
   }) {
     return GameState(
-      board: board ?? List<List<ChessPiece?>>.from(
-        this.board.map((row) => List<ChessPiece?>.from(row))
-      ),
+      board: board ?? this.board,
       currentPlayer: currentPlayer ?? this.currentPlayer,
       selectedPosition: selectedPosition,
       validMoves: validMoves ?? this.validMoves,
-      hasKingMoved: hasKingMoved ?? Map<PieceColor, bool>.from(this.hasKingMoved),
-      hasRookMoved: hasRookMoved ?? Map<PieceColor, Map<String, bool>>.from(
-        this.hasRookMoved.map(
-          (color, value) => MapEntry(
-            color,
-            Map<String, bool>.from(value),
-          ),
-        ),
-      ),
+      hasKingMoved: hasKingMoved ?? this.hasKingMoved,
+      hasRookMoved: hasRookMoved ?? this.hasRookMoved,
       lastPawnDoubleMoved: lastPawnDoubleMoved,
       lastMoveNumber: lastMoveNumber ?? this.lastMoveNumber,
       currentMoveNumber: currentMoveNumber ?? this.currentMoveNumber,
-      moveHistory: moveHistory ?? List<ChessMove>.from(this.moveHistory),
+      moveHistory: moveHistory ?? this.moveHistory,
+      specialMoveMessage: specialMoveMessage,
+      lastMove: lastMove,
     );
   }
 
@@ -214,5 +213,7 @@ class GameState extends Equatable {
     lastMoveNumber,
     currentMoveNumber,
     moveHistory,
+    specialMoveMessage,
+    lastMove,
   ];
 } 

@@ -21,7 +21,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
 
   void _onSelectPiece(SelectPiece event, Emitter<GameState> emit) {
     final piece = state.board[event.position.row][event.position.col];
-    
+
     if (piece != null && piece.color == state.currentPlayer) {
       final validMoves = ChessRules.getValidMoves(
         state.board,
@@ -88,7 +88,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
   }
 
   bool _isCastlingMove(ChessPiece movingPiece, MovePiece event) {
-    return movingPiece.type == PieceType.king && 
+    return movingPiece.type == PieceType.king &&
            (event.from.col - event.to.col).abs() == 2;
   }
 
@@ -96,7 +96,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     final isKingside = event.to.col > event.from.col;
     final rookFromCol = isKingside ? 7 : 0;
     final rookToCol = isKingside ? 5 : 3;
-    
+
     newBoard[event.to.row][event.to.col] = movingPiece;
     newBoard[event.from.row][event.from.col] = null;
     newBoard[event.from.row][rookToCol] = newBoard[event.from.row][rookFromCol];
@@ -105,36 +105,37 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     final newHasKingMoved = Map<PieceColor, bool>.from(state.hasKingMoved);
     newHasKingMoved[movingPiece.color] = true;
 
+    final move = ChessMove(
+      from: event.from,
+      to: event.to,
+      piece: movingPiece,
+      isCastling: true,
+    );
+
     emit(state.copyWith(
       board: newBoard,
-      currentPlayer: state.currentPlayer == PieceColor.white 
-          ? PieceColor.black 
+      currentPlayer: state.currentPlayer == PieceColor.white
+          ? PieceColor.black
           : PieceColor.white,
       selectedPosition: null,
       validMoves: [],
       hasKingMoved: newHasKingMoved,
       currentMoveNumber: state.currentMoveNumber + 1,
-      moveHistory: [
-        ...state.moveHistory,
-        ChessMove(
-          from: event.from,
-          to: event.to,
-          piece: movingPiece,
-          isCastling: true,
-        ),
-      ],
+      moveHistory: [...state.moveHistory, move],
+      specialMoveMessage: '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}进行${isKingside ? "王翼" : "后翼"}易位',
+      lastMove: move,
     ));
   }
 
   bool _isPawnDoubleMove(ChessPiece movingPiece, MovePiece event) {
-    return movingPiece.type == PieceType.pawn && 
+    return movingPiece.type == PieceType.pawn &&
            (event.from.row - event.to.row).abs() == 2;
   }
 
   bool _isEnPassantMove(ChessPiece movingPiece, MovePiece event, ChessPiece? capturedPiece) {
-    return movingPiece.type == PieceType.pawn && 
+    return movingPiece.type == PieceType.pawn &&
            state.lastPawnDoubleMoved != null &&
-           event.from.col != event.to.col && 
+           event.from.col != event.to.col &&
            capturedPiece == null &&
            state.lastMoveNumber == state.currentMoveNumber - 1 &&
            ((movingPiece.color == PieceColor.white && event.from.row == 3) ||
@@ -144,42 +145,51 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
 
   void _handleEnPassant(MovePiece event, ChessPiece movingPiece, List<List<ChessPiece?>> newBoard, Emitter<GameState> emit) {
     final capturedPawn = state.board[state.lastPawnDoubleMoved!.row][state.lastPawnDoubleMoved!.col];
-    
+
     newBoard[state.lastPawnDoubleMoved!.row][state.lastPawnDoubleMoved!.col] = null;
     newBoard[event.to.row][event.to.col] = movingPiece;
     newBoard[event.from.row][event.from.col] = null;
 
+    final move = ChessMove(
+      from: event.from,
+      to: event.to,
+      piece: movingPiece,
+      capturedPiece: capturedPawn,
+      isEnPassant: true,
+    );
+
     emit(state.copyWith(
       board: newBoard,
-      currentPlayer: state.currentPlayer == PieceColor.white 
-          ? PieceColor.black 
+      currentPlayer: state.currentPlayer == PieceColor.white
+          ? PieceColor.black
           : PieceColor.white,
       selectedPosition: null,
       validMoves: [],
       lastPawnDoubleMoved: null,
       lastMoveNumber: state.currentMoveNumber,
       currentMoveNumber: state.currentMoveNumber + 1,
-      moveHistory: [
-        ...state.moveHistory,
-        ChessMove(
-          from: event.from,
-          to: event.to,
-          piece: movingPiece,
-          capturedPiece: capturedPawn,
-          isEnPassant: true,
-        ),
-      ],
+      moveHistory: [...state.moveHistory, move],
+      specialMoveMessage: '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}吃过路兵',
+      lastMove: move,
     ));
   }
 
   bool _isPawnPromotion(ChessPiece movingPiece, MovePiece event) {
-    return movingPiece.type == PieceType.pawn && 
+    return movingPiece.type == PieceType.pawn &&
            (event.to.row == 0 || event.to.row == 7);
   }
 
   void _handlePawnPromotion(MovePiece event, ChessPiece movingPiece, List<List<ChessPiece?>> newBoard, Emitter<GameState> emit) {
     newBoard[event.to.row][event.to.col] = movingPiece;
     newBoard[event.from.row][event.from.col] = null;
+
+    final move = ChessMove(
+      from: event.from,
+      to: event.to,
+      piece: movingPiece,
+      isPromotion: true,
+    );
+
     emit(state.copyWith(
       board: newBoard,
       selectedPosition: null,
@@ -187,15 +197,9 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       lastPawnDoubleMoved: null,
       lastMoveNumber: state.currentMoveNumber,
       currentMoveNumber: state.currentMoveNumber + 1,
-      moveHistory: [
-        ...state.moveHistory,
-        ChessMove(
-          from: event.from,
-          to: event.to,
-          piece: movingPiece,
-          isPromotion: true,
-        ),
-      ],
+      moveHistory: [...state.moveHistory, move],
+      specialMoveMessage: '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}兵升变',
+      lastMove: move,
     ));
   }
 
@@ -220,31 +224,32 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       }
     }
 
+    final move = ChessMove(
+      from: event.from,
+      to: event.to,
+      piece: movingPiece,
+      capturedPiece: capturedPiece,
+      isEnPassant: capturedPiece == null &&
+          movingPiece.type == PieceType.pawn &&
+          event.from.col != event.to.col,
+    );
+
     emit(state.copyWith(
       board: newBoard,
-      currentPlayer: state.currentPlayer == PieceColor.white 
-          ? PieceColor.black 
+      currentPlayer: state.currentPlayer == PieceColor.white
+          ? PieceColor.black
           : PieceColor.white,
       selectedPosition: null,
       validMoves: [],
       hasRookMoved: newHasRookMoved,
       lastPawnDoubleMoved: newLastPawnDoubleMoved,
-      lastMoveNumber: newLastPawnDoubleMoved != null 
-          ? state.currentMoveNumber 
+      lastMoveNumber: newLastPawnDoubleMoved != null
+          ? state.currentMoveNumber
           : state.lastMoveNumber,
       currentMoveNumber: state.currentMoveNumber + 1,
-      moveHistory: [
-        ...state.moveHistory,
-        ChessMove(
-          from: event.from,
-          to: event.to,
-          piece: movingPiece,
-          capturedPiece: capturedPiece,
-          isEnPassant: capturedPiece == null && 
-              movingPiece.type == PieceType.pawn && 
-              event.from.col != event.to.col,
-        ),
-      ],
+      moveHistory: [...state.moveHistory, move],
+      specialMoveMessage: "常规移动",
+      lastMove: move,
     ));
   }
 
@@ -261,8 +266,8 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
 
     emit(state.copyWith(
       board: newBoard,
-      currentPlayer: state.currentPlayer == PieceColor.white 
-          ? PieceColor.black 
+      currentPlayer: state.currentPlayer == PieceColor.white
+          ? PieceColor.black
           : PieceColor.white,
       moveHistory: [
         ...state.moveHistory,
@@ -290,4 +295,4 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
   void _onLoadGame(LoadGame event, Emitter<GameState> emit) {
     // TODO: 实现加载游戏功能
   }
-} 
+}
