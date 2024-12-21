@@ -75,67 +75,121 @@ class _ChessBoardView extends StatelessWidget {
                       ),
                       const SizedBox(height: spacing),
                       SizedBox(
-                        width: boardSize,
-                        height: boardSize,
-                        child: Container(
-                          padding: const EdgeInsets.all(8.0),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black, width: 2.0),
-                          ),
-                          child: GridView.builder(
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 8,
-                            ),
-                            itemCount: 64,
-                            itemBuilder: (context, index) {
-                              final row = index ~/ 8;
-                              final col = index % 8;
-                              final isDark = (row + col) % 2 == 1;
-                              final isSelected = state.selectedPosition?.row == row && 
-                                             state.selectedPosition?.col == col;
-                              final isValidMove = state.validMoves.any(
-                                (pos) => pos.row == row && pos.col == col
-                              );
-
-                              return GestureDetector(
-                                onTap: () => _handleTap(context, row, col, state),
-                                child: Stack(
-                                  fit: StackFit.expand,
-                                  children: [
-                                    Container(
-                                      color: isSelected 
-                                          ? Colors.blue.withOpacity(0.5)
-                                          : isDark 
-                                              ? Colors.brown[300] 
-                                              : Colors.brown[100],
-                                    ),
-                                    if (state.board[row][col] != null)
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Image.asset(
-                                          _getPieceImage(state.board[row][col]!),
-                                          fit: BoxFit.contain,
-                                        ),
-                                      ),
-                                    if (isValidMove)
-                                      Center(
-                                        child: Container(
-                                          width: 16,
-                                          height: 16,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: isDark 
-                                                ? Colors.white.withOpacity(0.3)
-                                                : Colors.black.withOpacity(0.3),
+                        width: boardSize + 30, // 增加宽度以容纳行号
+                        height: boardSize + 30, // 增加高度以容纳列号
+                        child: Column(
+                          children: [
+                            // 列标记 (A-H)
+                            SizedBox(
+                              height: 30,
+                              child: Row(
+                                children: [
+                                  const SizedBox(width: 30), // 左上角空白
+                                  ...List.generate(8, (col) {
+                                    return Expanded(
+                                      child: Center(
+                                        child: Text(
+                                          String.fromCharCode('A'.codeUnitAt(0) + col),
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                       ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
+                                    );
+                                  }),
+                                ],
+                              ),
+                            ),
+                            // 棋盘和行号
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  // 行号 (8-1)
+                                  SizedBox(
+                                    width: 30,
+                                    child: Column(
+                                      children: List.generate(8, (row) {
+                                        return Expanded(
+                                          child: Center(
+                                            child: Text(
+                                              '${8 - row}',
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }),
+                                    ),
+                                  ),
+                                  // 棋盘
+                                  Expanded(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.black, width: 2.0),
+                                      ),
+                                      child: GridView.builder(
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 8,
+                                        ),
+                                        itemCount: 64,
+                                        itemBuilder: (context, index) {
+                                          final row = index ~/ 8;
+                                          final col = index % 8;
+                                          final isDark = (row + col) % 2 == 1;
+                                          final isSelected = state.selectedPosition?.row == row && 
+                                                         state.selectedPosition?.col == col;
+                                          final isValidMove = state.validMoves.any(
+                                            (pos) => pos.row == row && pos.col == col
+                                          );
+
+                                          return GestureDetector(
+                                            onTap: () => _handleTap(context, row, col, state),
+                                            child: Stack(
+                                              fit: StackFit.expand,
+                                              children: [
+                                                Container(
+                                                  color: isSelected 
+                                                      ? Colors.blue.withOpacity(0.5)
+                                                      : isDark 
+                                                          ? Colors.brown[300] 
+                                                          : Colors.brown[100],
+                                                ),
+                                                if (state.board[row][col] != null)
+                                                  Padding(
+                                                    padding: const EdgeInsets.all(8.0),
+                                                    child: Image.asset(
+                                                      _getPieceImage(state.board[row][col]!),
+                                                      fit: BoxFit.contain,
+                                                    ),
+                                                  ),
+                                                if (isValidMove)
+                                                  Center(
+                                                    child: Container(
+                                                      width: 16,
+                                                      height: 16,
+                                                      decoration: BoxDecoration(
+                                                        shape: BoxShape.circle,
+                                                        color: isDark 
+                                                            ? Colors.white.withOpacity(0.3)
+                                                            : Colors.black.withOpacity(0.3),
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -150,8 +204,8 @@ class _ChessBoardView extends StatelessWidget {
   }
 
   Widget _buildSpecialMoveIndicator(GameState state) {
-    if (state.lastMove == null || state.specialMoveMessage == null) {
-      return const SizedBox(height: 50);
+    if (state.lastMove == null) {
+      return const SizedBox(height: 50);  // 保持固定高度，避免布局跳动
     }
 
     return Container(
@@ -170,7 +224,7 @@ class _ChessBoardView extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            state.specialMoveMessage ?? '',
+            state.specialMoveMessage ?? _buildDefaultMoveMessage(state.lastMove!),
             style: const TextStyle(fontSize: 16),
           ),
           if (state.lastMove!.capturedPiece != null) ...[
@@ -184,6 +238,44 @@ class _ChessBoardView extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _buildDefaultMoveMessage(ChessMove move) {
+    final pieceColor = move.piece.color == PieceColor.white ? "白方" : "黑方";
+    final pieceType = _getPieceTypeName(move.piece.type);
+    final from = _getPositionName(move.from);
+    final to = _getPositionName(move.to);
+
+    if (move.capturedPiece != null) {
+      final capturedColor = move.capturedPiece!.color == PieceColor.white ? "白方" : "黑方";
+      final capturedType = _getPieceTypeName(move.capturedPiece!.type);
+      return '$pieceColor$pieceType($from)吃掉$capturedColor$capturedType($to)';
+    } else {
+      return '$pieceColor$pieceType从$from移动到$to';
+    }
+  }
+
+  String _getPieceTypeName(PieceType type) {
+    switch (type) {
+      case PieceType.king:
+        return "王";
+      case PieceType.queen:
+        return "后";
+      case PieceType.bishop:
+        return "象";
+      case PieceType.knight:
+        return "马";
+      case PieceType.rook:
+        return "车";
+      case PieceType.pawn:
+        return "兵";
+    }
+  }
+
+  String _getPositionName(Position position) {
+    final col = String.fromCharCode('A'.codeUnitAt(0) + position.col);
+    final row = 8 - position.row;
+    return '$col$row';
   }
 
   void _handleTap(BuildContext context, int row, int col, GameState state) {

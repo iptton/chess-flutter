@@ -150,8 +150,8 @@ class GameState extends Equatable {
       lastPawnDoubleMovedNumber: lastPawnDoubleMovedNumber ?? this.lastPawnDoubleMovedNumber,
       currentMoveNumber: currentMoveNumber ?? this.currentMoveNumber,
       moveHistory: moveHistory ?? this.moveHistory,
-      specialMoveMessage: specialMoveMessage,
-      lastMove: lastMove,
+      specialMoveMessage: specialMoveMessage ?? this.specialMoveMessage,
+      lastMove: lastMove ?? this.lastMove,
     );
   }
 
