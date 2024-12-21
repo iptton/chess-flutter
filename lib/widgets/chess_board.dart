@@ -42,7 +42,7 @@ class _ChessBoardState extends State<ChessBoard> {
     PieceColor.black: {'kingside': false, 'queenside': false},
   };
 
-  // 记录最后一次移动的兵��用于吃过路兵）
+  // 记录最后一次移动的兵（用于吃过路兵）
   Position? lastPawnDoubleMoved;
   int lastMoveNumber = 0;
   int currentMoveNumber = 0;
@@ -237,6 +237,9 @@ class _ChessBoardState extends State<ChessBoard> {
 
       // 处理兵的升变
       if (to.row == 0 || to.row == 7) {
+        // 先移动兵到目标位置
+        board[to.row][to.col] = board[from.row][from.col];
+        board[from.row][from.col] = null;
         _showPromotionDialog(to);
         return;
       }
@@ -272,16 +275,37 @@ class _ChessBoardState extends State<ChessBoard> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('升变'),
-          content: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildPromotionOption(PieceType.queen, piece.color),
-              _buildPromotionOption(PieceType.rook, piece.color),
-              _buildPromotionOption(PieceType.bishop, piece.color),
-              _buildPromotionOption(PieceType.knight, piece.color),
-            ],
+        return Dialog(
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  '选择升变棋子',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildPromotionOption(PieceType.queen, piece.color),
+                      const SizedBox(width: 8),
+                      _buildPromotionOption(PieceType.rook, piece.color),
+                      const SizedBox(width: 8),
+                      _buildPromotionOption(PieceType.bishop, piece.color),
+                      const SizedBox(width: 8),
+                      _buildPromotionOption(PieceType.knight, piece.color),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -289,10 +313,13 @@ class _ChessBoardState extends State<ChessBoard> {
 
     if (promotedPiece != null) {
       setState(() {
+        // 保持原来的颜色
         board[pawnPosition.row][pawnPosition.col] = ChessPiece(
           type: promotedPiece,
           color: piece.color,
         );
+        // 更新游戏状态
+        currentMoveNumber++;
         currentPlayer = currentPlayer == PieceColor.white 
             ? PieceColor.black 
             : PieceColor.white;
@@ -304,15 +331,16 @@ class _ChessBoardState extends State<ChessBoard> {
     return GestureDetector(
       onTap: () => Navigator.of(context).pop(type),
       child: Container(
+        width: 60,
+        height: 60,
         padding: const EdgeInsets.all(8.0),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.grey),
           borderRadius: BorderRadius.circular(8.0),
         ),
         child: Image.asset(
-          'assets/images/${color == PieceColor.white ? "white" : "black"}_${type.toString().split('.').last}.png',
-          width: 50,
-          height: 50,
+          _getPieceImage(ChessPiece(type: type, color: color)),
+          fit: BoxFit.contain,
         ),
       ),
     );
