@@ -217,17 +217,40 @@ class _ChessBoardView extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(
-            _getPieceImage(state.lastMove!.piece),
-            width: 32,
-            height: 32,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            state.specialMoveMessage ?? _buildDefaultMoveMessage(state.lastMove!),
-            style: const TextStyle(fontSize: 16),
-          ),
-          if (state.lastMove!.capturedPiece != null) ...[
+          if (state.lastMove?.piece != null) ...[
+            Image.asset(
+              _getPieceImage(state.lastMove!.piece),
+              width: 32,
+              height: 32,
+            ),
+            const SizedBox(width: 8),
+          ],
+          if (state.lastMove!.isPromotion && state.lastMove!.promotionType != null) ...[
+            Text(
+              '${state.lastMove!.piece.color == PieceColor.white ? "白方" : "黑方"}兵从${_getPositionName(state.lastMove!.from)}升变为',
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(width: 8),
+            Image.asset(
+              _getPieceImage(ChessPiece(
+                type: state.lastMove!.promotionType!,
+                color: state.lastMove!.piece.color,
+              )),
+              width: 32,
+              height: 32,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '到${_getPositionName(state.lastMove!.to)}',
+              style: const TextStyle(fontSize: 16),
+            ),
+          ] else if (state.specialMoveMessage != null || state.lastMove != null) ...[
+            Text(
+              state.specialMoveMessage ?? _buildDefaultMoveMessage(state.lastMove!),
+              style: const TextStyle(fontSize: 16),
+            ),
+          ],
+          if (state.lastMove?.capturedPiece != null && !state.lastMove!.isPromotion) ...[
             const SizedBox(width: 8),
             Image.asset(
               _getPieceImage(state.lastMove!.capturedPiece!),

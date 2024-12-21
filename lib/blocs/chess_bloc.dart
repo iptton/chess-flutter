@@ -231,7 +231,6 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       lastPawnDoubleMovedNumber: newLastPawnDoubleMovedNumber,
       currentMoveNumber: state.currentMoveNumber + 1,
       moveHistory: [...state.moveHistory, move],
-      specialMoveMessage: '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}兵从${_getPositionName(event.from)}升变到${_getPositionName(event.to)}',
       lastMove: move,
     ));
   }
@@ -327,10 +326,17 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       state.board.map((row) => List<ChessPiece?>.from(row))
     );
     final pawn = newBoard[event.position.row][event.position.col]!;
-
-    newBoard[event.position.row][event.position.col] = ChessPiece(
+    final promotedPiece = ChessPiece(
       type: event.promotionType,
       color: pawn.color,
+    );
+
+    newBoard[event.position.row][event.position.col] = promotedPiece;
+
+    // 获取最后一步移动
+    final lastMove = state.moveHistory.last.copyWith(
+      isPromotion: true,
+      promotionType: event.promotionType,
     );
 
     emit(state.copyWith(
@@ -339,13 +345,10 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
           ? PieceColor.black
           : PieceColor.white,
       moveHistory: [
-        ...state.moveHistory,
-        if (state.moveHistory.isNotEmpty)
-          state.moveHistory.last.copyWith(
-            isPromotion: true,
-            promotionType: event.promotionType,
-          ),
+        ...state.moveHistory.sublist(0, state.moveHistory.length - 1),
+        lastMove,
       ],
+      lastMove: lastMove,
     ));
   }
 
