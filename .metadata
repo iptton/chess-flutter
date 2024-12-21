@@ -15,7 +15,16 @@ migration:
     - platform: root
       create_revision: 92c0b10e1ac6683a7abbfdf1d0bb10892220db97
       base_revision: 92c0b10e1ac6683a7abbfdf1d0bb10892220db97
-    - platform: ohos
+    - platform: android
+      create_revision: 92c0b10e1ac6683a7abbfdf1d0bb10892220db97
+      base_revision: 92c0b10e1ac6683a7abbfdf1d0bb10892220db97
+    - platform: ios
+      create_revision: 92c0b10e1ac6683a7abbfdf1d0bb10892220db97
+      base_revision: 92c0b10e1ac6683a7abbfdf1d0bb10892220db97
+    - platform: macos
+      create_revision: 92c0b10e1ac6683a7abbfdf1d0bb10892220db97
+      base_revision: 92c0b10e1ac6683a7abbfdf1d0bb10892220db97
+    - platform: web
       create_revision: 92c0b10e1ac6683a7abbfdf1d0bb10892220db97
       base_revision: 92c0b10e1ac6683a7abbfdf1d0bb10892220db97
 
