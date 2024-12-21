@@ -112,18 +112,52 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isCastling: true,
     );
 
+    String message = '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}王从${_getPositionName(event.from)}进行${isKingside ? "王翼" : "后翼"}易位到${_getPositionName(event.to)}';
+
+    // 检查对手是否被将军或将死
+    final nextPlayer = state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white;
+    final isCheck = ChessRules.isInCheck(newBoard, nextPlayer);
+    final isCheckmate = isCheck && ChessRules.isCheckmate(
+      newBoard,
+      nextPlayer,
+      newHasKingMoved,
+      state.hasRookMoved,
+      state.lastPawnDoubleMoved,
+      state.lastPawnDoubleMovedNumber,
+      state.currentMoveNumber + 1,
+    );
+    final isStalemate = !isCheck && ChessRules.isStalemate(
+      newBoard,
+      nextPlayer,
+      newHasKingMoved,
+      state.hasRookMoved,
+      state.lastPawnDoubleMoved,
+      state.lastPawnDoubleMovedNumber,
+      state.currentMoveNumber + 1,
+    );
+
+    // 添加将军或将死的提示
+    if (isCheckmate) {
+      message += ' 将死！${nextPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
+    } else if (isCheck) {
+      message += ' 将军！';
+    } else if (isStalemate) {
+      message += ' 和棋！';
+    }
+
     emit(state.copyWith(
       board: newBoard,
-      currentPlayer: state.currentPlayer == PieceColor.white
-          ? PieceColor.black
-          : PieceColor.white,
+      currentPlayer: nextPlayer,
       selectedPosition: null,
       validMoves: [],
       hasKingMoved: newHasKingMoved,
       currentMoveNumber: state.currentMoveNumber + 1,
       moveHistory: [...state.moveHistory, move],
-      specialMoveMessage: '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}王从${_getPositionName(event.from)}进行${isKingside ? "王翼" : "后翼"}易位到${_getPositionName(event.to)}',
+      specialMoveMessage: message,
       lastMove: move,
+      isCheck: isCheck,
+      isCheckmate: isCheckmate,
+      isStalemate: isStalemate,
     ));
   }
 
@@ -187,19 +221,53 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     newLastPawnDoubleMoved[opponentColor] = null;
     newLastPawnDoubleMovedNumber[opponentColor] = -1;
 
+    String message = '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}兵从${_getPositionName(event.from)}吃过路兵到${_getPositionName(event.to)}';
+
+    // 检查对手是否被将军或将死
+    final nextPlayer = state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white;
+    final isCheck = ChessRules.isInCheck(newBoard, nextPlayer);
+    final isCheckmate = isCheck && ChessRules.isCheckmate(
+      newBoard,
+      nextPlayer,
+      state.hasKingMoved,
+      state.hasRookMoved,
+      newLastPawnDoubleMoved,
+      newLastPawnDoubleMovedNumber,
+      state.currentMoveNumber + 1,
+    );
+    final isStalemate = !isCheck && ChessRules.isStalemate(
+      newBoard,
+      nextPlayer,
+      state.hasKingMoved,
+      state.hasRookMoved,
+      newLastPawnDoubleMoved,
+      newLastPawnDoubleMovedNumber,
+      state.currentMoveNumber + 1,
+    );
+
+    // 添加将军或将死的提示
+    if (isCheckmate) {
+      message += ' 将死！${nextPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
+    } else if (isCheck) {
+      message += ' 将军！';
+    } else if (isStalemate) {
+      message += ' 和棋！';
+    }
+
     emit(state.copyWith(
       board: newBoard,
-      currentPlayer: state.currentPlayer == PieceColor.white
-          ? PieceColor.black
-          : PieceColor.white,
+      currentPlayer: nextPlayer,
       selectedPosition: null,
       validMoves: [],
       lastPawnDoubleMoved: newLastPawnDoubleMoved,
       lastPawnDoubleMovedNumber: newLastPawnDoubleMovedNumber,
       currentMoveNumber: state.currentMoveNumber + 1,
       moveHistory: [...state.moveHistory, move],
-      specialMoveMessage: '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}兵从${_getPositionName(event.from)}吃过路兵到${_getPositionName(event.to)}',
+      specialMoveMessage: message,
       lastMove: move,
+      isCheck: isCheck,
+      isCheckmate: isCheckmate,
+      isStalemate: isStalemate,
     ));
   }
 
@@ -281,11 +349,40 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       message = '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}${_getPieceTypeName(movingPiece.type)}从${_getPositionName(event.from)}移动到${_getPositionName(event.to)}';
     }
 
+    // 检查对手是否被将军或将死
+    final nextPlayer = state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white;
+    final isCheck = ChessRules.isInCheck(newBoard, nextPlayer);
+    final isCheckmate = isCheck && ChessRules.isCheckmate(
+      newBoard,
+      nextPlayer,
+      state.hasKingMoved,
+      newHasRookMoved ?? state.hasRookMoved,
+      newLastPawnDoubleMoved,
+      newLastPawnDoubleMovedNumber,
+      state.currentMoveNumber + 1,
+    );
+    final isStalemate = !isCheck && ChessRules.isStalemate(
+      newBoard,
+      nextPlayer,
+      state.hasKingMoved,
+      newHasRookMoved ?? state.hasRookMoved,
+      newLastPawnDoubleMoved,
+      newLastPawnDoubleMovedNumber,
+      state.currentMoveNumber + 1,
+    );
+
+    // 添加将军或将死的提示
+    if (isCheckmate) {
+      message += ' 将死！${nextPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
+    } else if (isCheck) {
+      message += ' 将军！';
+    } else if (isStalemate) {
+      message += ' 和棋！';
+    }
+
     emit(state.copyWith(
       board: newBoard,
-      currentPlayer: state.currentPlayer == PieceColor.white
-          ? PieceColor.black
-          : PieceColor.white,
+      currentPlayer: nextPlayer,
       selectedPosition: null,
       validMoves: [],
       hasRookMoved: newHasRookMoved,
@@ -295,6 +392,9 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       moveHistory: [...state.moveHistory, move],
       specialMoveMessage: message,
       lastMove: move,
+      isCheck: isCheck,
+      isCheckmate: isCheckmate,
+      isStalemate: isStalemate,
     ));
   }
 
@@ -339,16 +439,51 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       promotionType: event.promotionType,
     );
 
+    // 检查对手是否被将军或将死
+    final nextPlayer = state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white;
+    final isCheck = ChessRules.isInCheck(newBoard, nextPlayer);
+    final isCheckmate = isCheck && ChessRules.isCheckmate(
+      newBoard,
+      nextPlayer,
+      state.hasKingMoved,
+      state.hasRookMoved,
+      state.lastPawnDoubleMoved,
+      state.lastPawnDoubleMovedNumber,
+      state.currentMoveNumber + 1,
+    );
+    final isStalemate = !isCheck && ChessRules.isStalemate(
+      newBoard,
+      nextPlayer,
+      state.hasKingMoved,
+      state.hasRookMoved,
+      state.lastPawnDoubleMoved,
+      state.lastPawnDoubleMovedNumber,
+      state.currentMoveNumber + 1,
+    );
+
+    String message = '${pawn.color == PieceColor.white ? "白方" : "黑方"}兵从${_getPositionName(lastMove.from)}升变为${_getPieceTypeName(event.promotionType)}到${_getPositionName(lastMove.to)}';
+
+    // 添加将军或将死的提示
+    if (isCheckmate) {
+      message += ' 将死！${nextPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
+    } else if (isCheck) {
+      message += ' 将军！';
+    } else if (isStalemate) {
+      message += ' 和棋！';
+    }
+
     emit(state.copyWith(
       board: newBoard,
-      currentPlayer: state.currentPlayer == PieceColor.white
-          ? PieceColor.black
-          : PieceColor.white,
+      currentPlayer: nextPlayer,
       moveHistory: [
         ...state.moveHistory.sublist(0, state.moveHistory.length - 1),
         lastMove,
       ],
+      specialMoveMessage: message,
       lastMove: lastMove,
+      isCheck: isCheck,
+      isCheckmate: isCheckmate,
+      isStalemate: isStalemate,
     ));
   }
 

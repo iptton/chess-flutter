@@ -109,6 +109,9 @@ class GameState extends Equatable {
   final List<ChessMove> moveHistory;
   final String? specialMoveMessage;
   final ChessMove? lastMove;
+  final bool isCheck;
+  final bool isCheckmate;
+  final bool isStalemate;
 
   const GameState({
     required this.board,
@@ -123,6 +126,9 @@ class GameState extends Equatable {
     this.moveHistory = const [],
     this.specialMoveMessage,
     this.lastMove,
+    this.isCheck = false,
+    this.isCheckmate = false,
+    this.isStalemate = false,
   });
 
   GameState copyWith({
@@ -138,6 +144,9 @@ class GameState extends Equatable {
     List<ChessMove>? moveHistory,
     String? specialMoveMessage,
     ChessMove? lastMove,
+    bool? isCheck,
+    bool? isCheckmate,
+    bool? isStalemate,
   }) {
     return GameState(
       board: board ?? this.board,
@@ -152,6 +161,9 @@ class GameState extends Equatable {
       moveHistory: moveHistory ?? this.moveHistory,
       specialMoveMessage: specialMoveMessage ?? this.specialMoveMessage,
       lastMove: lastMove ?? this.lastMove,
+      isCheck: isCheck ?? this.isCheck,
+      isCheckmate: isCheckmate ?? this.isCheckmate,
+      isStalemate: isStalemate ?? this.isStalemate,
     );
   }
 
@@ -223,5 +235,8 @@ class GameState extends Equatable {
     moveHistory,
     specialMoveMessage,
     lastMove,
+    isCheck,
+    isCheckmate,
+    isStalemate,
   ];
 } 
