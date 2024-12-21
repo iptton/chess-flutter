@@ -20,6 +20,15 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
   }
 
   void _onSelectPiece(SelectPiece event, Emitter<GameState> emit) {
+    // 如果游戏已经结束（将死或和棋），不允许移动
+    if (state.isCheckmate || state.isStalemate) {
+      emit(state.copyWith(
+        selectedPosition: null,
+        validMoves: [],
+      ));
+      return;
+    }
+
     final piece = state.board[event.position.row][event.position.col];
 
     if (piece != null && piece.color == state.currentPlayer) {
@@ -145,6 +154,9 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       message += ' 和棋！';
     }
 
+    // 保存当前状态到撤销列表
+    final newUndoStates = List<GameState>.from(state.undoStates)..add(state);
+
     emit(state.copyWith(
       board: newBoard,
       currentPlayer: nextPlayer,
@@ -158,6 +170,8 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isCheck: isCheck,
       isCheckmate: isCheckmate,
       isStalemate: isStalemate,
+      undoStates: newUndoStates,
+      redoStates: [], // 清空重做列表
     ));
   }
 
@@ -254,6 +268,9 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       message += ' 和棋！';
     }
 
+    // 保存当前状态到撤销列表
+    final newUndoStates = List<GameState>.from(state.undoStates)..add(state);
+
     emit(state.copyWith(
       board: newBoard,
       currentPlayer: nextPlayer,
@@ -268,6 +285,8 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isCheck: isCheck,
       isCheckmate: isCheckmate,
       isStalemate: isStalemate,
+      undoStates: newUndoStates,
+      redoStates: [], // 清空重做列表
     ));
   }
 
@@ -291,6 +310,9 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     final newLastPawnDoubleMoved = Map<PieceColor, Position?>.from(state.lastPawnDoubleMoved);
     final newLastPawnDoubleMovedNumber = Map<PieceColor, int>.from(state.lastPawnDoubleMovedNumber);
 
+    // 保存当前状态到撤销列表
+    final newUndoStates = List<GameState>.from(state.undoStates)..add(state);
+
     emit(state.copyWith(
       board: newBoard,
       selectedPosition: null,
@@ -300,6 +322,8 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       currentMoveNumber: state.currentMoveNumber + 1,
       moveHistory: [...state.moveHistory, move],
       lastMove: move,
+      undoStates: newUndoStates,
+      redoStates: [], // 清空重做列表
     ));
   }
 
@@ -380,6 +404,9 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       message += ' 和棋！';
     }
 
+    // 保存当前状态到撤销列表
+    final newUndoStates = List<GameState>.from(state.undoStates)..add(state);
+
     emit(state.copyWith(
       board: newBoard,
       currentPlayer: nextPlayer,
@@ -395,6 +422,8 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isCheck: isCheck,
       isCheckmate: isCheckmate,
       isStalemate: isStalemate,
+      undoStates: newUndoStates,
+      redoStates: [], // 清空重做列表
     ));
   }
 
@@ -472,6 +501,9 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       message += ' 和棋！';
     }
 
+    // 保存当前状态到撤销列表
+    final newUndoStates = List<GameState>.from(state.undoStates)..add(state);
+
     emit(state.copyWith(
       board: newBoard,
       currentPlayer: nextPlayer,
@@ -484,15 +516,45 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isCheck: isCheck,
       isCheckmate: isCheckmate,
       isStalemate: isStalemate,
+      undoStates: newUndoStates,
+      redoStates: [], // 清空重做列表
     ));
   }
 
   void _onUndoMove(UndoMove event, Emitter<GameState> emit) {
-    // TODO: 实现悔棋功能
+    if (state.undoStates.isEmpty) return;
+
+    // 获取前一步的状态
+    final previousState = state.undoStates.last;
+    final newUndoStates = List<GameState>.from(state.undoStates)..removeLast();
+
+    // 将当前状态添加到重做列表
+    final newRedoStates = List<GameState>.from(state.redoStates)..add(state);
+
+    emit(previousState.copyWith(
+      undoStates: newUndoStates,
+      redoStates: newRedoStates,
+      selectedPosition: null,
+      validMoves: [],
+    ));
   }
 
   void _onRedoMove(RedoMove event, Emitter<GameState> emit) {
-    // TODO: 实现重做功能
+    if (state.redoStates.isEmpty) return;
+
+    // 获取后一步的状态
+    final nextState = state.redoStates.last;
+    final newRedoStates = List<GameState>.from(state.redoStates)..removeLast();
+
+    // 将当前状态添加到撤销列表
+    final newUndoStates = List<GameState>.from(state.undoStates)..add(state);
+
+    emit(nextState.copyWith(
+      undoStates: newUndoStates,
+      redoStates: newRedoStates,
+      selectedPosition: null,
+      validMoves: [],
+    ));
   }
 
   void _onSaveGame(SaveGame event, Emitter<GameState> emit) {

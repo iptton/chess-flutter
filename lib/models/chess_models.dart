@@ -112,6 +112,8 @@ class GameState extends Equatable {
   final bool isCheck;
   final bool isCheckmate;
   final bool isStalemate;
+  final List<GameState> undoStates;
+  final List<GameState> redoStates;
 
   const GameState({
     required this.board,
@@ -129,6 +131,8 @@ class GameState extends Equatable {
     this.isCheck = false,
     this.isCheckmate = false,
     this.isStalemate = false,
+    this.undoStates = const [],
+    this.redoStates = const [],
   });
 
   GameState copyWith({
@@ -147,6 +151,8 @@ class GameState extends Equatable {
     bool? isCheck,
     bool? isCheckmate,
     bool? isStalemate,
+    List<GameState>? undoStates,
+    List<GameState>? redoStates,
   }) {
     return GameState(
       board: board ?? this.board,
@@ -164,6 +170,8 @@ class GameState extends Equatable {
       isCheck: isCheck ?? this.isCheck,
       isCheckmate: isCheckmate ?? this.isCheckmate,
       isStalemate: isStalemate ?? this.isStalemate,
+      undoStates: undoStates ?? this.undoStates,
+      redoStates: redoStates ?? this.redoStates,
     );
   }
 
@@ -238,5 +246,7 @@ class GameState extends Equatable {
     isCheck,
     isCheckmate,
     isStalemate,
+    undoStates,
+    redoStates,
   ];
 } 
