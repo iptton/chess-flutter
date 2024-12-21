@@ -8,7 +8,7 @@ class ChessRules {
     Map<PieceColor, bool>? hasKingMoved,
     Map<PieceColor, Map<String, bool>>? hasRookMoved,
     Position? lastPawnDoubleMoved,
-    int? lastMoveNumber,
+    int? lastPawnDoubleMovedNumber,
     int? currentMoveNumber,
     }
   ) {
@@ -24,7 +24,7 @@ class ChessRules {
           position, 
           piece.color,
           lastPawnDoubleMoved: lastPawnDoubleMoved,
-          lastMoveNumber: lastMoveNumber,
+          lastPawnDoubleMovedNumber: lastPawnDoubleMovedNumber,
           currentMoveNumber: currentMoveNumber,
         ));
         break;
@@ -59,7 +59,7 @@ class ChessRules {
     Position position,
     PieceColor color, {
     Position? lastPawnDoubleMoved,
-    int? lastMoveNumber,
+    int? lastPawnDoubleMovedNumber,
     int? currentMoveNumber,
   }) {
     List<Position> moves = [];
@@ -93,7 +93,7 @@ class ChessRules {
 
     // 吃过路兵
     if (lastPawnDoubleMoved != null && 
-        lastMoveNumber == currentMoveNumber! - 1 &&
+        lastPawnDoubleMovedNumber == currentMoveNumber! - 1 &&
         position.row == (color == PieceColor.white ? 3 : 4) &&
         (position.col - lastPawnDoubleMoved.col).abs() == 1 &&
         board[lastPawnDoubleMoved.row][lastPawnDoubleMoved.col]?.type == PieceType.pawn &&

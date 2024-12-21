@@ -28,8 +28,8 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
         event.position,
         hasKingMoved: state.hasKingMoved,
         hasRookMoved: state.hasRookMoved,
-        lastPawnDoubleMoved: state.lastPawnDoubleMoved,
-        lastMoveNumber: state.lastMoveNumber,
+        lastPawnDoubleMoved: state.lastPawnDoubleMoved[piece.color == PieceColor.white ? PieceColor.black : PieceColor.white],
+        lastPawnDoubleMovedNumber: state.lastPawnDoubleMovedNumber[piece.color == PieceColor.white ? PieceColor.black : PieceColor.white],
         currentMoveNumber: state.currentMoveNumber,
       );
 
@@ -133,34 +133,41 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
   }
 
   bool _isEnPassantMove(ChessPiece movingPiece, MovePiece event, ChessPiece? capturedPiece) {
-    final lastPawnDoubleMoved = state.lastPawnDoubleMoved;
+    // 获取对手的双步兵记录
+    final opponentColor = movingPiece.color == PieceColor.white ? PieceColor.black : PieceColor.white;
+    final opponentLastPawnDoubleMoved = state.lastPawnDoubleMoved[opponentColor];
+    final opponentLastMoveNumber = state.lastPawnDoubleMovedNumber[opponentColor];
+
     if (movingPiece.type != PieceType.pawn ||
-        lastPawnDoubleMoved == null ||
+        opponentLastPawnDoubleMoved == null ||
         event.from.col == event.to.col ||
-        state.lastMoveNumber != state.currentMoveNumber - 1) {
+        opponentLastMoveNumber != state.currentMoveNumber - 1) {
       return false;
     }
 
     // 检查是否是吃过路兵的位置
     if (movingPiece.color == PieceColor.white) {
       return event.from.row == 3 && // 白方兵在第5行
-             lastPawnDoubleMoved.row == 3 && // 黑方兵在第5行
-             lastPawnDoubleMoved.col == event.to.col && // 目标列与黑方兵相同
+             opponentLastPawnDoubleMoved.row == 3 && // 黑方兵在第5行
+             opponentLastPawnDoubleMoved.col == event.to.col && // 目标列与黑方兵相同
              (event.from.col - event.to.col).abs() == 1; // 斜向移动一格
     } else {
       return event.from.row == 4 && // 黑方兵在第4行
-             lastPawnDoubleMoved.row == 4 && // 白方兵在第4行
-             lastPawnDoubleMoved.col == event.to.col && // 目标列与白方兵相同
+             opponentLastPawnDoubleMoved.row == 4 && // 白方兵在第4行
+             opponentLastPawnDoubleMoved.col == event.to.col && // 目标列与白方兵相同
              (event.from.col - event.to.col).abs() == 1; // 斜向移动一格
     }
   }
 
   void _handleEnPassant(MovePiece event, ChessPiece movingPiece, List<List<ChessPiece?>> newBoard, Emitter<GameState> emit) {
+    final opponentColor = movingPiece.color == PieceColor.white ? PieceColor.black : PieceColor.white;
+    final opponentLastPawnDoubleMoved = state.lastPawnDoubleMoved[opponentColor]!;
+
     // 获取被吃的兵
-    final capturedPawn = state.board[state.lastPawnDoubleMoved!.row][state.lastPawnDoubleMoved!.col]!;
+    final capturedPawn = state.board[opponentLastPawnDoubleMoved.row][opponentLastPawnDoubleMoved.col]!;
 
     // 移除被吃的兵
-    newBoard[state.lastPawnDoubleMoved!.row][state.lastPawnDoubleMoved!.col] = null;
+    newBoard[opponentLastPawnDoubleMoved.row][opponentLastPawnDoubleMoved.col] = null;
 
     // 移动吃子的兵
     newBoard[event.to.row][event.to.col] = movingPiece;
@@ -174,6 +181,12 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isEnPassant: true,
     );
 
+    // 创建新的双步兵记录
+    final newLastPawnDoubleMoved = Map<PieceColor, Position?>.from(state.lastPawnDoubleMoved);
+    final newLastPawnDoubleMovedNumber = Map<PieceColor, int>.from(state.lastPawnDoubleMovedNumber);
+    newLastPawnDoubleMoved[opponentColor] = null;
+    newLastPawnDoubleMovedNumber[opponentColor] = -1;
+
     emit(state.copyWith(
       board: newBoard,
       currentPlayer: state.currentPlayer == PieceColor.white
@@ -181,8 +194,8 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
           : PieceColor.white,
       selectedPosition: null,
       validMoves: [],
-      lastPawnDoubleMoved: null,
-      lastMoveNumber: state.currentMoveNumber,
+      lastPawnDoubleMoved: newLastPawnDoubleMoved,
+      lastPawnDoubleMovedNumber: newLastPawnDoubleMovedNumber,
       currentMoveNumber: state.currentMoveNumber + 1,
       moveHistory: [...state.moveHistory, move],
       specialMoveMessage: '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}吃过路兵',
@@ -206,12 +219,16 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isPromotion: true,
     );
 
+    // 创建新的双步兵记录
+    final newLastPawnDoubleMoved = Map<PieceColor, Position?>.from(state.lastPawnDoubleMoved);
+    final newLastPawnDoubleMovedNumber = Map<PieceColor, int>.from(state.lastPawnDoubleMovedNumber);
+
     emit(state.copyWith(
       board: newBoard,
       selectedPosition: null,
       validMoves: [],
-      lastPawnDoubleMoved: null,
-      lastMoveNumber: state.currentMoveNumber,
+      lastPawnDoubleMoved: newLastPawnDoubleMoved,
+      lastPawnDoubleMovedNumber: newLastPawnDoubleMovedNumber,
       currentMoveNumber: state.currentMoveNumber + 1,
       moveHistory: [...state.moveHistory, move],
       specialMoveMessage: '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}兵升变',
@@ -240,6 +257,15 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       }
     }
 
+    // 更新双步兵记录
+    final newLastPawnDoubleMoved = Map<PieceColor, Position?>.from(state.lastPawnDoubleMoved);
+    final newLastPawnDoubleMovedNumber = Map<PieceColor, int>.from(state.lastPawnDoubleMovedNumber);
+
+    if (newLastPawnDoubleMoved != null) {
+      newLastPawnDoubleMoved[movingPiece.color] = event.to;
+      newLastPawnDoubleMovedNumber[movingPiece.color] = state.currentMoveNumber;
+    }
+
     final move = ChessMove(
       from: event.from,
       to: event.to,
@@ -257,9 +283,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       validMoves: [],
       hasRookMoved: newHasRookMoved,
       lastPawnDoubleMoved: newLastPawnDoubleMoved,
-      lastMoveNumber: newLastPawnDoubleMoved != null
-          ? state.currentMoveNumber
-          : state.lastMoveNumber,
+      lastPawnDoubleMovedNumber: newLastPawnDoubleMovedNumber,
       currentMoveNumber: state.currentMoveNumber + 1,
       moveHistory: [...state.moveHistory, move],
       specialMoveMessage: capturedPiece != null

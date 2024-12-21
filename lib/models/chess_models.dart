@@ -103,8 +103,8 @@ class GameState extends Equatable {
   final List<Position> validMoves;
   final Map<PieceColor, bool> hasKingMoved;
   final Map<PieceColor, Map<String, bool>> hasRookMoved;
-  final Position? lastPawnDoubleMoved;
-  final int lastMoveNumber;
+  final Map<PieceColor, Position?> lastPawnDoubleMoved;
+  final Map<PieceColor, int> lastPawnDoubleMovedNumber;
   final int currentMoveNumber;
   final List<ChessMove> moveHistory;
   final String? specialMoveMessage;
@@ -117,8 +117,8 @@ class GameState extends Equatable {
     this.validMoves = const [],
     required this.hasKingMoved,
     required this.hasRookMoved,
-    this.lastPawnDoubleMoved,
-    this.lastMoveNumber = 0,
+    required this.lastPawnDoubleMoved,
+    required this.lastPawnDoubleMovedNumber,
     this.currentMoveNumber = 0,
     this.moveHistory = const [],
     this.specialMoveMessage,
@@ -132,8 +132,8 @@ class GameState extends Equatable {
     List<Position>? validMoves,
     Map<PieceColor, bool>? hasKingMoved,
     Map<PieceColor, Map<String, bool>>? hasRookMoved,
-    Position? lastPawnDoubleMoved,
-    int? lastMoveNumber,
+    Map<PieceColor, Position?>? lastPawnDoubleMoved,
+    Map<PieceColor, int>? lastPawnDoubleMovedNumber,
     int? currentMoveNumber,
     List<ChessMove>? moveHistory,
     String? specialMoveMessage,
@@ -146,8 +146,8 @@ class GameState extends Equatable {
       validMoves: validMoves ?? this.validMoves,
       hasKingMoved: hasKingMoved ?? this.hasKingMoved,
       hasRookMoved: hasRookMoved ?? this.hasRookMoved,
-      lastPawnDoubleMoved: lastPawnDoubleMoved,
-      lastMoveNumber: lastMoveNumber ?? this.lastMoveNumber,
+      lastPawnDoubleMoved: lastPawnDoubleMoved ?? this.lastPawnDoubleMoved,
+      lastPawnDoubleMovedNumber: lastPawnDoubleMovedNumber ?? this.lastPawnDoubleMovedNumber,
       currentMoveNumber: currentMoveNumber ?? this.currentMoveNumber,
       moveHistory: moveHistory ?? this.moveHistory,
       specialMoveMessage: specialMoveMessage,
@@ -198,6 +198,14 @@ class GameState extends Equatable {
         PieceColor.white: {'kingside': false, 'queenside': false},
         PieceColor.black: {'kingside': false, 'queenside': false},
       },
+      lastPawnDoubleMoved: {
+        PieceColor.white: null,
+        PieceColor.black: null,
+      },
+      lastPawnDoubleMovedNumber: {
+        PieceColor.white: -1,
+        PieceColor.black: -1,
+      },
     );
   }
 
@@ -210,7 +218,7 @@ class GameState extends Equatable {
     hasKingMoved,
     hasRookMoved,
     lastPawnDoubleMoved,
-    lastMoveNumber,
+    lastPawnDoubleMovedNumber,
     currentMoveNumber,
     moveHistory,
     specialMoveMessage,
