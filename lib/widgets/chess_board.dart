@@ -49,10 +49,11 @@ class _ChessBoardView extends StatelessWidget {
               const topBarHeight = 20.0; // SizedBox height
               const turnIndicatorHeight = 30.0; // 回合指示器高度
               const specialMoveHeight = 50.0; // 特殊移动提示高度
+              const controlButtonsHeight = 50.0; // 控制按钮高度
               const spacing = 20.0; // 间距
               
               // 计算棋盘可用的最大尺寸
-              final maxBoardSize = availableHeight - (topBarHeight + turnIndicatorHeight + specialMoveHeight + spacing * 3);
+              final maxBoardSize = availableHeight - (topBarHeight + turnIndicatorHeight + specialMoveHeight + controlButtonsHeight + spacing * 4);
               final boardSize = min(
                 min(maxBoardSize, availableWidth * 0.9),
                 availableHeight * 0.7,
@@ -72,6 +73,38 @@ class _ChessBoardView extends StatelessWidget {
                         height: specialMoveHeight,
                         alignment: Alignment.center,
                         child: _buildSpecialMoveIndicator(state),
+                      ),
+                      const SizedBox(height: spacing),
+                      Container(
+                        height: controlButtonsHeight,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: state.undoStates.isEmpty ? null : () {
+                                context.read<ChessBloc>().add(const UndoMove());
+                              },
+                              icon: const Icon(Icons.undo),
+                              label: const Text('前一步'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue[100],
+                                foregroundColor: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(width: 20),
+                            ElevatedButton.icon(
+                              onPressed: state.redoStates.isEmpty ? null : () {
+                                context.read<ChessBloc>().add(const RedoMove());
+                              },
+                              icon: const Icon(Icons.redo),
+                              label: const Text('后一步'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue[100],
+                                foregroundColor: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: spacing),
                       SizedBox(
