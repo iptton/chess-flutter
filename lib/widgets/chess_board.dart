@@ -6,6 +6,7 @@ import '../blocs/chess_bloc.dart';
 import '../blocs/chess_event.dart';
 import '../models/chess_models.dart';
 import '../screens/game_screen.dart';
+import '../utils/chess_rules.dart';
 
 class ChessBoard extends StatelessWidget {
   final GameMode gameMode;
@@ -178,6 +179,16 @@ class _ChessBoardView extends StatelessWidget {
                                           final isValidMove = state.validMoves.any(
                                             (pos) => pos.row == row && pos.col == col
                                           );
+                                          final isMovablePiece = state.board[row][col]?.color == state.currentPlayer &&
+                                            ChessRules.getValidMoves(
+                                              state.board,
+                                              Position(row: row, col: col),
+                                              hasKingMoved: state.hasKingMoved,
+                                              hasRookMoved: state.hasRookMoved,
+                                              lastPawnDoubleMoved: state.lastPawnDoubleMoved[state.board[row][col]?.color == PieceColor.white ? PieceColor.black : PieceColor.white],
+                                              lastPawnDoubleMovedNumber: state.lastPawnDoubleMovedNumber[state.board[row][col]?.color == PieceColor.white ? PieceColor.black : PieceColor.white],
+                                              currentMoveNumber: state.currentMoveNumber,
+                                            ).isNotEmpty;
 
                                           return GestureDetector(
                                             onTap: () => _handleTap(context, row, col, state),
@@ -185,11 +196,7 @@ class _ChessBoardView extends StatelessWidget {
                                               fit: StackFit.expand,
                                               children: [
                                                 Container(
-                                                  color: isSelected 
-                                                      ? Colors.blue.withOpacity(0.5)
-                                                      : isDark 
-                                                          ? Colors.brown[300] 
-                                                          : Colors.brown[100],
+                                                  color: isDark ? Colors.brown[300] : Colors.brown[100],
                                                 ),
                                                 if (state.board[row][col] != null)
                                                   Padding(
@@ -211,6 +218,12 @@ class _ChessBoardView extends StatelessWidget {
                                                             : Colors.black.withOpacity(0.3),
                                                       ),
                                                     ),
+                                                  ),
+                                                if (isSelected || (state.isCheck ? isMovablePiece : !isMovablePiece))
+                                                  Container(
+                                                    color: isSelected
+                                                        ? Colors.blue.withOpacity(0.3)
+                                                        : Colors.grey.withOpacity(0.5),
                                                   ),
                                               ],
                                             ),
