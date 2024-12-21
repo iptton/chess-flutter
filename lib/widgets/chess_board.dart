@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../screens/game_screen.dart';
-import '../utils/chess_rules.dart';
+import '../models/chess_models.dart';
+import '../blocs/chess_bloc.dart';
+import '../blocs/chess_event.dart';
 
-class ChessBoard extends StatefulWidget {
+class ChessBoard extends StatelessWidget {
   final GameMode gameMode;
 
   const ChessBoard({
@@ -11,160 +14,136 @@ class ChessBoard extends StatefulWidget {
   });
 
   @override
-  State<ChessBoard> createState() => _ChessBoardState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => ChessBloc()..add(const InitializeGame()),
+      child: _ChessBoardView(gameMode: gameMode),
+    );
+  }
 }
 
-class _ChessBoardState extends State<ChessBoard> {
-  static const int BOARD_SIZE = 8;
-  
-  // 棋盘状态
-  List<List<ChessPiece?>> board = List.generate(
-    BOARD_SIZE,
-    (i) => List.generate(BOARD_SIZE, (j) => null),
-  );
+class _ChessBoardView extends StatelessWidget {
+  final GameMode gameMode;
 
-  // 当前选中的棋子位置
-  Position? selectedPosition;
-  
-  // 当前玩家
-  PieceColor currentPlayer = PieceColor.white;
-
-  // 可移动位置
-  List<Position> validMoves = [];
-
-  // 记录王和车是否移动过（用于王车易位）
-  Map<PieceColor, bool> hasKingMoved = {
-    PieceColor.white: false,
-    PieceColor.black: false,
-  };
-  Map<PieceColor, Map<String, bool>> hasRookMoved = {
-    PieceColor.white: {'kingside': false, 'queenside': false},
-    PieceColor.black: {'kingside': false, 'queenside': false},
-  };
-
-  // 记录最后一次移动的兵（用于吃过路兵）
-  Position? lastPawnDoubleMoved;
-  int lastMoveNumber = 0;
-  int currentMoveNumber = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeBoard();
-  }
-
-  void _initializeBoard() {
-    // 初始化白方棋子
-    board[7][0] = ChessPiece(type: PieceType.rook, color: PieceColor.white);
-    board[7][1] = ChessPiece(type: PieceType.knight, color: PieceColor.white);
-    board[7][2] = ChessPiece(type: PieceType.bishop, color: PieceColor.white);
-    board[7][3] = ChessPiece(type: PieceType.queen, color: PieceColor.white);
-    board[7][4] = ChessPiece(type: PieceType.king, color: PieceColor.white);
-    board[7][5] = ChessPiece(type: PieceType.bishop, color: PieceColor.white);
-    board[7][6] = ChessPiece(type: PieceType.knight, color: PieceColor.white);
-    board[7][7] = ChessPiece(type: PieceType.rook, color: PieceColor.white);
-    for (int i = 0; i < BOARD_SIZE; i++) {
-      board[6][i] = ChessPiece(type: PieceType.pawn, color: PieceColor.white);
-    }
-
-    // 初始化黑方棋子
-    board[0][0] = ChessPiece(type: PieceType.rook, color: PieceColor.black);
-    board[0][1] = ChessPiece(type: PieceType.knight, color: PieceColor.black);
-    board[0][2] = ChessPiece(type: PieceType.bishop, color: PieceColor.black);
-    board[0][3] = ChessPiece(type: PieceType.queen, color: PieceColor.black);
-    board[0][4] = ChessPiece(type: PieceType.king, color: PieceColor.black);
-    board[0][5] = ChessPiece(type: PieceType.bishop, color: PieceColor.black);
-    board[0][6] = ChessPiece(type: PieceType.knight, color: PieceColor.black);
-    board[0][7] = ChessPiece(type: PieceType.rook, color: PieceColor.black);
-    for (int i = 0; i < BOARD_SIZE; i++) {
-      board[1][i] = ChessPiece(type: PieceType.pawn, color: PieceColor.black);
-    }
-  }
+  const _ChessBoardView({
+    required this.gameMode,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_getGameModeTitle()),
-      ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '当前回合: ${currentPlayer == PieceColor.white ? "白方" : "黑方"}',
-            style: const TextStyle(fontSize: 20),
+    return BlocBuilder<ChessBloc, GameState>(
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(_getGameModeTitle()),
           ),
-          const SizedBox(height: 20),
-          Center(
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: Container(
-                padding: const EdgeInsets.all(8.0),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black, width: 2.0),
-                ),
-                child: GridView.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: BOARD_SIZE,
-                  ),
-                  itemCount: BOARD_SIZE * BOARD_SIZE,
-                  itemBuilder: (context, index) {
-                    final row = index ~/ BOARD_SIZE;
-                    final col = index % BOARD_SIZE;
-                    final isDark = (row + col) % 2 == 1;
-                    final isSelected = selectedPosition?.row == row && 
-                                     selectedPosition?.col == col;
-                    final isValidMove = validMoves.any(
-                      (pos) => pos.row == row && pos.col == col
-                    );
-
-                    return GestureDetector(
-                      onTap: () => _handleTap(row, col),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          // 背景
-                          Container(
-                            color: isSelected 
-                                ? Colors.blue.withOpacity(0.5)
-                                : isDark 
-                                    ? Colors.brown[300] 
-                                    : Colors.brown[100],
-                          ),
-                          // 棋子
-                          if (board[row][col] != null)
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Image.asset(
-                                _getPieceImage(board[row][col]!),
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          // 可移动位置指示器
-                          if (isValidMove)
-                            Center(
-                              child: Container(
-                                width: 16,
-                                height: 16,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: isDark 
-                                      ? Colors.white.withOpacity(0.3)
-                                      : Colors.black.withOpacity(0.3),
-                                ),
-                              ),
-                            ),
-                        ],
+          body: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '当前回合: ${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}',
+                style: const TextStyle(fontSize: 20),
+              ),
+              const SizedBox(height: 20),
+              Center(
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: Container(
+                    padding: const EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black, width: 2.0),
+                    ),
+                    child: GridView.builder(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 8,
                       ),
-                    );
-                  },
+                      itemCount: 64,
+                      itemBuilder: (context, index) {
+                        final row = index ~/ 8;
+                        final col = index % 8;
+                        final isDark = (row + col) % 2 == 1;
+                        final isSelected = state.selectedPosition?.row == row && 
+                                         state.selectedPosition?.col == col;
+                        final isValidMove = state.validMoves.any(
+                          (pos) => pos.row == row && pos.col == col
+                        );
+
+                        return GestureDetector(
+                          onTap: () => _handleTap(context, row, col, state),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              // 背景
+                              Container(
+                                color: isSelected 
+                                    ? Colors.blue.withOpacity(0.5)
+                                    : isDark 
+                                        ? Colors.brown[300] 
+                                        : Colors.brown[100],
+                              ),
+                              // 棋子
+                              if (state.board[row][col] != null)
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Image.asset(
+                                    _getPieceImage(state.board[row][col]!),
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              // 可移动位置指示器
+                              if (isValidMove)
+                                Center(
+                                  child: Container(
+                                    width: 16,
+                                    height: 16,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: isDark 
+                                          ? Colors.white.withOpacity(0.3)
+                                          : Colors.black.withOpacity(0.3),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  void _handleTap(BuildContext context, int row, int col, GameState state) {
+    final bloc = context.read<ChessBloc>();
+    
+    if (state.selectedPosition != null) {
+      // 如果已经选中了棋子，尝试移动
+      if (state.validMoves.any((pos) => pos.row == row && pos.col == col)) {
+        final from = state.selectedPosition!;
+        final to = Position(row: row, col: col);
+        final piece = state.board[from.row][from.col]!;
+        
+        // 检查是否需要升变
+        if (piece.type == PieceType.pawn && (row == 0 || row == 7)) {
+          bloc.add(MovePiece(from, to));
+          showPromotionDialog(context, to);
+        } else {
+          bloc.add(MovePiece(from, to));
+        }
+      } else {
+        // 选中新的棋子
+        bloc.add(SelectPiece(Position(row: row, col: col)));
+      }
+    } else {
+      // 选中新的棋子
+      bloc.add(SelectPiece(Position(row: row, col: col)));
+    }
   }
 
   String _getPieceImage(ChessPiece piece) {
@@ -173,193 +152,8 @@ class _ChessBoardState extends State<ChessBoard> {
     return 'assets/images/${color}_$type.png';
   }
 
-  void _handleTap(int row, int col) {
-    setState(() {
-      if (selectedPosition != null) {
-        // 如果已经选中了棋子，尝试移动
-        if (validMoves.any((pos) => pos.row == row && pos.col == col)) {
-          _movePiece(selectedPosition!, Position(row: row, col: col));
-          selectedPosition = null;
-          validMoves = [];
-        } else {
-          // 选中新的棋子
-          _selectPiece(row, col);
-        }
-      } else {
-        // 选中新的棋子
-        _selectPiece(row, col);
-      }
-    });
-  }
-
-  void _selectPiece(int row, int col) {
-    final piece = board[row][col];
-    if (piece != null && piece.color == currentPlayer) {
-      selectedPosition = Position(row: row, col: col);
-      validMoves = _getValidMoves(row, col);
-    } else {
-      selectedPosition = null;
-      validMoves = [];
-    }
-  }
-
-  void _movePiece(Position from, Position to) {
-    final movingPiece = board[from.row][from.col]!;
-    final isCapture = board[to.row][to.col] != null;
-
-    // 处理王车易位
-    if (movingPiece.type == PieceType.king) {
-      _handleCastling(from, to);
-      hasKingMoved[movingPiece.color] = true;
-    } else if (movingPiece.type == PieceType.rook) {
-      if (from.col == 0) { // 后翼车
-        hasRookMoved[movingPiece.color]!['queenside'] = true;
-      } else if (from.col == 7) { // 前翼车
-        hasRookMoved[movingPiece.color]!['kingside'] = true;
-      }
-    }
-
-    // 处理吃过路兵
-    if (movingPiece.type == PieceType.pawn) {
-      // 记录双步移动的兵
-      if ((from.row - to.row).abs() == 2) {
-        lastPawnDoubleMoved = to;
-        lastMoveNumber = currentMoveNumber;
-      }
-      
-      // 处理吃过路兵
-      if (lastPawnDoubleMoved != null && 
-          !isCapture && 
-          from.col != to.col) {
-        // 移除被吃的过路兵
-        board[lastPawnDoubleMoved!.row][lastPawnDoubleMoved!.col] = null;
-      }
-
-      // 处理兵的升变
-      if (to.row == 0 || to.row == 7) {
-        // 先移动兵到目标位置
-        board[to.row][to.col] = board[from.row][from.col];
-        board[from.row][from.col] = null;
-        _showPromotionDialog(to);
-        return;
-      }
-    }
-
-    // 执行常规移动
-    board[to.row][to.col] = board[from.row][from.col];
-    board[from.row][from.col] = null;
-
-    // 更新游戏状态
-    currentMoveNumber++;
-    currentPlayer = currentPlayer == PieceColor.white 
-        ? PieceColor.black 
-        : PieceColor.white;
-  }
-
-  void _handleCastling(Position from, Position to) {
-    // 王车易位
-    if ((from.col - to.col).abs() == 2) {
-      final isKingside = to.col > from.col;
-      final rookFromCol = isKingside ? 7 : 0;
-      final rookToCol = isKingside ? 5 : 3;
-      
-      // 移动车
-      board[from.row][rookToCol] = board[from.row][rookFromCol];
-      board[from.row][rookFromCol] = null;
-    }
-  }
-
-  Future<void> _showPromotionDialog(Position pawnPosition) async {
-    final piece = board[pawnPosition.row][pawnPosition.col]!;
-    final promotedPiece = await showDialog<PieceType>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Dialog(
-          child: Container(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  '选择升变棋子',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildPromotionOption(PieceType.queen, piece.color),
-                      const SizedBox(width: 8),
-                      _buildPromotionOption(PieceType.rook, piece.color),
-                      const SizedBox(width: 8),
-                      _buildPromotionOption(PieceType.bishop, piece.color),
-                      const SizedBox(width: 8),
-                      _buildPromotionOption(PieceType.knight, piece.color),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
-    if (promotedPiece != null) {
-      setState(() {
-        // 保持原来的颜色
-        board[pawnPosition.row][pawnPosition.col] = ChessPiece(
-          type: promotedPiece,
-          color: piece.color,
-        );
-        // 更新游戏状态
-        currentMoveNumber++;
-        currentPlayer = currentPlayer == PieceColor.white 
-            ? PieceColor.black 
-            : PieceColor.white;
-      });
-    }
-  }
-
-  Widget _buildPromotionOption(PieceType type, PieceColor color) {
-    return GestureDetector(
-      onTap: () => Navigator.of(context).pop(type),
-      child: Container(
-        width: 60,
-        height: 60,
-        padding: const EdgeInsets.all(8.0),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: Image.asset(
-          _getPieceImage(ChessPiece(type: type, color: color)),
-          fit: BoxFit.contain,
-        ),
-      ),
-    );
-  }
-
-  List<Position> _getValidMoves(int row, int col) {
-    return ChessRules.getValidMoves(
-      board,
-      Position(row: row, col: col),
-      hasKingMoved: hasKingMoved,
-      hasRookMoved: hasRookMoved,
-      lastPawnDoubleMoved: lastPawnDoubleMoved,
-      lastMoveNumber: lastMoveNumber,
-      currentMoveNumber: currentMoveNumber,
-    );
-  }
-
   String _getGameModeTitle() {
-    switch (widget.gameMode) {
+    switch (gameMode) {
       case GameMode.offline:
         return '单机对战';
       case GameMode.online:
@@ -370,36 +164,68 @@ class _ChessBoardState extends State<ChessBoard> {
   }
 }
 
-class ChessPiece {
-  final PieceType type;
-  final PieceColor color;
+Future<void> showPromotionDialog(BuildContext context, Position position) async {
+  final bloc = context.read<ChessBloc>();
+  final promotedPiece = await showDialog<PieceType>(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return Dialog(
+        child: Container(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '选择升变棋子',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildPromotionOption(context, PieceType.queen),
+                    const SizedBox(width: 8),
+                    _buildPromotionOption(context, PieceType.rook),
+                    const SizedBox(width: 8),
+                    _buildPromotionOption(context, PieceType.bishop),
+                    const SizedBox(width: 8),
+                    _buildPromotionOption(context, PieceType.knight),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 
-  ChessPiece({
-    required this.type,
-    required this.color,
-  });
+  if (promotedPiece != null) {
+    bloc.add(PromotePawn(position, promotedPiece));
+  }
 }
 
-enum PieceType {
-  king,
-  queen,
-  bishop,
-  knight,
-  rook,
-  pawn,
-}
-
-enum PieceColor {
-  white,
-  black,
-}
-
-class Position {
-  final int row;
-  final int col;
-
-  Position({
-    required this.row,
-    required this.col,
-  });
+Widget _buildPromotionOption(BuildContext context, PieceType type) {
+  return GestureDetector(
+    onTap: () => Navigator.of(context).pop(type),
+    child: Container(
+      width: 60,
+      height: 60,
+      padding: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: Image.asset(
+        'assets/images/white_${type.toString().split('.').last}.png',
+        fit: BoxFit.contain,
+      ),
+    ),
+  );
 } 

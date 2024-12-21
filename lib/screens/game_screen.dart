@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import '../widgets/chess_board.dart';
+import '../models/chess_models.dart';
+
+enum GameMode {
+  offline,
+  online,
+  faceToFace,
+}
 
 class GameScreen extends StatelessWidget {
   const GameScreen({super.key});
@@ -74,10 +81,4 @@ class GameScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-enum GameMode {
-  offline,
-  online,
-  faceToFace,
 } 

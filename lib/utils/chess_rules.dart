@@ -1,4 +1,4 @@
-import '../widgets/chess_board.dart';
+import '../models/chess_models.dart';
 
 class ChessRules {
   static List<Position> getValidMoves(
@@ -211,7 +211,6 @@ class ChessRules {
     Position position,
     PieceColor color,
   ) {
-    // 皇��的移动结合了车和象的移动
     var moves = _getRookMoves(board, position, color);
     moves.addAll(_getBishopMoves(board, position, color));
     return moves;
