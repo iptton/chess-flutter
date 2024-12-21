@@ -231,11 +231,13 @@ class _ChessBoardView extends StatelessWidget {
                                                       ),
                                                     ),
                                                   ),
-                                                if (isSelected || (state.hintMode && (state.isCheck ? isMovablePiece : !isMovablePiece)))
+                                                if (isSelected || (state.hintMode && (isValidMove || isMovablePiece)) || (state.isCheck && !state.hintMode && (state.isCheck ? isMovablePiece : !isMovablePiece)))
                                                   Container(
                                                     color: isSelected
                                                         ? Colors.blue.withOpacity(0.3)
-                                                        : Colors.grey.withOpacity(0.5),
+                                                        : state.hintMode && (isValidMove || isMovablePiece)
+                                                            ? Colors.yellow.withOpacity(0.3)
+                                                            : Colors.grey.withOpacity(0.5),
                                                   ),
                                               ],
                                             ),
