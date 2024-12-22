@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../screens/game_screen.dart';
 import '../services/settings_service.dart';
 
 enum PieceType {
@@ -98,6 +99,28 @@ class ChessMove extends Equatable {
 }
 
 class GameState extends Equatable {
+  static ChessPiece? _getInitialPiece(int row, int col) {
+    if (row == 1) {
+      return ChessPiece(type: PieceType.pawn, color: PieceColor.black);
+    } else if (row == 6) {
+      return ChessPiece(type: PieceType.pawn, color: PieceColor.white);
+    } else if (row == 0 || row == 7) {
+      final color = row == 0 ? PieceColor.black : PieceColor.white;
+      if (col == 0 || col == 7) {
+        return ChessPiece(type: PieceType.rook, color: color);
+      } else if (col == 1 || col == 6) {
+        return ChessPiece(type: PieceType.knight, color: color);
+      } else if (col == 2 || col == 5) {
+        return ChessPiece(type: PieceType.bishop, color: color);
+      } else if (col == 3) {
+        return ChessPiece(type: PieceType.queen, color: color);
+      } else if (col == 4) {
+        return ChessPiece(type: PieceType.king, color: color);
+      }
+    }
+    return null;
+  }
+
   final List<List<ChessPiece?>> board;
   final PieceColor currentPlayer;
   final Position? selectedPosition;
@@ -116,6 +139,9 @@ class GameState extends Equatable {
   final List<GameState> undoStates;
   final List<GameState> redoStates;
   final bool hintMode;
+  final bool isInteractive;
+  final PieceColor? allowedPlayer;
+  final GameMode gameMode;
 
   const GameState({
     required this.board,
@@ -136,6 +162,9 @@ class GameState extends Equatable {
     this.undoStates = const [],
     this.redoStates = const [],
     this.hintMode = false,
+    this.isInteractive = true,
+    this.allowedPlayer,
+    this.gameMode = GameMode.offline,
   });
 
   GameState copyWith({
@@ -157,6 +186,9 @@ class GameState extends Equatable {
     List<GameState>? undoStates,
     List<GameState>? redoStates,
     bool? hintMode,
+    bool? isInteractive,
+    PieceColor? allowedPlayer,
+    GameMode? gameMode,
   }) {
     return GameState(
       board: board ?? this.board,
@@ -169,20 +201,56 @@ class GameState extends Equatable {
       lastPawnDoubleMovedNumber: lastPawnDoubleMovedNumber ?? this.lastPawnDoubleMovedNumber,
       currentMoveNumber: currentMoveNumber ?? this.currentMoveNumber,
       moveHistory: moveHistory ?? this.moveHistory,
-      specialMoveMessage: specialMoveMessage ?? this.specialMoveMessage,
-      lastMove: lastMove ?? this.lastMove,
+      specialMoveMessage: specialMoveMessage,
+      lastMove: lastMove,
       isCheck: isCheck ?? this.isCheck,
       isCheckmate: isCheckmate ?? this.isCheckmate,
       isStalemate: isStalemate ?? this.isStalemate,
       undoStates: undoStates ?? this.undoStates,
       redoStates: redoStates ?? this.redoStates,
       hintMode: hintMode ?? this.hintMode,
+      isInteractive: isInteractive ?? this.isInteractive,
+      allowedPlayer: allowedPlayer ?? this.allowedPlayer,
+      gameMode: gameMode ?? this.gameMode,
     );
   }
 
-  static Future<GameState> initialFromPrefs() async {
-    final defaultHintMode = await SettingsService.getDefaultHintMode();
-    return initial(hintMode: defaultHintMode);
+  static Future<GameState> initialFromPrefs({
+    bool hintMode = false,
+    bool isInteractive = true,
+    PieceColor? allowedPlayer,
+    GameMode gameMode = GameMode.offline,
+  }) async {
+    final board = List.generate(8, (row) {
+      return List.generate(8, (col) {
+        return _getInitialPiece(row, col);
+      });
+    });
+
+    return GameState(
+      board: board,
+      currentPlayer: PieceColor.white,
+      hasKingMoved: {
+        PieceColor.white: false,
+        PieceColor.black: false,
+      },
+      hasRookMoved: {
+        PieceColor.white: {'kingside': false, 'queenside': false},
+        PieceColor.black: {'kingside': false, 'queenside': false},
+      },
+      lastPawnDoubleMoved: {
+        PieceColor.white: null,
+        PieceColor.black: null,
+      },
+      lastPawnDoubleMovedNumber: {
+        PieceColor.white: -1,
+        PieceColor.black: -1,
+      },
+      hintMode: hintMode,
+      isInteractive: isInteractive,
+      allowedPlayer: allowedPlayer,
+      gameMode: gameMode,
+    );
   }
 
   static GameState initial({bool hintMode = false}) {
@@ -260,5 +328,8 @@ class GameState extends Equatable {
     undoStates,
     redoStates,
     hintMode,
+    isInteractive,
+    allowedPlayer,
+    gameMode,
   ];
-} 
+}

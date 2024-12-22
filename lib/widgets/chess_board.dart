@@ -14,10 +14,14 @@ import '../utils/chess_formatters.dart';
 // 主入口组件
 class ChessBoard extends StatelessWidget {
   final GameMode gameMode;
+  final bool isInteractive;
+  final PieceColor? allowedPlayer;
 
   const ChessBoard({
     super.key,
     required this.gameMode,
+    this.isInteractive = true,
+    this.allowedPlayer,
   });
 
   @override
@@ -27,8 +31,18 @@ class ChessBoard extends StatelessWidget {
       builder: (context, snapshot) {
         final defaultHintMode = snapshot.data ?? false;
         return BlocProvider(
-          create: (context) => ChessBloc()..add(InitializeGame(defaultHintMode)),
-          child: _ChessBoardView(gameMode: gameMode),
+          create: (context) => ChessBloc()
+            ..add(InitializeGame(
+              defaultHintMode,
+              isInteractive: isInteractive,
+              allowedPlayer: allowedPlayer,
+              gameMode: gameMode,
+            )),
+          child: _ChessBoardView(
+            gameMode: gameMode,
+            isInteractive: isInteractive,
+            allowedPlayer: allowedPlayer,
+          ),
         );
       },
     );
@@ -38,9 +52,13 @@ class ChessBoard extends StatelessWidget {
 // 主视图组件
 class _ChessBoardView extends StatelessWidget {
   final GameMode gameMode;
+  final bool isInteractive;
+  final PieceColor? allowedPlayer;
 
   const _ChessBoardView({
     required this.gameMode,
+    required this.isInteractive,
+    this.allowedPlayer,
   });
 
   @override
@@ -50,10 +68,47 @@ class _ChessBoardView extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             title: Text(ChessFormatters.getGameModeTitle(gameMode)),
+            actions: [
+              if (!state.isInteractive)
+                IconButton(
+                  icon: const Icon(Icons.play_arrow),
+                  tooltip: '从当前局面开始新对局',
+                  onPressed: () => _showNewGameDialog(context, state),
+                ),
+            ],
           ),
           body: const ChessBoardLayout(),
         );
       },
+    );
+  }
+
+  void _showNewGameDialog(BuildContext context, GameState state) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('开始新对局'),
+        content: const Text('是否要从当前局面开始新的对局？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              context.read<ChessBloc>().add(
+                StartNewGameFromCurrentPosition(
+                  gameMode: gameMode,
+                  isInteractive: true,
+                  allowedPlayer: null,
+                ),
+              );
+              Navigator.pop(context);
+            },
+            child: const Text('确定'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -364,7 +419,7 @@ class ChessSquare extends StatelessWidget {
     final isMovablePiece = _isMovablePiece(state, row, col);
 
     return GestureDetector(
-      onTap: () => _handleTap(context, row, col),
+      onTap: state.isInteractive ? () => _handleTap(context, row, col) : null,
       child: Stack(
         fit: StackFit.expand,
         children: [

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../models/chess_models.dart';
+import '../screens/game_screen.dart';
 
 abstract class ChessEvent extends Equatable {
   const ChessEvent();
@@ -9,12 +10,20 @@ abstract class ChessEvent extends Equatable {
 }
 
 class InitializeGame extends ChessEvent {
-  final bool defaultHintMode;
+  final bool hintMode;
+  final bool isInteractive;
+  final PieceColor? allowedPlayer;
+  final GameMode gameMode;
 
-  const InitializeGame([this.defaultHintMode = false]);
+  const InitializeGame(
+    this.hintMode, {
+    this.isInteractive = true,
+    this.allowedPlayer,
+    this.gameMode = GameMode.offline,
+  });
 
   @override
-  List<Object?> get props => [defaultHintMode];
+  List<Object?> get props => [hintMode, isInteractive, allowedPlayer, gameMode];
 }
 
 class SelectPiece extends ChessEvent {
@@ -69,4 +78,35 @@ class LoadGame extends ChessEvent {
 
 class ToggleHintMode extends ChessEvent {
   const ToggleHintMode();
-} 
+}
+
+// 新增：从当前棋局开始新的对局
+class StartNewGameFromCurrentPosition extends ChessEvent {
+  final GameMode gameMode;
+  final bool isInteractive;
+  final PieceColor? allowedPlayer;
+
+  const StartNewGameFromCurrentPosition({
+    required this.gameMode,
+    this.isInteractive = true,
+    this.allowedPlayer,
+  });
+}
+
+// 新增：设置棋盘交互状态
+class SetBoardInteractivity extends ChessEvent {
+  final bool isInteractive;
+  final PieceColor? allowedPlayer;
+
+  const SetBoardInteractivity({
+    required this.isInteractive,
+    this.allowedPlayer,
+  });
+}
+
+// 新增：设置游戏模式
+class SetGameMode extends ChessEvent {
+  final GameMode gameMode;
+
+  const SetGameMode(this.gameMode);
+}

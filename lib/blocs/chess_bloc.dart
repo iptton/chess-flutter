@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../models/chess_models.dart';
+import '../screens/game_screen.dart';
 import '../utils/chess_rules.dart';
 import 'chess_event.dart';
 
@@ -14,16 +15,32 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     on<SaveGame>(_onSaveGame);
     on<LoadGame>(_onLoadGame);
     on<ToggleHintMode>(_onToggleHintMode);
+    on<StartNewGameFromCurrentPosition>(_onStartNewGameFromCurrentPosition);
+    on<SetBoardInteractivity>(_onSetBoardInteractivity);
+    on<SetGameMode>(_onSetGameMode);
   }
 
   void _onInitializeGame(InitializeGame event, Emitter<GameState> emit) async {
-    final initialState = await GameState.initialFromPrefs();
+    final initialState = await GameState.initialFromPrefs(
+      hintMode: event.hintMode,
+      isInteractive: true,
+      gameMode: GameMode.offline,
+    );
     emit(initialState);
   }
 
   void _onSelectPiece(SelectPiece event, Emitter<GameState> emit) {
-    // 如果游戏已经结束（将死或和棋），不允许移动
-    if (state.isCheckmate || state.isStalemate) {
+    // 如果棋盘不可交互或游戏已结束，不允许选择棋子
+    if (!state.isInteractive || state.isCheckmate || state.isStalemate) {
+      emit(state.copyWith(
+        selectedPosition: null,
+        validMoves: [],
+      ));
+      return;
+    }
+
+    // 如果设置了允许操作的玩家方，检查当前是否允许操作
+    if (state.allowedPlayer != null && state.currentPlayer != state.allowedPlayer) {
       emit(state.copyWith(
         selectedPosition: null,
         validMoves: [],
@@ -33,27 +50,29 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
 
     final piece = state.board[event.position.row][event.position.col];
 
-    if (piece != null && piece.color == state.currentPlayer) {
-      final validMoves = ChessRules.getValidMoves(
-        state.board,
-        event.position,
-        hasKingMoved: state.hasKingMoved,
-        hasRookMoved: state.hasRookMoved,
-        lastPawnDoubleMoved: state.lastPawnDoubleMoved[piece.color == PieceColor.white ? PieceColor.black : PieceColor.white],
-        lastPawnDoubleMovedNumber: state.lastPawnDoubleMovedNumber[piece.color == PieceColor.white ? PieceColor.black : PieceColor.white],
-        currentMoveNumber: state.currentMoveNumber,
-      );
-
-      emit(state.copyWith(
-        selectedPosition: event.position,
-        validMoves: validMoves,
-      ));
-    } else {
+    // 检查是否是当前玩家的棋子
+    if (piece?.color != state.currentPlayer) {
       emit(state.copyWith(
         selectedPosition: null,
         validMoves: [],
       ));
+      return;
     }
+
+    final validMoves = ChessRules.getValidMoves(
+      state.board,
+      event.position,
+      hasKingMoved: state.hasKingMoved,
+      hasRookMoved: state.hasRookMoved,
+      lastPawnDoubleMoved: state.lastPawnDoubleMoved[piece?.color == PieceColor.white ? PieceColor.black : PieceColor.white],
+      lastPawnDoubleMovedNumber: state.lastPawnDoubleMovedNumber[piece?.color == PieceColor.white ? PieceColor.black : PieceColor.white],
+      currentMoveNumber: state.currentMoveNumber,
+    );
+
+    emit(state.copyWith(
+      selectedPosition: event.position,
+      validMoves: validMoves,
+    ));
   }
 
   void _onMovePiece(MovePiece event, Emitter<GameState> emit) {
@@ -270,7 +289,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       message += ' 和棋！';
     }
 
-    // 保存当前状态到撤销列表
+    // ���存当前状态到撤销列表
     final newUndoStates = List<GameState>.from(state.undoStates)..add(state);
 
     emit(state.copyWith(
@@ -576,6 +595,56 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       hintMode: !state.hintMode,
       selectedPosition: state.selectedPosition,
       validMoves: state.validMoves,
+    ));
+  }
+
+  void _onStartNewGameFromCurrentPosition(
+    StartNewGameFromCurrentPosition event,
+    Emitter<GameState> emit,
+  ) {
+    // 从当前棋局创建新的游戏状态
+    final newState = state.copyWith(
+      // 保持当前棋盘状态
+      currentPlayer: state.currentPlayer,
+      // 清除历史记录和状态
+      moveHistory: [],
+      undoStates: [],
+      redoStates: [],
+      selectedPosition: null,
+      validMoves: [],
+      specialMoveMessage: null,
+      lastMove: null,
+      // 设置新的游戏模式和交互状态
+      gameMode: event.gameMode,
+      isInteractive: event.isInteractive,
+      allowedPlayer: event.allowedPlayer,
+      // 重置检查状态
+      isCheck: false,
+      isCheckmate: false,
+      isStalemate: false,
+      // 重置移动计数
+      currentMoveNumber: 0,
+    );
+
+    emit(newState);
+  }
+
+  void _onSetBoardInteractivity(
+    SetBoardInteractivity event,
+    Emitter<GameState> emit,
+  ) {
+    emit(state.copyWith(
+      isInteractive: event.isInteractive,
+      allowedPlayer: event.allowedPlayer,
+    ));
+  }
+
+  void _onSetGameMode(
+    SetGameMode event,
+    Emitter<GameState> emit,
+  ) {
+    emit(state.copyWith(
+      gameMode: event.gameMode,
     ));
   }
 }
