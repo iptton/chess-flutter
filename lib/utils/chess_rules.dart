@@ -17,7 +17,14 @@ class ChessRules {
     List<Position> possibleMoves;
     switch (piece.type) {
       case PieceType.pawn:
-        possibleMoves = _getPawnMoves(board, position, piece.color);
+        possibleMoves = _getPawnMoves(
+          board,
+          position,
+          piece.color,
+          lastPawnDoubleMoved: lastPawnDoubleMoved,
+          lastPawnDoubleMovedNumber: lastPawnDoubleMovedNumber,
+          currentMoveNumber: currentMoveNumber,
+        );
         break;
       case PieceType.rook:
         possibleMoves = _getRookMoves(board, position, piece.color);
@@ -48,44 +55,21 @@ class ChessRules {
       final newBoard = List<List<ChessPiece?>>.from(
         board.map((row) => List<ChessPiece?>.from(row))
       );
+
+      // 如果是吃过路兵，需要移除被吃的兵
+      if (piece.type == PieceType.pawn &&
+          lastPawnDoubleMoved != null &&
+          move.col == lastPawnDoubleMoved.col &&
+          (position.col - lastPawnDoubleMoved.col).abs() == 1) {
+        newBoard[lastPawnDoubleMoved.row][lastPawnDoubleMoved.col] = null;
+      }
+
       newBoard[move.row][move.col] = newBoard[position.row][position.col];
       newBoard[position.row][position.col] = null;
 
       // 如果移动后自己不会被将军，这是一个合法移动
       if (!isInCheck(newBoard, piece.color)) {
         legalMoves.add(move);
-      }
-    }
-
-    // 如果当前被将军，只返回能解除将军的移动
-    if (isInCheck(board, piece.color)) {
-      return legalMoves;
-    }
-
-    // 如果是兵的特殊移动（吃过路兵），需要额外检查
-    if (piece.type == PieceType.pawn &&
-        lastPawnDoubleMoved != null &&
-        lastPawnDoubleMovedNumber != null &&
-        currentMoveNumber != null) {
-      final opponentColor = piece.color == PieceColor.white ? PieceColor.black : PieceColor.white;
-      if (lastPawnDoubleMovedNumber == currentMoveNumber - 1) {
-        if (piece.color == PieceColor.white && position.row == 3) {
-          if (lastPawnDoubleMoved.row == 3 &&
-              (lastPawnDoubleMoved.col - position.col).abs() == 1) {
-            final enPassantMove = Position(row: 2, col: lastPawnDoubleMoved.col);
-            if (legalMoves.any((move) => move.row == enPassantMove.row && move.col == enPassantMove.col)) {
-              legalMoves.add(enPassantMove);
-            }
-          }
-        } else if (piece.color == PieceColor.black && position.row == 4) {
-          if (lastPawnDoubleMoved.row == 4 &&
-              (lastPawnDoubleMoved.col - position.col).abs() == 1) {
-            final enPassantMove = Position(row: 5, col: lastPawnDoubleMoved.col);
-            if (legalMoves.any((move) => move.row == enPassantMove.row && move.col == enPassantMove.col)) {
-              legalMoves.add(enPassantMove);
-            }
-          }
-        }
       }
     }
 
@@ -361,7 +345,7 @@ class ChessRules {
     Map<PieceColor, int> lastPawnDoubleMovedNumber,
     int currentMoveNumber,
   ) {
-    // 如果没有被将军，就不可能被将死
+    // ���果没有被将军，就不可能被将死
     if (!isInCheck(board, color)) return false;
 
     // 检查所有己方棋子的所有可能移动

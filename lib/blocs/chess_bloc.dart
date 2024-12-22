@@ -312,7 +312,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     final newLastPawnDoubleMoved = Map<PieceColor, Position?>.from(state.lastPawnDoubleMoved);
     final newLastPawnDoubleMovedNumber = Map<PieceColor, int>.from(state.lastPawnDoubleMovedNumber);
 
-    // 保��当前状态到撤销列表
+    // 保存当前状态到撤销列表
     final newUndoStates = List<GameState>.from(state.undoStates)..add(state);
 
     emit(state.copyWith(
@@ -354,9 +354,13 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     final newLastPawnDoubleMoved = Map<PieceColor, Position?>.from(state.lastPawnDoubleMoved);
     final newLastPawnDoubleMovedNumber = Map<PieceColor, int>.from(state.lastPawnDoubleMovedNumber);
 
-    if (newLastPawnDoubleMoved != null) {
+    if (movingPiece.type == PieceType.pawn && (event.from.row - event.to.row).abs() == 2) {
       newLastPawnDoubleMoved[movingPiece.color] = event.to;
       newLastPawnDoubleMovedNumber[movingPiece.color] = state.currentMoveNumber;
+    } else {
+      // 如果不是双步移动，清除当前玩家的双步兵记录
+      newLastPawnDoubleMoved[movingPiece.color] = null;
+      newLastPawnDoubleMovedNumber[movingPiece.color] = -1;
     }
 
     final move = ChessMove(

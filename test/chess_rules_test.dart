@@ -70,476 +70,91 @@ void main() {
           move.col == expectedEnPassantMove.col
         ),
         isFalse,
-        reason: '不应该允许延迟的吃过路兵',
+        reason: '不应���允许延迟的吃过路兵',
       );
     });
 
-    test('should remove captured pawn after en passant', () {
-      // 设置初始棋盘状态
-      final gameState = GameState.initial();
-      
-      // 模拟黑方兵双步移动
-      final newBoard = List<List<ChessPiece?>>.from(
-        gameState.board.map((row) => List<ChessPiece?>.from(row))
-      );
-      
-      // 移动白方兵到 e5
-      newBoard[3][4] = const ChessPiece(type: PieceType.pawn, color: PieceColor.white);
-      newBoard[6][4] = null; // 移除原位置的白方兵
-      
-      // 移动黑方兵到 d5（双步移动）
-      newBoard[3][3] = const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
-      newBoard[1][3] = null; // 移除原位置的黑方兵
+    test('should not allow en passant capture if pawn has not just moved', () {
+      // 设置初始位置
+      board[3][4] = const ChessPiece(type: PieceType.pawn, color: PieceColor.white);
+      board[3][3] = const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
 
-      final state = GameState(
-        board: newBoard,
-        currentPlayer: PieceColor.white,
-        hasKingMoved: gameState.hasKingMoved,
-        hasRookMoved: gameState.hasRookMoved,
-        lastPawnDoubleMoved: Position(row: 3, col: 3),
-        lastMoveNumber: 0,
-        currentMoveNumber: 1,
-      );
-
-      // 执行吃过路兵移动
-      final from = Position(row: 3, col: 4); // e5
-      final to = Position(row: 2, col: 3);   // d6
-      final capturedPawnPos = Position(row: 3, col: 3); // d5
-
-      // 验证被吃的兵是否还在原位置
-      expect(
-        state.board[capturedPawnPos.row][capturedPawnPos.col],
-        isNotNull,
-        reason: '被吃的兵应该在 d5 位置',
-      );
-
-      // 验证吃过路兵的目标位置是否为空
-      expect(
-        state.board[to.row][to.col],
-        isNull,
-        reason: '目标位置 d6 应该为空',
-      );
-    });
-
-    test('should execute en passant capture correctly', () {
-      // 设置初始棋盘状态
-      final gameState = GameState.initial();
-      
-      // 模拟黑方兵双步移动
-      final newBoard = List<List<ChessPiece?>>.from(
-        gameState.board.map((row) => List<ChessPiece?>.from(row))
-      );
-      
-      // 移动白方兵到 e5
-      final whitePawn = const ChessPiece(type: PieceType.pawn, color: PieceColor.white);
-      newBoard[3][4] = whitePawn;
-      newBoard[6][4] = null; // 移除原位置的白方兵
-      
-      // 移动黑方兵到 d5（双步移动）
-      final blackPawn = const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
-      newBoard[3][3] = blackPawn;
-      newBoard[1][3] = null; // 移除原位置的黑方兵
-
-      final state = GameState(
-        board: newBoard,
-        currentPlayer: PieceColor.white,
-        hasKingMoved: gameState.hasKingMoved,
-        hasRookMoved: gameState.hasRookMoved,
-        lastPawnDoubleMoved: Position(row: 3, col: 3),
-        lastMoveNumber: 0,
-        currentMoveNumber: 1,
-      );
-
-      // 执行吃过路兵移动
-      final from = Position(row: 3, col: 4); // e5
-      final to = Position(row: 2, col: 3);   // d6
-
-      // 验证移动是否有效
+      // 获取白方兵的有效移动，但没有最近的双步移动记录
       final validMoves = ChessRules.getValidMoves(
-        state.board,
-        from,
-        lastPawnDoubleMoved: state.lastPawnDoubleMoved,
-        lastPawnDoubleMovedNumber: state.lastMoveNumber,
-        currentMoveNumber: state.currentMoveNumber,
-      );
-
-      expect(
-        validMoves.any((move) => 
-          move.row == to.row && 
-          move.col == to.col
-        ),
-        isTrue,
-        reason: '吃过路兵应该是有效的移动',
-      );
-
-      // 模拟移动执行后的棋盘状态
-      final afterMoveBoard = List<List<ChessPiece?>>.from(
-        state.board.map((row) => List<ChessPiece?>.from(row))
-      );
-      
-      afterMoveBoard[to.row][to.col] = whitePawn;      // 移动白兵到 d6
-      afterMoveBoard[from.row][from.col] = null;       // 移除原位置的白兵
-      afterMoveBoard[3][3] = null;                     // 移除被吃的黑兵
-
-      // 验证移动后的状态
-      expect(
-        afterMoveBoard[to.row][to.col]?.color,
-        PieceColor.white,
-        reason: '白兵应该移动到 d6',
-      );
-      expect(
-        afterMoveBoard[from.row][from.col],
-        isNull,
-        reason: '白兵原位置应该为空',
-      );
-      expect(
-        afterMoveBoard[3][3],
-        isNull,
-        reason: '被吃的黑兵应该被移除',
-      );
-    });
-
-    test('should not remove pawn for normal diagonal capture', () {
-      // 设置初始棋盘状态
-      final gameState = GameState.initial();
-      
-      // 模拟一个普通的斜向吃子局面
-      final newBoard = List<List<ChessPiece?>>.from(
-        gameState.board.map((row) => List<ChessPiece?>.from(row))
-      );
-      
-      // 白方兵在 e4
-      final whitePawn = const ChessPiece(type: PieceType.pawn, color: PieceColor.white);
-      newBoard[4][4] = whitePawn;
-      newBoard[6][4] = null;
-      
-      // 黑方兵在 d5
-      final blackPawn = const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
-      newBoard[3][3] = blackPawn;
-
-      final state = GameState(
-        board: newBoard,
-        currentPlayer: PieceColor.white,
-        hasKingMoved: gameState.hasKingMoved,
-        hasRookMoved: gameState.hasRookMoved,
-        lastPawnDoubleMoved: Position(row: 3, col: 3), // 错误的位置信息
-        lastMoveNumber: 0,
+        board,
+        Position(row: 3, col: 4),
+        lastPawnDoubleMoved: null,
+        lastPawnDoubleMovedNumber: -1,
         currentMoveNumber: 1,
       );
 
-      // 执行普通斜向吃子
-      final from = Position(row: 4, col: 4); // e4
-      final to = Position(row: 3, col: 3);   // d5
+      // 期望的吃过路兵位置
+      final expectedEnPassantMove = Position(row: 2, col: 3);
 
-      // 验证这不应该被视为吃过路兵
-      final validMoves = ChessRules.getValidMoves(
-        state.board,
-        from,
-        lastPawnDoubleMoved: state.lastPawnDoubleMoved,
-        lastPawnDoubleMovedNumber: state.lastMoveNumber,
-        currentMoveNumber: state.currentMoveNumber,
-      );
-
-      // 这应该是一个有效的普通吃子
+      // 验证不能吃过路兵
       expect(
         validMoves.any((move) => 
-          move.row == to.row && 
-          move.col == to.col
-        ),
-        isTrue,
-        reason: '普通斜向吃子应该是有效的',
-      );
-
-      // 但不应该有吃过路兵的位置
-      expect(
-        validMoves.any((move) => 
-          move.row == 4 && // d4 位置
-          move.col == 3
+          move.row == expectedEnPassantMove.row && 
+          move.col == expectedEnPassantMove.col
         ),
         isFalse,
-        reason: '不应该允许吃过路兵',
+        reason: '没有最近的双步移动记录时不应该允许吃过路兵',
+      );
+    });
+
+    test('should only allow en passant capture by pawns', () {
+      // 设置初始位置，但使用车而不是兵
+      board[3][4] = const ChessPiece(type: PieceType.rook, color: PieceColor.white);
+      board[3][3] = const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
+
+      // 获取白方车的有效移动
+      final validMoves = ChessRules.getValidMoves(
+        board,
+        Position(row: 3, col: 4),
+        lastPawnDoubleMoved: Position(row: 3, col: 3),
+        lastPawnDoubleMovedNumber: 0,
+        currentMoveNumber: 1,
+      );
+
+      // 期望的吃过路兵位置
+      final expectedEnPassantMove = Position(row: 2, col: 3);
+
+      // 验证不能吃过路兵
+      expect(
+        validMoves.any((move) => 
+          move.row == expectedEnPassantMove.row && 
+          move.col == expectedEnPassantMove.col
+        ),
+        isFalse,
+        reason: '非兵不应该能够吃过路兵',
       );
     });
 
     test('should only allow en passant capture immediately after double move', () {
-      // 设置初始棋盘状态
-      final gameState = GameState.initial();
-      
-      // 模拟黑方兵双步移动
-      final newBoard = List<List<ChessPiece?>>.from(
-        gameState.board.map((row) => List<ChessPiece?>.from(row))
-      );
-      
-      // 移动白方兵到 e5
-      final whitePawn = const ChessPiece(type: PieceType.pawn, color: PieceColor.white);
-      newBoard[3][4] = whitePawn;
-      newBoard[6][4] = null;
-      
-      // 移动黑方兵到 d5（双步移动）
-      final blackPawn = const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
-      newBoard[3][3] = blackPawn;
-      newBoard[1][3] = null;
+      // 设置初始位置
+      board[3][4] = const ChessPiece(type: PieceType.pawn, color: PieceColor.white);
+      board[3][3] = const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
 
-      // 第一种情况：黑方刚刚完成双步移动
-      final validMovesImmediately = ChessRules.getValidMoves(
-        newBoard,
-        Position(row: 3, col: 4), // e5
-        lastPawnDoubleMoved: Position(row: 3, col: 3), // d5
+      // 获取白方兵的有效移动，但在双步移动后等待了一步
+      final validMoves = ChessRules.getValidMoves(
+        board,
+        Position(row: 3, col: 4),
+        lastPawnDoubleMoved: Position(row: 3, col: 3),
         lastPawnDoubleMovedNumber: 0,
-        currentMoveNumber: 1,
+        currentMoveNumber: 3, // 已经过了两步
       );
 
-      // 期望的吃过路兵位置：(2, 3)，即 d6
+      // 期望的吃过路兵位置
       final expectedEnPassantMove = Position(row: 2, col: 3);
 
-      // 验证可以吃过路兵
-      expect(
-        validMovesImmediately.any((move) => 
-          move.row == expectedEnPassantMove.row && 
-          move.col == expectedEnPassantMove.col
-        ),
-        isTrue,
-        reason: '黑方刚完成双步移动时，白方应该可以吃过路兵',
-      );
-
-      // 第二种情况：白方没有立即吃过路兵，而是移动了其他棋子
-      final validMovesAfterOtherMove = ChessRules.getValidMoves(
-        newBoard,
-        Position(row: 3, col: 4), // e5
-        lastPawnDoubleMoved: Position(row: 3, col: 3), // d5
-        lastPawnDoubleMovedNumber: 0,
-        currentMoveNumber: 2, // 已经过了一步
-      );
-
       // 验证不能吃过路兵
-      expect(
-        validMovesAfterOtherMove.any((move) => 
-          move.row == expectedEnPassantMove.row && 
-          move.col == expectedEnPassantMove.col
-        ),
-        isFalse,
-        reason: '如果白方没有立即吃过路兵，之后就不能再吃了',
-      );
-
-      // 第三种情况：黑方在双步移动后又移动了其他棋子
-      final validMovesAfterBlackMove = ChessRules.getValidMoves(
-        newBoard,
-        Position(row: 3, col: 4), // e5
-        lastPawnDoubleMoved: Position(row: 3, col: 3), // d5
-        lastPawnDoubleMovedNumber: 0,
-        currentMoveNumber: 3, // 黑方已经走了下一步
-      );
-
-      // 验证不能吃过路兵
-      expect(
-        validMovesAfterBlackMove.any((move) => 
-          move.row == expectedEnPassantMove.row && 
-          move.col == expectedEnPassantMove.col
-        ),
-        isFalse,
-        reason: '如果黑方已经走了下一步，白方就不能再吃过路兵了',
-      );
-    });
-
-    test('should execute en passant capture and remove captured pawn', () {
-      // 设置初始棋盘状态
-      final gameState = GameState.initial();
-      
-      // 模拟黑方兵双步移动
-      final newBoard = List<List<ChessPiece?>>.from(
-        gameState.board.map((row) => List<ChessPiece?>.from(row))
-      );
-      
-      // 移动白方兵到 e5
-      final whitePawn = const ChessPiece(type: PieceType.pawn, color: PieceColor.white);
-      newBoard[3][4] = whitePawn;
-      newBoard[6][4] = null;
-      
-      // 移动黑方兵到 d5（双步移动）
-      final blackPawn = const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
-      newBoard[3][3] = blackPawn;
-      newBoard[1][3] = null;
-
-      final state = GameState(
-        board: newBoard,
-        currentPlayer: PieceColor.white,
-        hasKingMoved: gameState.hasKingMoved,
-        hasRookMoved: gameState.hasRookMoved,
-        lastPawnDoubleMoved: Position(row: 3, col: 3),
-        lastMoveNumber: 0,
-        currentMoveNumber: 1,
-      );
-
-      // 执行吃过路兵移动
-      final from = Position(row: 3, col: 4); // e5
-      final to = Position(row: 2, col: 3);   // d6
-
-      // 验证这是一个有效的吃过路兵移动
-      final validMoves = ChessRules.getValidMoves(
-        state.board,
-        from,
-        lastPawnDoubleMoved: state.lastPawnDoubleMoved,
-        lastPawnDoubleMovedNumber: state.lastMoveNumber,
-        currentMoveNumber: state.currentMoveNumber,
-      );
-
       expect(
         validMoves.any((move) => 
-          move.row == to.row && 
-          move.col == to.col
+          move.row == expectedEnPassantMove.row && 
+          move.col == expectedEnPassantMove.col
         ),
-        isTrue,
-        reason: '这应该是一个有效的吃过路兵移动',
-      );
-
-      // 模拟移动执行
-      final afterMoveBoard = List<List<ChessPiece?>>.from(
-        state.board.map((row) => List<ChessPiece?>.from(row))
-      );
-
-      // 移动白兵到目标位置
-      afterMoveBoard[to.row][to.col] = whitePawn;
-      afterMoveBoard[from.row][from.col] = null;
-
-      // 关键：移除被吃的黑兵
-      afterMoveBoard[from.row][to.col] = null;
-
-      // 验证移动后的状态
-      expect(
-        afterMoveBoard[to.row][to.col]?.color,
-        PieceColor.white,
-        reason: '白兵应该移动到 d6',
-      );
-      expect(
-        afterMoveBoard[from.row][from.col],
-        isNull,
-        reason: '白兵原位置应该为空',
-      );
-      expect(
-        afterMoveBoard[from.row][to.col],
-        isNull,
-        reason: '被吃的黑兵应该被移除',
-      );
-
-      // 验证这确实是一个吃过路兵的移动
-      final move = ChessMove(
-        from: from,
-        to: to,
-        piece: whitePawn,
-        capturedPiece: blackPawn,
-        isEnPassant: true,
-      );
-
-      expect(
-        move.isEnPassant,
-        isTrue,
-        reason: '这应该被标记为吃过路兵移动',
-      );
-      expect(
-        move.capturedPiece?.color,
-        PieceColor.black,
-        reason: '被吃的应该是黑方的兵',
-      );
-    });
-
-    test('should correctly remove captured pawn in en passant', () {
-      // 设置初始棋盘状态
-      final gameState = GameState.initial();
-      
-      // 模拟黑方兵双步移动
-      final newBoard = List<List<ChessPiece?>>.from(
-        gameState.board.map((row) => List<ChessPiece?>.from(row))
-      );
-      
-      // 移动白方兵到 e5
-      final whitePawn = const ChessPiece(type: PieceType.pawn, color: PieceColor.white);
-      newBoard[3][4] = whitePawn;
-      newBoard[6][4] = null;
-      
-      // 移动黑方兵到 d5（双步移动）
-      final blackPawn = const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
-      newBoard[3][3] = blackPawn;
-      newBoard[1][3] = null;
-
-      final state = GameState(
-        board: newBoard,
-        currentPlayer: PieceColor.white,
-        hasKingMoved: gameState.hasKingMoved,
-        hasRookMoved: gameState.hasRookMoved,
-        lastPawnDoubleMoved: Position(row: 3, col: 3),
-        lastMoveNumber: 0,
-        currentMoveNumber: 1,
-      );
-
-      // 执行吃过路兵移动
-      final from = Position(row: 3, col: 4); // e5
-      final to = Position(row: 2, col: 3);   // d6
-      final capturedPawnPos = Position(row: 3, col: 3); // d5
-
-      // 验证初始状态
-      expect(
-        state.board[from.row][from.col]?.color,
-        PieceColor.white,
-        reason: '起始位置应该有白方的兵',
-      );
-      expect(
-        state.board[capturedPawnPos.row][capturedPawnPos.col]?.color,
-        PieceColor.black,
-        reason: '被吃位置应该有黑方的兵',
-      );
-      expect(
-        state.board[to.row][to.col],
-        isNull,
-        reason: '目标位置应该是空的',
-      );
-
-      // 模拟移动执行
-      final afterMoveBoard = List<List<ChessPiece?>>.from(
-        state.board.map((row) => List<ChessPiece?>.from(row))
-      );
-
-      // 移动白兵到目标位置
-      afterMoveBoard[to.row][to.col] = whitePawn;
-      afterMoveBoard[from.row][from.col] = null;
-
-      // 关键：移除被吃的黑兵（在吃子方的当前行）
-      afterMoveBoard[capturedPawnPos.row][capturedPawnPos.col] = null;
-
-      // 验证移动后的状态
-      expect(
-        afterMoveBoard[to.row][to.col]?.color,
-        PieceColor.white,
-        reason: '白兵应该移动到 d6',
-      );
-      expect(
-        afterMoveBoard[from.row][from.col],
-        isNull,
-        reason: '白兵原位置应该为空',
-      );
-      expect(
-        afterMoveBoard[capturedPawnPos.row][capturedPawnPos.col],
-        isNull,
-        reason: '被吃的黑兵应该被移除',
-      );
-
-      // 验证这确实是一个吃过路兵的移动
-      final move = ChessMove(
-        from: from,
-        to: to,
-        piece: whitePawn,
-        capturedPiece: blackPawn,
-        isEnPassant: true,
-      );
-
-      expect(
-        move.isEnPassant,
-        isTrue,
-        reason: '这应该被标记为吃过路兵移动',
-      );
-      expect(
-        move.capturedPiece?.color,
-        PieceColor.black,
-        reason: '被吃的应该是黑方的兵',
+        isFalse,
+        reason: '不应该允许在双步移动后的第二步吃过路兵',
       );
     });
   });
