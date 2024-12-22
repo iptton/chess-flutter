@@ -1,4 +1,5 @@
 import '../models/chess_models.dart';
+import '../screens/game_screen.dart';
 
 class ChessLocalizations {
   final String locale;
@@ -85,11 +86,11 @@ class ChessLocalizations {
   String buildMoveMessage(ChessMove move) {
     final pieceColor = move.piece.color == PieceColor.white ? white : black;
     final pieceType = getPieceTypeName(move.piece.type);
-    
+
     if (move.capturedPiece != null) {
       final capturedColor = move.capturedPiece!.color == PieceColor.white ? white : black;
       final capturedType = getPieceTypeName(move.capturedPiece!.type);
-      
+
       return locale == 'en'
           ? '$pieceColor $pieceType captures $capturedColor $capturedType'
           : '$pieceColor$pieceType吃掉$capturedColor$capturedType';
@@ -102,9 +103,9 @@ class ChessLocalizations {
 
   String buildPromotionMessage(ChessMove move) {
     final pieceColor = move.piece.color == PieceColor.white ? white : black;
-    
+
     return locale == 'en'
         ? '$pieceColor Pawn promotes to ${getPieceTypeName(move.promotionType!)}'
         : '$pieceColor兵升变为${getPieceTypeName(move.promotionType!)}';
   }
-} 
+}
