@@ -1,9 +1,9 @@
 {
   "app": {
-    "bundleName": "com.example.testflutter",
-    "vendor": "example",
+    "bundleName": "cn.pan2017.yiqixiaqi",
+    "vendor": "panxz",
     "versionCode": 1,
-    "versionName": "1.0.0",
+    "versionName": "0.1.0",
     "icon": "$media:app_icon",
     "label": "$string:app_name"
   }

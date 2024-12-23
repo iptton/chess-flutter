@@ -20,13 +20,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "/Users/zxnap/.ohos/config/default_ohos_bZOkeL2bVkNn7fO6r0_a0-1IKNfI4xShfW7cdYcP_lM=.cer",
-          "storePassword": "0000001964C8A605724E1F0E4E07020BA7DEEDCCF4041E3781F136067AC861AED3D5D68289619C7DAD",
-          "keyAlias": "debugKey",
-          "keyPassword": "00000019F60FB70DFB3510F9668F71FE8E6A5EAE85D4C6DE0AC855D8C71D72DD1D68F2F122267DDCF7",
-          "profile": "/Users/zxnap/.ohos/config/default_ohos_bZOkeL2bVkNn7fO6r0_a0-1IKNfI4xShfW7cdYcP_lM=.p7b",
+          "storePassword": "00000019CB3BC78E162D0CF646EF14C331357F1CD85D20D74DCEBEECB3F260D0E90C92A37AB5F87A5A",
+          "certpath": "/Users/zxnap/keys/app-publish.cer",
+          "keyAlias": "app",
+          "keyPassword": "0000001982AB47C9FC95D7247539FAEAA76EA3C9988C34074F99C75F4B332938BA6DC4D561DCDFCB82",
+          "profile": "/Users/zxnap/keys/appRelease.p7b",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "/Users/zxnap/.ohos/config/default_ohos_bZOkeL2bVkNn7fO6r0_a0-1IKNfI4xShfW7cdYcP_lM=.p12"
+          "storeFile": "/Users/zxnap/keys/app.p12"
         }
       }
     ],

@@ -10,7 +10,15 @@
     },
     {
       "name": "EntryAbility_label",
-      "value": "testflutter"
+      "value": "一起下棋"
+    },
+    {
+      "name": "navigation_toolbar_home",
+      "value": "游戏"
+    },
+    {
+      "name": "navigation_toolbar_profile",
+      "value": "设置"
     }
   ]
 }
