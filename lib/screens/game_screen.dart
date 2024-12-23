@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../widgets/chess_board.dart';
-import '../models/chess_models.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 enum GameMode {
   offline,
@@ -24,14 +25,14 @@ class GameScreen extends StatelessWidget {
           children: [
             _buildGameButton(
               context,
-              '单机对战',
+              '单机对战（开发中）',
               Icons.person,
               () => _startGame(context, GameMode.offline),
             ),
             const SizedBox(height: 16),
             _buildGameButton(
               context,
-              '联网对战',
+              '联网对战（开发中）',
               Icons.cloud,
               () => _startGame(context, GameMode.online),
             ),
@@ -74,11 +75,30 @@ class GameScreen extends StatelessWidget {
   }
 
   void _startGame(BuildContext context, GameMode mode) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ChessBoard(gameMode: mode),
-      ),
-    );
+    // 当前仅支持面对面对战，其他模式先显示 Toast 提示
+    if (mode != GameMode.faceToFace) {
+      Fluttertoast.showToast(
+          msg: "这是一条 Toast 消息",
+          // 显示的文本
+          toastLength: Toast.LENGTH_SHORT,
+          // Toast显示的时长
+          gravity: ToastGravity.CENTER,
+          // Toast显示的位置
+          timeInSecForIosWeb: 1,
+          // iOS和Web平台上显示的时长
+          backgroundColor: Colors.black87,
+          // 背景色
+          textColor: Colors.white,
+          // 文字颜色
+          fontSize: 16.0 // 文字大小
+          );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChessBoard(gameMode: mode),
+        ),
+      );
+    }
   }
-} 
+}

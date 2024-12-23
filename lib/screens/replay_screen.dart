@@ -10,8 +10,8 @@ class ReplayScreen extends StatelessWidget {
         title: const Text('对局复盘'),
       ),
       body: const Center(
-        child: Text('历史对局列表将显示在这里'),
+        child: Text('历史对局列表将显示在这里（开发中）'),
       ),
     );
   }
-} 
+}
