@@ -137,7 +137,7 @@ class _ChessBoardView extends StatelessWidget {
                             startTime: DateTime.now().subtract(Duration(minutes: state.moveHistory.length)), // 估算开始时间
                             endTime: DateTime.now(),
                             moves: state.moveHistory,
-                            winner: state.isCheckmate ? state.currentPlayer : null,
+                            winner: state.isCheckmate ? (state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white) : null,
                             gameMode: gameMode,
                             isCompleted: state.isCheckmate || state.isStalemate,
                           );
