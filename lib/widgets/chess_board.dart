@@ -65,19 +65,45 @@ class _ChessBoardView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ChessBloc, GameState>(
       builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(ChessFormatters.getGameModeTitle(gameMode)),
-            actions: [
-              if (!state.isInteractive)
-                IconButton(
-                  icon: const Icon(Icons.play_arrow),
-                  tooltip: '从当前局面开始新对局',
-                  onPressed: () => _showNewGameDialog(context, state),
+        return WillPopScope(
+          onWillPop: () async {
+            // 如果有历史步数，显示确认对话框
+            if (state.moveHistory.isNotEmpty) {
+              final shouldPop = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('退出对局'),
+                  content: const Text('当前对局尚未结束，确定要退出吗？'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('取消'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text('确定'),
+                    ),
+                  ],
                 ),
-            ],
+              );
+              return shouldPop ?? false;
+            }
+            return true;
+          },
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text(ChessFormatters.getGameModeTitle(gameMode)),
+              actions: [
+                if (!state.isInteractive)
+                  IconButton(
+                    icon: const Icon(Icons.play_arrow),
+                    tooltip: '从当前局面开始新对局',
+                    onPressed: () => _showNewGameDialog(context, state),
+                  ),
+              ],
+            ),
+            body: const ChessBoardLayout(),
           ),
-          body: const ChessBoardLayout(),
         );
       },
     );
