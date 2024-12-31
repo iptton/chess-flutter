@@ -168,7 +168,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
 
     // 添加将军或将死的提示
     if (isCheckmate) {
-      message += ' 将死！${nextPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
+      message += ' 将死！${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
     } else if (isCheck) {
       message += ' 将军！';
     } else if (isStalemate) {
@@ -282,7 +282,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
 
     // 添加将军或将死的提示
     if (isCheckmate) {
-      message += ' 将死！${nextPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
+      message += ' 将死！${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
     } else if (isCheck) {
       message += ' 将军！';
     } else if (isStalemate) {
@@ -422,7 +422,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
 
     // 添加将军或将死的提示
     if (isCheckmate) {
-      message += ' 将死！${nextPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
+      message += ' 将死！${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
     } else if (isCheck) {
       message += ' 将军！';
     } else if (isStalemate) {
@@ -519,7 +519,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
 
     // 添加将军或将死的提示
     if (isCheckmate) {
-      message += ' 将死！${nextPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
+      message += ' 将死！${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
     } else if (isCheck) {
       message += ' 将军！';
     } else if (isStalemate) {
