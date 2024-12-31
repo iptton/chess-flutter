@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/settings_service.dart';
+import '../widgets/web_view_page.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -43,9 +44,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
               });
             },
           ),
+          // 隐私政策设置项
+          ListTile(
+            leading: const Icon(Icons.security),
+            title: const Text('隐私政策'),
+            onTap: () async {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const WebPage(initialUrl: "https://your-web-content-url.com")),
+              );
+            },
+          ),
           // 其他设置项...
         ],
       ),
     );
   }
-} 
+}

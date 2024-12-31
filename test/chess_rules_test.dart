@@ -26,14 +26,14 @@ void main() {
       // 获取白方兵的有效移动
       final validMoves = ChessRules.getValidMoves(
         board,
-        Position(row: 3, col: 4), // 白方兵的位置 e5
-        lastPawnDoubleMoved: Position(row: 3, col: 3), // 黑方兵的位置 d5
+        const Position(row: 3, col: 4), // 白方兵的位置 e5
+        lastPawnDoubleMoved: const Position(row: 3, col: 3), // 黑方兵的位置 d5
         lastPawnDoubleMovedNumber: 0,
         currentMoveNumber: 1,
       );
 
       // 期望吃过路兵位置：(2, 3)，即 d6
-      final expectedEnPassantMove = Position(row: 2, col: 3);
+      final expectedEnPassantMove = const Position(row: 2, col: 3);
 
       // 验证可以吃过路兵
       expect(
@@ -54,14 +54,14 @@ void main() {
       // 获取白方兵的有效移动，但不是在黑方兵刚移动两步后
       final validMoves = ChessRules.getValidMoves(
         board,
-        Position(row: 3, col: 4),
-        lastPawnDoubleMoved: Position(row: 3, col: 3),
+        const Position(row: 3, col: 4),
+        lastPawnDoubleMoved: const Position(row: 3, col: 3),
         lastPawnDoubleMovedNumber: 0,
         currentMoveNumber: 2, // 已经过了一步
       );
 
       // 期望的吃过路兵位置
-      final expectedEnPassantMove = Position(row: 2, col: 3);
+      final expectedEnPassantMove = const Position(row: 2, col: 3);
 
       // 验证不能吃过路兵
       expect(
@@ -82,14 +82,14 @@ void main() {
       // 获取白方兵的有效移动，但没有最近的双步移动记录
       final validMoves = ChessRules.getValidMoves(
         board,
-        Position(row: 3, col: 4),
+        const Position(row: 3, col: 4),
         lastPawnDoubleMoved: null,
         lastPawnDoubleMovedNumber: -1,
         currentMoveNumber: 1,
       );
 
       // 期望的吃过路兵位置
-      final expectedEnPassantMove = Position(row: 2, col: 3);
+      final expectedEnPassantMove = const Position(row: 2, col: 3);
 
       // 验证不能吃过路兵
       expect(
@@ -110,14 +110,14 @@ void main() {
       // 获取白方车的有效移动
       final validMoves = ChessRules.getValidMoves(
         board,
-        Position(row: 3, col: 4),
-        lastPawnDoubleMoved: Position(row: 3, col: 3),
+        const Position(row: 3, col: 4),
+        lastPawnDoubleMoved: const Position(row: 3, col: 3),
         lastPawnDoubleMovedNumber: 0,
         currentMoveNumber: 1,
       );
 
       // 期望的吃过路兵位置
-      final expectedEnPassantMove = Position(row: 2, col: 3);
+      final expectedEnPassantMove = const Position(row: 2, col: 3);
 
       // 验证不能吃过路兵
       expect(
@@ -138,14 +138,14 @@ void main() {
       // 获取白方兵的有效移动，但在双步移动后等待了一步
       final validMoves = ChessRules.getValidMoves(
         board,
-        Position(row: 3, col: 4),
-        lastPawnDoubleMoved: Position(row: 3, col: 3),
+        const Position(row: 3, col: 4),
+        lastPawnDoubleMoved: const Position(row: 3, col: 3),
         lastPawnDoubleMovedNumber: 0,
         currentMoveNumber: 3, // 已经过了两步
       );
 
       // 期望的吃过路兵位置
-      final expectedEnPassantMove = Position(row: 2, col: 3);
+      final expectedEnPassantMove = const Position(row: 2, col: 3);
 
       // 验证不能吃过路兵
       expect(

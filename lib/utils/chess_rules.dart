@@ -326,7 +326,7 @@ class ChessRules {
             board,
             Position(row: row, col: col),
           );
-          if (moves.any((pos) => pos.row == kingPosition!.row && pos.col == kingPosition!.col)) {
+          if (moves.any((pos) => pos.row == kingPosition!.row && pos.col == kingPosition.col)) {
             return true;
           }
         }

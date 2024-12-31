@@ -101,9 +101,9 @@ class ChessMove extends Equatable {
 class GameState extends Equatable {
   static ChessPiece? _getInitialPiece(int row, int col) {
     if (row == 1) {
-      return ChessPiece(type: PieceType.pawn, color: PieceColor.black);
+      return const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
     } else if (row == 6) {
-      return ChessPiece(type: PieceType.pawn, color: PieceColor.white);
+      return const ChessPiece(type: PieceType.pawn, color: PieceColor.white);
     } else if (row == 0 || row == 7) {
       final color = row == 0 ? PieceColor.black : PieceColor.white;
       if (col == 0 || col == 7) {
@@ -230,19 +230,19 @@ class GameState extends Equatable {
     return GameState(
       board: board,
       currentPlayer: PieceColor.white,
-      hasKingMoved: {
+      hasKingMoved: const {
         PieceColor.white: false,
         PieceColor.black: false,
       },
-      hasRookMoved: {
-        PieceColor.white: {'kingside': false, 'queenside': false},
-        PieceColor.black: {'kingside': false, 'queenside': false},
+      hasRookMoved: const {
+        PieceColor.white: const {'kingside': false, 'queenside': false},
+        PieceColor.black: const {'kingside': false, 'queenside': false},
       },
-      lastPawnDoubleMoved: {
+      lastPawnDoubleMoved: const {
         PieceColor.white: null,
         PieceColor.black: null,
       },
-      lastPawnDoubleMovedNumber: {
+      lastPawnDoubleMovedNumber: const {
         PieceColor.white: -1,
         PieceColor.black: -1,
       },
@@ -288,19 +288,19 @@ class GameState extends Equatable {
     return GameState(
       board: board,
       currentPlayer: PieceColor.white,
-      hasKingMoved: {
+      hasKingMoved: const {
         PieceColor.white: false,
         PieceColor.black: false,
       },
-      hasRookMoved: {
-        PieceColor.white: {'kingside': false, 'queenside': false},
-        PieceColor.black: {'kingside': false, 'queenside': false},
+      hasRookMoved: const {
+        PieceColor.white: const {'kingside': false, 'queenside': false},
+        PieceColor.black: const {'kingside': false, 'queenside': false},
       },
-      lastPawnDoubleMoved: {
+      lastPawnDoubleMoved: const {
         PieceColor.white: null,
         PieceColor.black: null,
       },
-      lastPawnDoubleMovedNumber: {
+      lastPawnDoubleMovedNumber: const {
         PieceColor.white: -1,
         PieceColor.black: -1,
       },

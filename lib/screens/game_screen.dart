@@ -78,7 +78,7 @@ class GameScreen extends StatelessWidget {
     // 当前仅支持面对面对战，其他模式先显示 Toast 提示
     if (mode != GameMode.faceToFace) {
       Fluttertoast.showToast(
-          msg: "这是一条 Toast 消息",
+          msg: "开发中，敬请期待",
           // 显示的文本
           toastLength: Toast.LENGTH_SHORT,
           // Toast显示的时长

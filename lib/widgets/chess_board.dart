@@ -219,10 +219,10 @@ class MoveMessageContent extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (lastMove.piece != null) ...[
-          ChessPieceImage(piece: lastMove.piece),
-          const SizedBox(width: 8),
-        ],
+        ...[
+        ChessPieceImage(piece: lastMove.piece),
+        const SizedBox(width: 8),
+      ],
         if (lastMove.isPromotion && lastMove.promotionType != null)
           _buildPromotionMessage(lastMove)
         else
@@ -273,7 +273,7 @@ class ControlButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ChessBloc, GameState>(
       builder: (context, state) {
-        return Container(
+        return SizedBox(
           height: ChessConstants.controlButtonsHeight,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -321,7 +321,7 @@ class ControlButtons extends StatelessWidget {
   Widget _buildHintButton(BuildContext context, GameState state) {
     return ElevatedButton.icon(
       onPressed: () {
-        context.read<ChessBloc>().add(ToggleHintMode());
+        context.read<ChessBloc>().add(const ToggleHintMode());
       },
       icon: Icon(state.hintMode ? Icons.lightbulb : Icons.lightbulb_outline),
       label: Text(state.hintMode ? '关闭提示' : '开启提示'),
@@ -354,7 +354,7 @@ class ChessBoardGrid extends StatelessWidget {
             child: Row(
               children: [
                 BoardRowLabels(),
-                Expanded(
+                const Expanded(
                   child: ChessBoardSquares(),
                 ),
               ],
@@ -533,6 +533,8 @@ class ChessPieceImage extends StatelessWidget {
 
 // 棋盘列标签组件
 class BoardColumnLabels extends StatelessWidget {
+  const BoardColumnLabels({super.key});
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -561,6 +563,8 @@ class BoardColumnLabels extends StatelessWidget {
 
 // 棋盘行标签组件
 class BoardRowLabels extends StatelessWidget {
+  const BoardRowLabels({super.key});
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -610,28 +614,28 @@ class PromotionDialog extends StatelessWidget {
     return Dialog(
       child: Container(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
+        child: const Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               '选择升变棋子',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   PromotionOption(pieceType: PieceType.queen),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   PromotionOption(pieceType: PieceType.rook),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   PromotionOption(pieceType: PieceType.bishop),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   PromotionOption(pieceType: PieceType.knight),
                 ],
               ),
