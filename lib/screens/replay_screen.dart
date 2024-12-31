@@ -109,6 +109,32 @@ class _ReplayScreenState extends State<ReplayScreen> {
             ),
           );
         },
+        onLongPress: () {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('删除对局记录'),
+              content: const Text('确定要删除这条对局记录吗？'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('取消'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    await GameHistoryService.deleteGame(game.id);
+                    Navigator.pop(context);
+                    _loadGameHistory(); // 重新加载列表
+                  },
+                  child: const Text(
+                    '删除',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

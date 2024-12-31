@@ -37,6 +37,16 @@ class GameHistoryService {
     await prefs.remove(_historyKey);
   }
 
+  static Future<void> deleteGame(String gameId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final historyList = await getGameHistory();
+    
+    historyList.removeWhere((game) => game.id == gameId);
+    
+    final jsonList = historyList.map((game) => game.toJson()).toList();
+    await prefs.setString(_historyKey, jsonEncode(jsonList));
+  }
+
   static String generateGameId() {
     return _uuid.v4();
   }
