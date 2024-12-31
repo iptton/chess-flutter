@@ -21,12 +21,80 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
   }
 
   void _onInitializeGame(InitializeGame event, Emitter<GameState> emit) async {
-    final initialState = await GameState.initialFromPrefs(
-      hintMode: event.hintMode,
-      isInteractive: true,
-      gameMode: GameMode.offline,
+    if (event.replayGame != null) {
+      // 初始化复盘状态
+      final initialState = await GameState.initialFromPrefs(
+        hintMode: event.hintMode,
+        isInteractive: event.isInteractive,
+        allowedPlayer: event.allowedPlayer,
+        gameMode: event.gameMode,
+      );
+
+      // 将所有移动添加到 redoStates
+      final redoStates = <GameState>[];
+      var currentState = initialState;
+      
+      for (final move in event.replayGame!.moves) {
+        redoStates.add(currentState);
+        currentState = await _applyMove(currentState, move);
+      }
+
+      emit(initialState.copyWith(
+        redoStates: redoStates,
+        moveHistory: event.replayGame!.moves,
+      ));
+    } else {
+      // 正常对局初始化
+      final initialState = await GameState.initialFromPrefs(
+        hintMode: event.hintMode,
+        isInteractive: event.isInteractive,
+        allowedPlayer: event.allowedPlayer,
+        gameMode: event.gameMode,
+      );
+      emit(initialState);
+    }
+  }
+
+  Future<GameState> _applyMove(GameState state, ChessMove move) async {
+    // 创建新的棋盘状态
+    final newBoard = List<List<ChessPiece?>>.from(
+      state.board.map((row) => List<ChessPiece?>.from(row)),
     );
-    emit(initialState);
+
+    // 移动棋子
+    newBoard[move.to.row][move.to.col] = move.piece;
+    newBoard[move.from.row][move.from.col] = null;
+
+    // 处理吃过路兵
+    if (move.isEnPassant) {
+      newBoard[move.from.row][move.to.col] = null;
+    }
+
+    // 处理王车易位
+    if (move.isCastling) {
+      final rookFromCol = move.from.col > move.to.col ? 0 : 7;
+      final rookToCol = move.from.col > move.to.col ? 3 : 5;
+      newBoard[move.from.row][rookToCol] = newBoard[move.from.row][rookFromCol];
+      newBoard[move.from.row][rookFromCol] = null;
+    }
+
+    // 处理升变
+    if (move.isPromotion && move.promotionType != null) {
+      newBoard[move.to.row][move.to.col] = ChessPiece(
+        type: move.promotionType!,
+        color: move.piece.color,
+      );
+    }
+
+    // 更新状态
+    return state.copyWith(
+      board: newBoard,
+      currentPlayer: state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white,
+      selectedPosition: null,
+      validMoves: const [],
+      moveHistory: List.from(state.moveHistory)..add(move),
+      lastMove: move,
+    );
   }
 
   void _onSelectPiece(SelectPiece event, Emitter<GameState> emit) {

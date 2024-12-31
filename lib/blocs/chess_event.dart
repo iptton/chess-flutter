@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../models/chess_models.dart';
+import '../models/game_history.dart';
 import '../screens/game_screen.dart';
 
 abstract class ChessEvent extends Equatable {
@@ -14,16 +15,18 @@ class InitializeGame extends ChessEvent {
   final bool isInteractive;
   final PieceColor? allowedPlayer;
   final GameMode gameMode;
+  final GameHistory? replayGame;
 
   const InitializeGame(
     this.hintMode, {
     this.isInteractive = true,
     this.allowedPlayer,
     this.gameMode = GameMode.offline,
+    this.replayGame,
   });
 
   @override
-  List<Object?> get props => [hintMode, isInteractive, allowedPlayer, gameMode];
+  List<Object?> get props => [hintMode, isInteractive, allowedPlayer, gameMode, replayGame];
 }
 
 class SelectPiece extends ChessEvent {

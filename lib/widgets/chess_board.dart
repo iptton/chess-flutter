@@ -31,18 +31,6 @@ class ChessBoard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (replayGame != null) {
-      return BlocProvider(
-        create: (context) => ReplayBloc()..add(InitializeReplay(replayGame!)),
-        child: _ChessBoardView(
-          gameMode: gameMode,
-          isInteractive: false,
-          allowedPlayer: allowedPlayer,
-          isReplayMode: true,
-        ),
-      );
-    }
-
     return FutureBuilder<bool>(
       future: SettingsService.getDefaultHintMode(),
       builder: (context, snapshot) {
@@ -51,15 +39,16 @@ class ChessBoard extends StatelessWidget {
           create: (context) => ChessBloc()
             ..add(InitializeGame(
               defaultHintMode,
-              isInteractive: isInteractive,
+              isInteractive: replayGame != null ? false : isInteractive,
               allowedPlayer: allowedPlayer,
               gameMode: gameMode,
+              replayGame: replayGame,
             )),
           child: _ChessBoardView(
             gameMode: gameMode,
-            isInteractive: isInteractive,
+            isInteractive: replayGame != null ? false : isInteractive,
             allowedPlayer: allowedPlayer,
-            isReplayMode: false,
+            isReplayMode: replayGame != null,
           ),
         );
       },
@@ -83,37 +72,23 @@ class _ChessBoardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isReplayMode) {
-      return BlocBuilder<ReplayBloc, ReplayState>(
-        builder: (context, state) {
+    return BlocBuilder<ChessBloc, GameState>(
+      builder: (context, state) {
+        if (isReplayMode) {
           return Scaffold(
             appBar: AppBar(
               title: const Text('对局复盘'),
             ),
-            body: Column(
-              children: [
-                const SizedBox(height: ChessConstants.topBarHeight),
-                const ReplayTurnIndicator(),
-                const SizedBox(height: ChessConstants.spacing),
-                const ReplaySpecialMoveIndicator(),
-                const SizedBox(height: ChessConstants.spacing),
+            body: ChessBoardLayout(
+              topContent: [
+                _buildTurnIndicator(context),
+                _buildSpecialMoveIndicator(context),
                 _buildReplayControls(context, state),
-                const SizedBox(height: ChessConstants.spacing),
-                Expanded(
-                  child: ChessBoardGrid(
-                    boardSize: MediaQuery.of(context).size.width * 0.9,
-                    isReplayMode: true,
-                  ),
-                ),
               ],
             ),
           );
-        },
-      );
-    }
+        }
 
-    return BlocBuilder<ChessBloc, GameState>(
-      builder: (context, state) {
         return WillPopScope(
           onWillPop: () async {
             // 如果有历史步数，显示确认对话框
@@ -166,46 +141,136 @@ class _ChessBoardView extends StatelessWidget {
                   ),
               ],
             ),
-            body: const ChessBoardLayout(),
+            body: ChessBoardLayout(
+              topContent: [
+                _buildTurnIndicator(context),
+                _buildSpecialMoveIndicator(context),
+                _buildGameControls(context),
+              ],
+            ),
           ),
         );
       },
     );
   }
 
-  Widget _buildReplayControls(BuildContext context, ReplayState state) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        ElevatedButton.icon(
-          onPressed: state.currentMoveIndex > -1
-              ? () => context.read<ReplayBloc>().add(PreviousMove())
-              : null,
-          icon: const Icon(Icons.skip_previous),
-          label: const Text('上一步'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue[100],
-            foregroundColor: Colors.black,
+  Widget _buildTurnIndicator(BuildContext context) {
+    return BlocBuilder<ChessBloc, GameState>(
+      builder: (context, state) {
+        return Text(
+          '当前回合: ${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}',
+          style: const TextStyle(fontSize: 20),
+        );
+      },
+    );
+  }
+
+  Widget _buildSpecialMoveIndicator(BuildContext context) {
+    return BlocBuilder<ChessBloc, GameState>(
+      builder: (context, state) {
+        if (state.lastMove == null) {
+          return const SizedBox(height: ChessConstants.specialMoveHeight);
+        }
+
+        return Container(
+          height: ChessConstants.specialMoveHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.blue.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
           ),
-        ),
-        const SizedBox(width: 20),
-        Text(
-          '${state.currentMoveIndex + 1}/${state.gameHistory.moves.length}',
-          style: const TextStyle(fontSize: 16),
-        ),
-        const SizedBox(width: 20),
-        ElevatedButton.icon(
-          onPressed: state.currentMoveIndex < state.gameHistory.moves.length - 1
-              ? () => context.read<ReplayBloc>().add(NextMove())
-              : null,
-          icon: const Icon(Icons.skip_next),
-          label: const Text('下一步'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue[100],
-            foregroundColor: Colors.black,
+          child: MoveMessageContent(state: state),
+        );
+      },
+    );
+  }
+
+  Widget _buildReplayControls(BuildContext context, GameState state) {
+    return SizedBox(
+      height: ChessConstants.controlButtonsHeight,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ElevatedButton.icon(
+            onPressed: state.undoStates.isNotEmpty
+                ? () => context.read<ChessBloc>().add(const UndoMove())
+                : null,
+            icon: const Icon(Icons.skip_previous),
+            label: const Text('上一步'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue[100],
+              foregroundColor: Colors.black,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(width: 20),
+          Text(
+            '${state.moveHistory.length - state.redoStates.length}/${state.moveHistory.length}',
+            style: const TextStyle(fontSize: 16),
+          ),
+          const SizedBox(width: 20),
+          ElevatedButton.icon(
+            onPressed: state.redoStates.isNotEmpty
+                ? () => context.read<ChessBloc>().add(const RedoMove())
+                : null,
+            icon: const Icon(Icons.skip_next),
+            label: const Text('下一步'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue[100],
+              foregroundColor: Colors.black,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGameControls(BuildContext context) {
+    return BlocBuilder<ChessBloc, GameState>(
+      builder: (context, state) {
+        return SizedBox(
+          height: ChessConstants.controlButtonsHeight,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton.icon(
+                onPressed: state.undoStates.isEmpty ? null : () {
+                  context.read<ChessBloc>().add(const UndoMove());
+                },
+                icon: const Icon(Icons.undo),
+                label: const Text('前一步'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue[100],
+                  foregroundColor: Colors.black,
+                ),
+              ),
+              const SizedBox(width: 20),
+              ElevatedButton.icon(
+                onPressed: state.redoStates.isEmpty ? null : () {
+                  context.read<ChessBloc>().add(const RedoMove());
+                },
+                icon: const Icon(Icons.redo),
+                label: const Text('后一步'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue[100],
+                  foregroundColor: Colors.black,
+                ),
+              ),
+              const SizedBox(width: 20),
+              ElevatedButton.icon(
+                onPressed: () {
+                  context.read<ChessBloc>().add(const ToggleHintMode());
+                },
+                icon: Icon(state.hintMode ? Icons.lightbulb : Icons.lightbulb_outline),
+                label: Text(state.hintMode ? '关闭提示' : '开启提示'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: state.hintMode ? Colors.yellow[100] : Colors.grey[100],
+                  foregroundColor: Colors.black,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -241,7 +306,12 @@ class _ChessBoardView extends StatelessWidget {
 
 // 布局组件
 class ChessBoardLayout extends StatelessWidget {
-  const ChessBoardLayout({super.key});
+  final List<Widget> topContent;
+
+  const ChessBoardLayout({
+    super.key,
+    required this.topContent,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -254,12 +324,10 @@ class ChessBoardLayout extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: ChessConstants.topBarHeight),
-                const TurnIndicator(),
-                const SizedBox(height: ChessConstants.spacing),
-                const SpecialMoveIndicator(),
-                const SizedBox(height: ChessConstants.spacing),
-                const ControlButtons(),
-                const SizedBox(height: ChessConstants.spacing),
+                ...topContent.expand((widget) => [
+                  widget,
+                  const SizedBox(height: ChessConstants.spacing),
+                ]).toList(),
                 ChessBoardGrid(boardSize: boardSize),
               ],
             ),
@@ -288,229 +356,17 @@ class ChessBoardLayout extends StatelessWidget {
   }
 }
 
-// 回合指示器组件
-class TurnIndicator extends StatelessWidget {
-  const TurnIndicator({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<ChessBloc, GameState>(
-      builder: (context, state) {
-        return Text(
-          '当前回合: ${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}',
-          style: const TextStyle(fontSize: 20),
-        );
-      },
-    );
-  }
-}
-
-// 复盘回合指示器组件
-class ReplayTurnIndicator extends StatelessWidget {
-  const ReplayTurnIndicator({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<ReplayBloc, ReplayState>(
-      builder: (context, state) {
-        return Text(
-          '当前回合: ${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}',
-          style: const TextStyle(fontSize: 20),
-        );
-      },
-    );
-  }
-}
-
-// 特殊移动提示组件
-class SpecialMoveIndicator extends StatelessWidget {
-  const SpecialMoveIndicator({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<ChessBloc, GameState>(
-      builder: (context, state) {
-        if (state.lastMove == null) {
-          return const SizedBox(height: ChessConstants.specialMoveHeight);
-        }
-
-        return Container(
-          height: ChessConstants.specialMoveHeight,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: MoveMessageContent(state: state),
-        );
-      },
-    );
-  }
-}
-
-// 复盘特殊移动提示组件
-class ReplaySpecialMoveIndicator extends StatelessWidget {
-  const ReplaySpecialMoveIndicator({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<ReplayBloc, ReplayState>(
-      builder: (context, state) {
-        if (state.lastMove == null) {
-          return const SizedBox(height: ChessConstants.specialMoveHeight);
-        }
-
-        return Container(
-          height: ChessConstants.specialMoveHeight,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: MoveMessageContent(state: state),
-        );
-      },
-    );
-  }
-}
-
-// 移动信息内容组件
-class MoveMessageContent extends StatelessWidget {
-  final GameState state;
-
-  const MoveMessageContent({super.key, required this.state});
-
-  @override
-  Widget build(BuildContext context) {
-    final lastMove = state.lastMove;
-    if (lastMove == null) return const SizedBox();
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ...[
-        ChessPieceImage(piece: lastMove.piece),
-        const SizedBox(width: 8),
-      ],
-        if (lastMove.isPromotion && lastMove.promotionType != null)
-          _buildPromotionMessage(lastMove)
-        else
-          Text(
-            state.specialMoveMessage ??
-            ChessFormatters.buildDefaultMoveMessage(lastMove),
-            style: const TextStyle(fontSize: 16),
-          ),
-        if (lastMove.capturedPiece != null && !lastMove.isPromotion) ...[
-          const SizedBox(width: 8),
-          ChessPieceImage(piece: lastMove.capturedPiece!),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildPromotionMessage(ChessMove move) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          '${move.piece.color == PieceColor.white ? "白方" : "黑方"}兵从${ChessFormatters.getPositionName(move.from)}升变为',
-          style: const TextStyle(fontSize: 16),
-        ),
-        const SizedBox(width: 8),
-        if (move.promotionType != null)
-          ChessPieceImage(
-            piece: ChessPiece(
-              type: move.promotionType!,
-              color: move.piece.color,
-            ),
-          ),
-        const SizedBox(width: 8),
-        Text(
-          '到${ChessFormatters.getPositionName(move.to)}',
-          style: const TextStyle(fontSize: 16),
-        ),
-      ],
-    );
-  }
-}
-
-// 控制按钮组件
-class ControlButtons extends StatelessWidget {
-  const ControlButtons({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<ChessBloc, GameState>(
-      builder: (context, state) {
-        return SizedBox(
-          height: ChessConstants.controlButtonsHeight,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildUndoButton(context, state),
-              const SizedBox(width: 20),
-              _buildRedoButton(context, state),
-              const SizedBox(width: 20),
-              _buildHintButton(context, state),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildUndoButton(BuildContext context, GameState state) {
-    return ElevatedButton.icon(
-      onPressed: state.undoStates.isEmpty ? null : () {
-        context.read<ChessBloc>().add(const UndoMove());
-      },
-      icon: const Icon(Icons.undo),
-      label: const Text('前一步'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blue[100],
-        foregroundColor: Colors.black,
-      ),
-    );
-  }
-
-  Widget _buildRedoButton(BuildContext context, GameState state) {
-    return ElevatedButton.icon(
-      onPressed: state.redoStates.isEmpty ? null : () {
-        context.read<ChessBloc>().add(const RedoMove());
-      },
-      icon: const Icon(Icons.redo),
-      label: const Text('后一步'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blue[100],
-        foregroundColor: Colors.black,
-      ),
-    );
-  }
-
-  Widget _buildHintButton(BuildContext context, GameState state) {
-    return ElevatedButton.icon(
-      onPressed: () {
-        context.read<ChessBloc>().add(const ToggleHintMode());
-      },
-      icon: Icon(state.hintMode ? Icons.lightbulb : Icons.lightbulb_outline),
-      label: Text(state.hintMode ? '关闭提示' : '开启提示'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: state.hintMode ? Colors.yellow[100] : Colors.grey[100],
-        foregroundColor: Colors.black,
-      ),
-    );
-  }
-}
-
 // 棋盘网格组件
 class ChessBoardGrid extends StatelessWidget {
   final double boardSize;
   final bool isReplayMode;
+  final bool isFlipped;
 
   const ChessBoardGrid({
     super.key,
     required this.boardSize,
     this.isReplayMode = false,
+    this.isFlipped = false,
   });
 
   @override
@@ -520,11 +376,11 @@ class ChessBoardGrid extends StatelessWidget {
       height: boardSize + 30,
       child: Column(
         children: [
-          BoardColumnLabels(),
+          BoardColumnLabels(isFlipped: isFlipped),
           Expanded(
             child: Row(
               children: [
-                BoardRowLabels(),
+                BoardRowLabels(isFlipped: isFlipped),
                 Expanded(
                   child: isReplayMode
                       ? const ReplayChessBoardSquares()
@@ -735,7 +591,12 @@ class ChessPieceImage extends StatelessWidget {
 
 // 棋盘列标签组件
 class BoardColumnLabels extends StatelessWidget {
-  const BoardColumnLabels({super.key});
+  final bool isFlipped;
+
+  const BoardColumnLabels({
+    super.key,
+    this.isFlipped = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -748,7 +609,7 @@ class BoardColumnLabels extends StatelessWidget {
             return Expanded(
               child: Center(
                 child: Text(
-                  String.fromCharCode('A'.codeUnitAt(0) + col),
+                  ChessFormatters.getColumnLabel(col, isFlipped: isFlipped),
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -765,7 +626,12 @@ class BoardColumnLabels extends StatelessWidget {
 
 // 棋盘行标签组件
 class BoardRowLabels extends StatelessWidget {
-  const BoardRowLabels({super.key});
+  final bool isFlipped;
+
+  const BoardRowLabels({
+    super.key,
+    this.isFlipped = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -776,7 +642,7 @@ class BoardRowLabels extends StatelessWidget {
           return Expanded(
             child: Center(
               child: Text(
-                '${8 - row}',
+                ChessFormatters.getRowLabel(row, isFlipped: isFlipped),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -875,6 +741,67 @@ class PromotionOption extends StatelessWidget {
           fit: BoxFit.contain,
         ),
       ),
+    );
+  }
+}
+
+// 移动信息内容组件
+class MoveMessageContent extends StatelessWidget {
+  final GameState state;
+
+  const MoveMessageContent({super.key, required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    final lastMove = state.lastMove;
+    if (lastMove == null) return const SizedBox();
+
+    final moveMessage = state.specialMoveMessage ??
+        (ChessFormatters.buildDefaultMoveMessage(lastMove) +
+        ChessFormatters.buildMoveStateMessage(state));
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ChessPieceImage(piece: lastMove.piece),
+        const SizedBox(width: 8),
+        if (lastMove.isPromotion && lastMove.promotionType != null)
+          _buildPromotionMessage(lastMove)
+        else
+          Text(
+            moveMessage,
+            style: const TextStyle(fontSize: 16),
+          ),
+        if (lastMove.capturedPiece != null && !lastMove.isPromotion) ...[
+          const SizedBox(width: 8),
+          ChessPieceImage(piece: lastMove.capturedPiece!),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildPromotionMessage(ChessMove move) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '${move.piece.color == PieceColor.white ? "白方" : "黑方"}兵从${ChessFormatters.getPositionName(move.from)}升变为',
+          style: const TextStyle(fontSize: 16),
+        ),
+        const SizedBox(width: 8),
+        if (move.promotionType != null)
+          ChessPieceImage(
+            piece: ChessPiece(
+              type: move.promotionType!,
+              color: move.piece.color,
+            ),
+          ),
+        const SizedBox(width: 8),
+        Text(
+          '到${ChessFormatters.getPositionName(move.to)}',
+          style: const TextStyle(fontSize: 16),
+        ),
+      ],
     );
   }
 }
