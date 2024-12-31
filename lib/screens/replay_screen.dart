@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/game_history.dart';
 import '../services/game_history_service.dart';
-import '../widgets/chess_board.dart';
 import '../models/chess_models.dart';
+import '../widgets/chess_board.dart';
 import 'game_screen.dart';
 
 class ReplayScreen extends StatefulWidget {
@@ -104,7 +104,7 @@ class _ReplayScreenState extends State<ReplayScreen> {
             MaterialPageRoute(
               builder: (context) => ChessBoard(
                 gameMode: game.gameMode,
-                isInteractive: false,
+                replayGame: game,
               ),
             ),
           );

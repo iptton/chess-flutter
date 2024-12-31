@@ -4,6 +4,7 @@ import 'dart:math';
 
 import '../blocs/chess_bloc.dart';
 import '../blocs/chess_event.dart';
+import '../blocs/replay_bloc.dart';
 import '../models/chess_models.dart';
 import '../models/game_history.dart';
 import '../screens/game_screen.dart';
@@ -18,16 +19,30 @@ class ChessBoard extends StatelessWidget {
   final GameMode gameMode;
   final bool isInteractive;
   final PieceColor? allowedPlayer;
+  final GameHistory? replayGame;
 
   const ChessBoard({
     super.key,
     required this.gameMode,
     this.isInteractive = true,
     this.allowedPlayer,
+    this.replayGame,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (replayGame != null) {
+      return BlocProvider(
+        create: (context) => ReplayBloc()..add(InitializeReplay(replayGame!)),
+        child: _ChessBoardView(
+          gameMode: gameMode,
+          isInteractive: false,
+          allowedPlayer: allowedPlayer,
+          isReplayMode: true,
+        ),
+      );
+    }
+
     return FutureBuilder<bool>(
       future: SettingsService.getDefaultHintMode(),
       builder: (context, snapshot) {
@@ -44,6 +59,7 @@ class ChessBoard extends StatelessWidget {
             gameMode: gameMode,
             isInteractive: isInteractive,
             allowedPlayer: allowedPlayer,
+            isReplayMode: false,
           ),
         );
       },
@@ -56,15 +72,46 @@ class _ChessBoardView extends StatelessWidget {
   final GameMode gameMode;
   final bool isInteractive;
   final PieceColor? allowedPlayer;
+  final bool isReplayMode;
 
   const _ChessBoardView({
     required this.gameMode,
     required this.isInteractive,
+    required this.isReplayMode,
     this.allowedPlayer,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (isReplayMode) {
+      return BlocBuilder<ReplayBloc, ReplayState>(
+        builder: (context, state) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('对局复盘'),
+            ),
+            body: Column(
+              children: [
+                const SizedBox(height: ChessConstants.topBarHeight),
+                const ReplayTurnIndicator(),
+                const SizedBox(height: ChessConstants.spacing),
+                const ReplaySpecialMoveIndicator(),
+                const SizedBox(height: ChessConstants.spacing),
+                _buildReplayControls(context, state),
+                const SizedBox(height: ChessConstants.spacing),
+                Expanded(
+                  child: ChessBoardGrid(
+                    boardSize: MediaQuery.of(context).size.width * 0.9,
+                    isReplayMode: true,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
+
     return BlocBuilder<ChessBloc, GameState>(
       builder: (context, state) {
         return WillPopScope(
@@ -123,6 +170,42 @@ class _ChessBoardView extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildReplayControls(BuildContext context, ReplayState state) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        ElevatedButton.icon(
+          onPressed: state.currentMoveIndex > -1
+              ? () => context.read<ReplayBloc>().add(PreviousMove())
+              : null,
+          icon: const Icon(Icons.skip_previous),
+          label: const Text('上一步'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue[100],
+            foregroundColor: Colors.black,
+          ),
+        ),
+        const SizedBox(width: 20),
+        Text(
+          '${state.currentMoveIndex + 1}/${state.gameHistory.moves.length}',
+          style: const TextStyle(fontSize: 16),
+        ),
+        const SizedBox(width: 20),
+        ElevatedButton.icon(
+          onPressed: state.currentMoveIndex < state.gameHistory.moves.length - 1
+              ? () => context.read<ReplayBloc>().add(NextMove())
+              : null,
+          icon: const Icon(Icons.skip_next),
+          label: const Text('下一步'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue[100],
+            foregroundColor: Colors.black,
+          ),
+        ),
+      ],
     );
   }
 
@@ -222,6 +305,23 @@ class TurnIndicator extends StatelessWidget {
   }
 }
 
+// 复盘回合指示器组件
+class ReplayTurnIndicator extends StatelessWidget {
+  const ReplayTurnIndicator({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ReplayBloc, ReplayState>(
+      builder: (context, state) {
+        return Text(
+          '当前回合: ${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}',
+          style: const TextStyle(fontSize: 20),
+        );
+      },
+    );
+  }
+}
+
 // 特殊移动提示组件
 class SpecialMoveIndicator extends StatelessWidget {
   const SpecialMoveIndicator({super.key});
@@ -229,6 +329,32 @@ class SpecialMoveIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ChessBloc, GameState>(
+      builder: (context, state) {
+        if (state.lastMove == null) {
+          return const SizedBox(height: ChessConstants.specialMoveHeight);
+        }
+
+        return Container(
+          height: ChessConstants.specialMoveHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.blue.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: MoveMessageContent(state: state),
+        );
+      },
+    );
+  }
+}
+
+// 复盘特殊移动提示组件
+class ReplaySpecialMoveIndicator extends StatelessWidget {
+  const ReplaySpecialMoveIndicator({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ReplayBloc, ReplayState>(
       builder: (context, state) {
         if (state.lastMove == null) {
           return const SizedBox(height: ChessConstants.specialMoveHeight);
@@ -379,10 +505,12 @@ class ControlButtons extends StatelessWidget {
 // 棋盘网格组件
 class ChessBoardGrid extends StatelessWidget {
   final double boardSize;
+  final bool isReplayMode;
 
   const ChessBoardGrid({
     super.key,
     required this.boardSize,
+    this.isReplayMode = false,
   });
 
   @override
@@ -397,8 +525,10 @@ class ChessBoardGrid extends StatelessWidget {
             child: Row(
               children: [
                 BoardRowLabels(),
-                const Expanded(
-                  child: ChessBoardSquares(),
+                Expanded(
+                  child: isReplayMode
+                      ? const ReplayChessBoardSquares()
+                      : const ChessBoardSquares(),
                 ),
               ],
             ),
@@ -416,6 +546,35 @@ class ChessBoardSquares extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ChessBloc, GameState>(
+      builder: (context, state) {
+        return Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.black, width: 2.0),
+          ),
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 8,
+            ),
+            itemCount: 64,
+            itemBuilder: (context, index) => ChessSquare(
+              index: index,
+              state: state,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// 复盘棋盘方格组件
+class ReplayChessBoardSquares extends StatelessWidget {
+  const ReplayChessBoardSquares({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ReplayBloc, ReplayState>(
       builder: (context, state) {
         return Container(
           decoration: BoxDecoration(
