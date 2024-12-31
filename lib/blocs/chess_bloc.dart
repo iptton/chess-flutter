@@ -289,7 +289,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       message += ' 和棋！';
     }
 
-    // ���存当前状态到撤销列表
+    // 保存当前状态到撤销列表
     final newUndoStates = List<GameState>.from(state.undoStates)..add(state);
 
     emit(state.copyWith(
