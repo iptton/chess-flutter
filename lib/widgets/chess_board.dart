@@ -5,11 +5,13 @@ import 'dart:math';
 import '../blocs/chess_bloc.dart';
 import '../blocs/chess_event.dart';
 import '../models/chess_models.dart';
+import '../models/game_history.dart';
 import '../screens/game_screen.dart';
 import '../utils/chess_rules.dart';
 import '../services/settings_service.dart';
 import '../utils/chess_constants.dart';
 import '../utils/chess_formatters.dart';
+import '../services/game_history_service.dart';
 
 // 主入口组件
 class ChessBoard extends StatelessWidget {
@@ -80,7 +82,22 @@ class _ChessBoardView extends StatelessWidget {
                       child: const Text('取消'),
                     ),
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(true),
+                      onPressed: () async {
+                        // 保存游戏历史
+                        if (state.moveHistory.isNotEmpty) {
+                          final history = GameHistory(
+                            id: GameHistoryService.generateGameId(),
+                            startTime: DateTime.now().subtract(Duration(minutes: state.moveHistory.length)), // 估算开始时间
+                            endTime: DateTime.now(),
+                            moves: state.moveHistory,
+                            winner: state.isCheckmate ? state.currentPlayer : null,
+                            gameMode: gameMode,
+                            isCompleted: state.isCheckmate || state.isStalemate,
+                          );
+                          await GameHistoryService.saveGame(history);
+                        }
+                        Navigator.of(context).pop(true);
+                      },
                       child: const Text('确定'),
                     ),
                   ],

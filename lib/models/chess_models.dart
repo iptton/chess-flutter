@@ -96,6 +96,66 @@ class ChessMove extends Equatable {
     isCastling,
     isEnPassant,
   ];
+
+  Map<String, dynamic> toJson() {
+    return {
+      'from': {
+        'row': from.row,
+        'col': from.col,
+      },
+      'to': {
+        'row': to.row,
+        'col': to.col,
+      },
+      'piece': {
+        'type': piece.type.toString(),
+        'color': piece.color.toString(),
+      },
+      'capturedPiece': capturedPiece == null ? null : {
+        'type': capturedPiece!.type.toString(),
+        'color': capturedPiece!.color.toString(),
+      },
+      'isPromotion': isPromotion,
+      'promotionType': promotionType?.toString(),
+      'isCastling': isCastling,
+      'isEnPassant': isEnPassant,
+    };
+  }
+
+  factory ChessMove.fromJson(Map<String, dynamic> json) {
+    return ChessMove(
+      from: Position(
+        row: json['from']['row'],
+        col: json['from']['col'],
+      ),
+      to: Position(
+        row: json['to']['row'],
+        col: json['to']['col'],
+      ),
+      piece: ChessPiece(
+        type: PieceType.values.firstWhere(
+          (e) => e.toString() == json['piece']['type'],
+        ),
+        color: PieceColor.values.firstWhere(
+          (e) => e.toString() == json['piece']['color'],
+        ),
+      ),
+      capturedPiece: json['capturedPiece'] == null ? null : ChessPiece(
+        type: PieceType.values.firstWhere(
+          (e) => e.toString() == json['capturedPiece']['type'],
+        ),
+        color: PieceColor.values.firstWhere(
+          (e) => e.toString() == json['capturedPiece']['color'],
+        ),
+      ),
+      isPromotion: json['isPromotion'],
+      promotionType: json['promotionType'] == null ? null : PieceType.values.firstWhere(
+        (e) => e.toString() == json['promotionType'],
+      ),
+      isCastling: json['isCastling'],
+      isEnPassant: json['isEnPassant'],
+    );
+  }
 }
 
 class GameState extends Equatable {
