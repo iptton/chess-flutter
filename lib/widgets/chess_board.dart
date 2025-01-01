@@ -186,13 +186,17 @@ class _ChessBoardView extends StatelessWidget {
   }
 
   Widget _buildReplayControls(BuildContext context, GameState state) {
+    // 计算当前步数和总步数
+    final totalSteps = state.moveHistory.length;
+    final currentStep = totalSteps - state.redoStates.length;
+
     return SizedBox(
       height: ChessConstants.controlButtonsHeight,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           ElevatedButton.icon(
-            onPressed: state.undoStates.isNotEmpty
+            onPressed: currentStep > 0
                 ? () => context.read<ChessBloc>().add(const UndoMove())
                 : null,
             icon: const Icon(Icons.skip_previous),
@@ -204,12 +208,12 @@ class _ChessBoardView extends StatelessWidget {
           ),
           const SizedBox(width: 20),
           Text(
-            '${state.moveHistory.length - state.redoStates.length}/${state.moveHistory.length}',
+            '$currentStep/$totalSteps',
             style: const TextStyle(fontSize: 16),
           ),
           const SizedBox(width: 20),
           ElevatedButton.icon(
-            onPressed: state.redoStates.isNotEmpty
+            onPressed: currentStep < totalSteps
                 ? () => context.read<ChessBloc>().add(const RedoMove())
                 : null,
             icon: const Icon(Icons.skip_next),

@@ -30,18 +30,23 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
         gameMode: event.gameMode,
       );
 
-      // 将所有移动添加到 redoStates
-      final redoStates = <GameState>[];
+      // 生成所有中间状态
+      final states = <GameState>[initialState];
       var currentState = initialState;
       
+      // 应用所有移动来生成中间状态
       for (final move in event.replayGame!.moves) {
-        redoStates.add(currentState);
         currentState = await _applyMove(currentState, move);
+        states.add(currentState);
       }
 
-      emit(initialState.copyWith(
-        redoStates: redoStates,
+      // 发出初始状态，将所有后续状态放入 redoStates
+      emit(states[0].copyWith(
         moveHistory: event.replayGame!.moves,
+        redoStates: states.sublist(1),
+        undoStates: [],
+        selectedPosition: null,
+        validMoves: const [],
       ));
     } else {
       // 正常对局初始化
@@ -621,10 +626,15 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     final previousState = state.undoStates.last;
     final newUndoStates = List<GameState>.from(state.undoStates)..removeLast();
 
-    // 将当前状态添加到重做列表
-    final newRedoStates = List<GameState>.from(state.redoStates)..add(state);
+    // 将当前状态添加到重做列表的开头
+    final newRedoStates = List<GameState>.from(state.redoStates)
+      ..insert(0, state.copyWith(
+        undoStates: newUndoStates,
+        redoStates: [],
+      ));
 
     emit(previousState.copyWith(
+      moveHistory: state.moveHistory,
       undoStates: newUndoStates,
       redoStates: newRedoStates,
       selectedPosition: null,
@@ -635,14 +645,15 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
   void _onRedoMove(RedoMove event, Emitter<GameState> emit) {
     if (state.redoStates.isEmpty) return;
 
-    // 获取后一步的状态
-    final nextState = state.redoStates.last;
-    final newRedoStates = List<GameState>.from(state.redoStates)..removeLast();
+    // 获取下一步的状态
+    final nextState = state.redoStates[0];
+    final newRedoStates = List<GameState>.from(state.redoStates)..removeAt(0);
 
     // 将当前状态添加到撤销列表
     final newUndoStates = List<GameState>.from(state.undoStates)..add(state);
 
     emit(nextState.copyWith(
+      moveHistory: state.moveHistory,
       undoStates: newUndoStates,
       redoStates: newRedoStates,
       selectedPosition: null,
