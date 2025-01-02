@@ -345,7 +345,7 @@ class ChessRules {
     Map<PieceColor, int> lastPawnDoubleMovedNumber,
     int currentMoveNumber,
   ) {
-    // ���果没有被将军，就不可能被将死
+    // 如果没有被将军，就不可能被将死
     if (!isInCheck(board, color)) return false;
 
     // 检查所有己方棋子的所有可能移动
