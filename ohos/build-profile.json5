@@ -5,10 +5,10 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "storePassword": "00000019F56D6B972A4E598F1469838531736DEE0FC2053DE4CCD23BC9F6F07BCABB18F3C22C31DACD",
+          "storePassword": "00000019CB3BC78E162D0CF646EF14C331357F1CD85D20D74DCEBEECB3F260D0E90C92A37AB5F87A5A",
           "certpath": "/Users/zxnap/keys/app-publish.cer",
           "keyAlias": "app",
-          "keyPassword": "0000001982BA782A48E7E608B355DF3648CA47A629B12B35C001025591BC21B8DD0CED340C4FA9BE8D",
+          "keyPassword": "0000001982AB47C9FC95D7247539FAEAA76EA3C9988C34074F99C75F4B332938BA6DC4D561DCDFCB82",
           "profile": "/Users/zxnap/keys/appRelease.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "/Users/zxnap/keys/app.p12"
@@ -27,14 +27,6 @@
             "useNormalizedOHMUrl": true
           }
         }
-      }
-    ],
-    "buildModeSet": [
-      {
-        "name": "debug"
-      },
-      {
-        "name": "release"
       }
     ]
   },
