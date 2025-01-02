@@ -33,7 +33,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       // 生成所有中间状态
       final states = <GameState>[initialState];
       var currentState = initialState;
-      
+
       // 应用所有移动来生成中间状态
       for (final move in event.replayGame!.moves) {
         currentState = await _applyMove(currentState, move);
@@ -442,6 +442,11 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       }
     }
 
+    Map<PieceColor, bool> newHasKingMoved = Map<PieceColor, bool>.from(state.hasKingMoved);
+    if (movingPiece.type == PieceType.king) {
+      newHasKingMoved[movingPiece.color] = true;
+    }
+
     // 更新双步兵记录
     final newLastPawnDoubleMoved = Map<PieceColor, Position?>.from(state.lastPawnDoubleMoved);
     final newLastPawnDoubleMovedNumber = Map<PieceColor, int>.from(state.lastPawnDoubleMovedNumber);
@@ -477,7 +482,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     final isCheckmate = isCheck && ChessRules.isCheckmate(
       newBoard,
       nextPlayer,
-      state.hasKingMoved,
+      newHasKingMoved,
       newHasRookMoved ?? state.hasRookMoved,
       newLastPawnDoubleMoved,
       newLastPawnDoubleMovedNumber,
@@ -486,7 +491,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     final isStalemate = !isCheck && ChessRules.isStalemate(
       newBoard,
       nextPlayer,
-      state.hasKingMoved,
+      newHasKingMoved,
       newHasRookMoved ?? state.hasRookMoved,
       newLastPawnDoubleMoved,
       newLastPawnDoubleMovedNumber,
@@ -510,6 +515,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       currentPlayer: nextPlayer,
       selectedPosition: null,
       validMoves: [],
+      hasKingMoved: newHasKingMoved,
       hasRookMoved: newHasRookMoved,
       lastPawnDoubleMoved: newLastPawnDoubleMoved,
       lastPawnDoubleMovedNumber: newLastPawnDoubleMovedNumber,
