@@ -5,5 +5,7 @@
   "main": "",
   "author": "",
   "license": "",
-  "dependencies": {}
+  "dependencies": {
+    "shared_preferences_ohos": "file:../har/shared_preferences_ohos.har"
+  }
 }

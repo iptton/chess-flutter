@@ -1,18 +1,3 @@
-/*
-* Copyright (c) 2023 Hunan OpenValley Digital Industry Development Co., Ltd.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
-
 {
   "app": {
     "signingConfigs": [
@@ -20,10 +5,10 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "storePassword": "00000019CB3BC78E162D0CF646EF14C331357F1CD85D20D74DCEBEECB3F260D0E90C92A37AB5F87A5A",
+          "storePassword": "00000019F56D6B972A4E598F1469838531736DEE0FC2053DE4CCD23BC9F6F07BCABB18F3C22C31DACD",
           "certpath": "/Users/zxnap/keys/app-publish.cer",
           "keyAlias": "app",
-          "keyPassword": "0000001982AB47C9FC95D7247539FAEAA76EA3C9988C34074F99C75F4B332938BA6DC4D561DCDFCB82",
+          "keyPassword": "0000001982BA782A48E7E608B355DF3648CA47A629B12B35C001025591BC21B8DD0CED340C4FA9BE8D",
           "profile": "/Users/zxnap/keys/appRelease.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "/Users/zxnap/keys/app.p12"
@@ -34,7 +19,7 @@
       {
         "name": "default",
         "signingConfig": "default",
-        "compatibleSdkVersion": "5.0.0(12)",
+        "compatibleSdkVersion": "5.0.1(13)",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
           "strictMode": {
@@ -46,7 +31,7 @@
     ],
     "buildModeSet": [
       {
-        "name": "debug",
+        "name": "debug"
       },
       {
         "name": "release"
