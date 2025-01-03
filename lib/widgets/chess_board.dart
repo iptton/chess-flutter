@@ -154,7 +154,7 @@ class _ChessBoardView extends StatelessWidget {
             appBar: AppBar(
               title: Text(ChessFormatters.getGameModeTitle(gameMode)),
               actions: [
-                if (!state.isInteractive)
+                if (isReplayMode)
                   IconButton(
                     icon: const Icon(Icons.play_arrow),
                     tooltip: '从当前局面开始新对局',
@@ -354,6 +354,7 @@ class ChessBoardLayout extends StatelessWidget {
                   const SizedBox(height: ChessConstants.spacing),
                 ]).toList(),
                 ChessBoardGrid(boardSize: boardSize),
+                const SizedBox(height: ChessConstants.spacing),
               ],
             ),
           ),
@@ -371,7 +372,7 @@ class ChessBoardLayout extends StatelessWidget {
       ChessConstants.turnIndicatorHeight +
       ChessConstants.specialMoveHeight +
       ChessConstants.controlButtonsHeight +
-      ChessConstants.spacing * 4
+      ChessConstants.spacing * 5
     );
 
     return min(
