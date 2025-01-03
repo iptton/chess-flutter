@@ -107,37 +107,60 @@ class _ChessBoardView extends StatelessWidget {
         return WillPopScope(
           onWillPop: () async {
             // 如果有历史步数，且未结束显示确认对话框
-            if (!isReplayMode && state.moveHistory.isNotEmpty && !(state.isCheckmate || state.isStalemate)) {
+            if (!isReplayMode && state.moveHistory.isNotEmpty) {
+              bool shouldSave = true; // 默认勾选保存
               final shouldPop = await showDialog<bool>(
                 context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('退出对局'),
-                  content: const Text('当前对局尚未结束，确定要退出吗？'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      child: const Text('取消'),
+                builder: (context) => StatefulBuilder(
+                  builder: (context, setState) => AlertDialog(
+                    title: const Text('退出对局'),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('确定要退出吗？'),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: shouldSave,
+                              onChanged: (value) {
+                                setState(() {
+                                  shouldSave = value ?? true;
+                                });
+                              },
+                            ),
+                            const Text('保存当前棋局'),
+                          ],
+                        ),
+                      ],
                     ),
-                    TextButton(
-                      onPressed: () async {
-                        // 保存游戏历史
-                        if (state.moveHistory.isNotEmpty) {
-                          final history = GameHistory(
-                            id: GameHistoryService.generateGameId(),
-                            startTime: DateTime.now().subtract(Duration(minutes: state.moveHistory.length)), // 估算开始时间
-                            endTime: DateTime.now(),
-                            moves: state.moveHistory,
-                            winner: state.isCheckmate ? (state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white) : null,
-                            gameMode: gameMode,
-                            isCompleted: state.isCheckmate || state.isStalemate,
-                          );
-                          await GameHistoryService.saveGame(history);
-                        }
-                        Navigator.of(context).pop(true);
-                      },
-                      child: const Text('确定'),
-                    ),
-                  ],
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('取消'),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          // 如果选择保存，则保存游戏历史
+                          if (shouldSave && state.moveHistory.isNotEmpty) {
+                            final history = GameHistory(
+                              id: GameHistoryService.generateGameId(),
+                              startTime: DateTime.now().subtract(Duration(minutes: state.moveHistory.length)), // 估算开始时间
+                              endTime: DateTime.now(),
+                              moves: state.moveHistory,
+                              winner: state.isCheckmate ? (state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white) : null,
+                              gameMode: gameMode,
+                              isCompleted: state.isCheckmate || state.isStalemate,
+                            );
+                            await GameHistoryService.saveGame(history);
+                          }
+                          Navigator.of(context).pop(true);
+                        },
+                        child: const Text('确定'),
+                      ),
+                    ],
+                  ),
                 ),
               );
               return shouldPop ?? false;
@@ -263,7 +286,7 @@ class _ChessBoardView extends StatelessWidget {
     // 计算当前步数
     final currentStep = state.moveHistory.length - state.redoStates.length;
     final currentMoves = state.moveHistory.sublist(0, currentStep);
-    
+
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
