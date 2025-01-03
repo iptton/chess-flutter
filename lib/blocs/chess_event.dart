@@ -16,6 +16,9 @@ class InitializeGame extends ChessEvent {
   final PieceColor? allowedPlayer;
   final GameMode gameMode;
   final GameHistory? replayGame;
+  final List<List<ChessPiece?>>? initialBoard;
+  final PieceColor? initialPlayer;
+  final List<ChessMove>? initialMoves;
 
   const InitializeGame(
     this.hintMode, {
@@ -23,10 +26,13 @@ class InitializeGame extends ChessEvent {
     this.allowedPlayer,
     this.gameMode = GameMode.offline,
     this.replayGame,
+    this.initialBoard,
+    this.initialPlayer,
+    this.initialMoves,
   });
 
   @override
-  List<Object?> get props => [hintMode, isInteractive, allowedPlayer, gameMode, replayGame];
+  List<Object?> get props => [hintMode, isInteractive, allowedPlayer, gameMode, replayGame, initialBoard, initialPlayer, initialMoves];
 }
 
 class SelectPiece extends ChessEvent {

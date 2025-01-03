@@ -40,7 +40,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
         states.add(currentState);
       }
 
-      // 发出初始状态，将所有后续状态放入 redoStates
+      // 正常复盘模式
       emit(states[0].copyWith(
         moveHistory: event.replayGame!.moves,
         redoStates: states.sublist(1),
@@ -48,16 +48,56 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
         selectedPosition: null,
         validMoves: const [],
       ));
-    } else {
-      // 正常对局初始化
-      final initialState = await GameState.initialFromPrefs(
+      return;
+    }
+
+    if (event.initialBoard != null) {
+      // 从指定的棋盘状态开始
+      var state = GameState(
+        board: event.initialBoard!,
+        currentPlayer: event.initialPlayer ?? PieceColor.white,
+        hasKingMoved: const {
+          PieceColor.white: false,
+          PieceColor.black: false,
+        },
+        hasRookMoved: const {
+          PieceColor.white: const {'kingside': false, 'queenside': false},
+          PieceColor.black: const {'kingside': false, 'queenside': false},
+        },
+        lastPawnDoubleMoved: const {
+          PieceColor.white: null,
+          PieceColor.black: null,
+        },
+        lastPawnDoubleMovedNumber: const {
+          PieceColor.white: -1,
+          PieceColor.black: -1,
+        },
         hintMode: event.hintMode,
         isInteractive: event.isInteractive,
         allowedPlayer: event.allowedPlayer,
         gameMode: event.gameMode,
       );
-      emit(initialState);
+
+      // 如果有初始移动历史，应用这些移动
+      if (event.initialMoves != null) {
+        state = state.copyWith(
+          moveHistory: event.initialMoves!,
+          currentMoveNumber: event.initialMoves!.length,
+        );
+      }
+
+      emit(state);
+      return;
     }
+
+    // 从初始状态开始
+    final initialState = await GameState.initialFromPrefs(
+      hintMode: event.hintMode,
+      isInteractive: event.isInteractive,
+      allowedPlayer: event.allowedPlayer,
+      gameMode: event.gameMode,
+    );
+    emit(initialState);
   }
 
   Future<GameState> _applyMove(GameState state, ChessMove move) async {

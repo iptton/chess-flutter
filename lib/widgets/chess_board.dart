@@ -20,6 +20,9 @@ class ChessBoard extends StatelessWidget {
   final bool isInteractive;
   final PieceColor? allowedPlayer;
   final GameHistory? replayGame;
+  final List<List<ChessPiece?>>? initialBoard;
+  final PieceColor? initialPlayer;
+  final List<ChessMove>? initialMoves;
 
   const ChessBoard({
     super.key,
@@ -27,6 +30,9 @@ class ChessBoard extends StatelessWidget {
     this.isInteractive = true,
     this.allowedPlayer,
     this.replayGame,
+    this.initialBoard,
+    this.initialPlayer,
+    this.initialMoves,
   });
 
   @override
@@ -43,6 +49,9 @@ class ChessBoard extends StatelessWidget {
               allowedPlayer: allowedPlayer,
               gameMode: gameMode,
               replayGame: replayGame,
+              initialBoard: initialBoard,
+              initialPlayer: initialPlayer,
+              initialMoves: initialMoves,
             )),
           child: _ChessBoardView(
             gameMode: gameMode,
@@ -95,25 +104,10 @@ class _ChessBoardView extends StatelessWidget {
           });
         }
 
-        if (isReplayMode) {
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('对局复盘'),
-            ),
-            body: ChessBoardLayout(
-              topContent: [
-                _buildTurnIndicator(context),
-                _buildSpecialMoveIndicator(context),
-                _buildReplayControls(context, state),
-              ],
-            ),
-          );
-        }
-
         return WillPopScope(
           onWillPop: () async {
             // 如果有历史步数，且未结束显示确认对话框
-            if (state.moveHistory.isNotEmpty && !(state.isCheckmate || state.isStalemate)) {
+            if (!isReplayMode && state.moveHistory.isNotEmpty && !(state.isCheckmate || state.isStalemate)) {
               final shouldPop = await showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
@@ -152,7 +146,7 @@ class _ChessBoardView extends StatelessWidget {
           },
           child: Scaffold(
             appBar: AppBar(
-              title: Text(ChessFormatters.getGameModeTitle(gameMode)),
+              title: Text(isReplayMode ? '对局复盘' : ChessFormatters.getGameModeTitle(gameMode)),
               actions: [
                 if (isReplayMode)
                   IconButton(
@@ -166,7 +160,7 @@ class _ChessBoardView extends StatelessWidget {
               topContent: [
                 _buildTurnIndicator(context),
                 _buildSpecialMoveIndicator(context),
-                _buildGameControls(context),
+                _buildControls(context, state),
               ],
             ),
           ),
@@ -206,7 +200,7 @@ class _ChessBoardView extends StatelessWidget {
     );
   }
 
-  Widget _buildReplayControls(BuildContext context, GameState state) {
+  Widget _buildControls(BuildContext context, GameState state) {
     // 计算当前步数和总步数
     final totalSteps = state.moveHistory.length;
     final currentStep = totalSteps - state.redoStates.length;
@@ -217,109 +211,84 @@ class _ChessBoardView extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           ElevatedButton.icon(
-            onPressed: currentStep > 0
-                ? () => context.read<ChessBloc>().add(const UndoMove())
-                : null,
-            icon: const Icon(Icons.skip_previous),
-            label: const Text('上一步'),
+            onPressed: state.undoStates.isEmpty ? null : () {
+              context.read<ChessBloc>().add(const UndoMove());
+            },
+            icon: const Icon(Icons.undo),
+            label: Text(isReplayMode ? '上一步' : '前一步'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue[100],
               foregroundColor: Colors.black,
             ),
           ),
           const SizedBox(width: 20),
-          Text(
-            '$currentStep/$totalSteps',
-            style: const TextStyle(fontSize: 16),
-          ),
-          const SizedBox(width: 20),
+          if (isReplayMode)
+            Text(
+              '$currentStep/$totalSteps',
+              style: const TextStyle(fontSize: 16),
+            ),
+          if (isReplayMode)
+            const SizedBox(width: 20),
           ElevatedButton.icon(
-            onPressed: currentStep < totalSteps
-                ? () => context.read<ChessBloc>().add(const RedoMove())
-                : null,
-            icon: const Icon(Icons.skip_next),
-            label: const Text('下一步'),
+            onPressed: state.redoStates.isEmpty ? null : () {
+              context.read<ChessBloc>().add(const RedoMove());
+            },
+            icon: const Icon(Icons.redo),
+            label: Text(isReplayMode ? '下一步' : '后一步'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue[100],
               foregroundColor: Colors.black,
             ),
           ),
+          if (!isReplayMode) ...[
+            const SizedBox(width: 20),
+            ElevatedButton.icon(
+              onPressed: () {
+                context.read<ChessBloc>().add(const ToggleHintMode());
+              },
+              icon: Icon(state.hintMode ? Icons.lightbulb : Icons.lightbulb_outline),
+              label: Text(state.hintMode ? '关闭提示' : '开启提示'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: state.hintMode ? Colors.yellow[100] : Colors.grey[100],
+                foregroundColor: Colors.black,
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildGameControls(BuildContext context) {
-    return BlocBuilder<ChessBloc, GameState>(
-      builder: (context, state) {
-        return SizedBox(
-          height: ChessConstants.controlButtonsHeight,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton.icon(
-                onPressed: state.undoStates.isEmpty ? null : () {
-                  context.read<ChessBloc>().add(const UndoMove());
-                },
-                icon: const Icon(Icons.undo),
-                label: const Text('前一步'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[100],
-                  foregroundColor: Colors.black,
-                ),
-              ),
-              const SizedBox(width: 20),
-              ElevatedButton.icon(
-                onPressed: state.redoStates.isEmpty ? null : () {
-                  context.read<ChessBloc>().add(const RedoMove());
-                },
-                icon: const Icon(Icons.redo),
-                label: const Text('后一步'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[100],
-                  foregroundColor: Colors.black,
-                ),
-              ),
-              const SizedBox(width: 20),
-              ElevatedButton.icon(
-                onPressed: () {
-                  context.read<ChessBloc>().add(const ToggleHintMode());
-                },
-                icon: Icon(state.hintMode ? Icons.lightbulb : Icons.lightbulb_outline),
-                label: Text(state.hintMode ? '关闭提示' : '开启提示'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: state.hintMode ? Colors.yellow[100] : Colors.grey[100],
-                  foregroundColor: Colors.black,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   void _showNewGameDialog(BuildContext context, GameState state) {
+    // 计算当前步数
+    final currentStep = state.moveHistory.length - state.redoStates.length;
+    final currentMoves = state.moveHistory.sublist(0, currentStep);
+    
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('开始新对局'),
         content: const Text('是否要从当前局面开始新的对局？'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('取消'),
           ),
           TextButton(
             onPressed: () {
-              context.read<ChessBloc>().add(
-                StartNewGameFromCurrentPosition(
-                  gameMode: gameMode,
-                  isInteractive: true,
-                  allowedPlayer: null,
+              Navigator.pop(dialogContext); // 先关闭对话框
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChessBoard(
+                    gameMode: GameMode.faceToFace,
+                    initialBoard: state.board,
+                    initialPlayer: state.currentPlayer,
+                    isInteractive: true,
+                    initialMoves: currentMoves,
+                  ),
                 ),
               );
-              Navigator.pop(context);
             },
             child: const Text('确定'),
           ),
