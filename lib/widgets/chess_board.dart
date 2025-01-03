@@ -70,10 +70,31 @@ class _ChessBoardView extends StatelessWidget {
     this.allowedPlayer,
   });
 
+  Future<void> _saveGame(GameState state) async {
+    if (state.moveHistory.isNotEmpty) {
+      final history = GameHistory(
+        id: GameHistoryService.generateGameId(),
+        startTime: DateTime.now().subtract(Duration(minutes: state.moveHistory.length)), // 估算开始时间
+        endTime: DateTime.now(),
+        moves: state.moveHistory,
+        winner: state.isCheckmate ? (state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white) : null,
+        gameMode: gameMode,
+        isCompleted: state.isCheckmate || state.isStalemate,
+      );
+      await GameHistoryService.saveGame(history);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ChessBloc, GameState>(
       builder: (context, state) {
+        if ((state.isCheckmate || state.isStalemate) && !isReplayMode) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _saveGame(state);
+          });
+        }
+
         if (isReplayMode) {
           return Scaffold(
             appBar: AppBar(
@@ -91,8 +112,8 @@ class _ChessBoardView extends StatelessWidget {
 
         return WillPopScope(
           onWillPop: () async {
-            // 如果有历史步数，显示确认对话框
-            if (state.moveHistory.isNotEmpty) {
+            // 如果有历史步数，且未结束显示确认对话框
+            if (state.moveHistory.isNotEmpty && !(state.isCheckmate || state.isStalemate)) {
               final shouldPop = await showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
