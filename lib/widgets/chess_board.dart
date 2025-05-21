@@ -96,13 +96,31 @@ class _ChessBoardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ChessBloc, GameState>(
-      builder: (context, state) {
+    return BlocConsumer<ChessBloc, GameState>(
+      listener: (context, state) {
+        if (state.isPendingPromotion && state.promotionPosition != null) {
+          // Ensure the dialog is not already open, if necessary (e.g. by managing a local flag or checking ModalRoute.of(context)?.isCurrent != true)
+          // For simplicity, we call it directly here. If it can be called multiple times due to rapid state changes,
+          // a more robust check might be needed.
+          WidgetsBinding.instance.addPostFrameCallback((_) { // Ensure it's called after build
+            if (ModalRoute.of(context)?.isCurrent ?? false) { // Only show if current route is active
+                 showPromotionDialog(context, state.promotionPosition!);
+            }
+          });
+        }
         if ((state.isCheckmate || state.isStalemate) && !isReplayMode) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _saveGame(state);
           });
         }
+      },
+      builder: (context, state) {
+        // The check for game over and saving is now in the listener.
+        // if ((state.isCheckmate || state.isStalemate) && !isReplayMode) {
+        //   WidgetsBinding.instance.addPostFrameCallback((_) {
+        //     _saveGame(state);
+        //   });
+        // }
 
         return WillPopScope(
           onWillPop: () async {
@@ -567,24 +585,38 @@ class ChessSquare extends StatelessWidget {
 
   void _handleTap(BuildContext context, int row, int col) {
     final bloc = context.read<ChessBloc>();
+    final tappedPosition = Position(row: row, col: col);
 
-    if (state.selectedPosition != null) {
-      if (state.validMoves.any((pos) => pos.row == row && pos.col == col)) {
-        final from = state.selectedPosition!;
-        final to = Position(row: row, col: col);
-        final piece = state.board[from.row][from.col]!;
-
-        if (piece.type == PieceType.pawn && (row == 0 || row == 7)) {
-          bloc.add(MovePiece(from, to));
-          showPromotionDialog(context, to);
-        } else {
-          bloc.add(MovePiece(from, to));
-        }
-      } else {
-        bloc.add(SelectPiece(Position(row: row, col: col)));
+    if (state.selectedPosition == null) {
+      // No piece is currently selected, so select the tapped piece if it's the current player's.
+      final pieceOnTappedSquare = state.board[row][col];
+      if (pieceOnTappedSquare != null && pieceOnTappedSquare.color == state.currentPlayer) {
+        bloc.add(SelectPiece(tappedPosition));
       }
+      // If tapping an empty square or opponent's piece without selection, do nothing or clear selection (already handled by SelectPiece logic in BLoC if needed)
     } else {
-      bloc.add(SelectPiece(Position(row: row, col: col)));
+      // A piece is selected. Check if the tap is on a valid move.
+      if (state.validMoves.any((pos) => pos.row == row && pos.col == col)) {
+        bloc.add(MovePiece(state.selectedPosition!, tappedPosition));
+      } else {
+        // Tapped on a square that's not a valid move for the selected piece.
+        // Option 1: Deselect current piece if tapping the same selected piece again.
+        if (state.selectedPosition!.row == row && state.selectedPosition!.col == col) {
+          bloc.add(SelectPiece(tappedPosition)); // Or a dedicated DeselectPiece event if preferred
+        } else {
+        // Option 2: Select the new piece if it's the current player's, otherwise keep current selection or clear.
+          final pieceOnTappedSquare = state.board[row][col];
+          if (pieceOnTappedSquare != null && pieceOnTappedSquare.color == state.currentPlayer) {
+            bloc.add(SelectPiece(tappedPosition));
+          } else {
+            // Tapped on an empty square or an opponent's piece, not a valid move.
+            // Optionally, deselect by sending SelectPiece with current selectedPosition
+            // or a specific Deselect event, or do nothing to keep selection.
+            // For now, let's make it select the new piece if it's selectable, or clear.
+            bloc.add(SelectPiece(tappedPosition)); // This will clear if not selectable
+          }
+        }
+      }
     }
   }
 }
