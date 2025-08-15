@@ -50,5 +50,6 @@ flutter:
     - assets/images/black_queen.png
     - assets/images/black_bishop.png
     - assets/images/black_knight.png
-    - assets/images/black_rook.png
     - assets/images/black_pawn.png
+    - assets/images/black_rook.png
+    - assets/privacy/privacy.txt

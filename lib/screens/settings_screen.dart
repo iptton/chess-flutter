@@ -51,7 +51,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () async {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const WebPage(initialUrl: "https://your-web-content-url.com")),
+                MaterialPageRoute(builder: (context) => const WebPage(initialUrl: "https://chess.pan2017.cn/?privacy")),
               );
             },
           ),
