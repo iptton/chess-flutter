@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../models/chess_models.dart';
 import '../models/game_history.dart';
 import '../screens/game_screen.dart';
+import '../services/chess_ai.dart';
 
 // Events
 abstract class ReplayEvent {}
@@ -46,6 +47,7 @@ class ReplayState extends GameState {
     required super.gameMode,
   });
 
+  @override
   ReplayState copyWith({
     List<List<ChessPiece?>>? board,
     PieceColor? currentPlayer,
@@ -70,6 +72,9 @@ class ReplayState extends GameState {
     bool? isInteractive,
     PieceColor? allowedPlayer,
     GameMode? gameMode,
+    AIDifficulty? aiDifficulty,
+    PieceColor? aiColor,
+    bool? isAIThinking,
   }) {
     return ReplayState(
       board: board ?? this.board,

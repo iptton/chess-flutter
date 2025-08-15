@@ -28,6 +28,7 @@ dependencies:
     git:
       url: https://gitee.com/openharmony-sig/flutter_inappwebview.git
       path: "flutter_inappwebview"
+  chess: ^0.8.1
 
 dev_dependencies:
   flutter_test:
@@ -35,6 +36,7 @@ dev_dependencies:
   flutter_lints: ^2.0.0
   mockito: ^5.3.2
   build_runner: ^2.3.3
+  bloc_test: ^9.1.7
 
 flutter:
   uses-material-design: true

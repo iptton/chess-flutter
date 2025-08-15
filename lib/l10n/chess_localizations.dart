@@ -17,7 +17,7 @@ class ChessLocalizations {
       case 'zh':
         switch (gameMode) {
           case GameMode.offline:
-            return '单机对战';
+            return '单机对战 (人机)';
           case GameMode.online:
             return '联网对战';
           case GameMode.faceToFace:
@@ -26,7 +26,7 @@ class ChessLocalizations {
       case 'en':
         switch (gameMode) {
           case GameMode.offline:
-            return 'Offline Game';
+            return 'AI Game';
           case GameMode.online:
             return 'Online Game';
           case GameMode.faceToFace:

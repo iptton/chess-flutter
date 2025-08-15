@@ -5,7 +5,7 @@ class ChessFormatters {
   static String getGameModeTitle(GameMode gameMode) {
     switch (gameMode) {
       case GameMode.offline:
-        return '单机对战';
+        return '单机对战 (人机)';
       case GameMode.online:
         return '联网对战';
       case GameMode.faceToFace:

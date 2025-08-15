@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import '../models/chess_models.dart';
 import '../models/game_history.dart';
 import '../screens/game_screen.dart';
+import '../services/chess_ai.dart';
 
 abstract class ChessEvent extends Equatable {
   const ChessEvent();
@@ -19,6 +20,8 @@ class InitializeGame extends ChessEvent {
   final List<List<ChessPiece?>>? initialBoard;
   final PieceColor? initialPlayer;
   final List<ChessMove>? initialMoves;
+  final AIDifficulty? aiDifficulty;
+  final PieceColor? aiColor;
 
   const InitializeGame(
     this.hintMode, {
@@ -29,10 +32,12 @@ class InitializeGame extends ChessEvent {
     this.initialBoard,
     this.initialPlayer,
     this.initialMoves,
+    this.aiDifficulty,
+    this.aiColor,
   });
 
   @override
-  List<Object?> get props => [hintMode, isInteractive, allowedPlayer, gameMode, replayGame, initialBoard, initialPlayer, initialMoves];
+  List<Object?> get props => [hintMode, isInteractive, allowedPlayer, gameMode, replayGame, initialBoard, initialPlayer, initialMoves, aiDifficulty, aiColor];
 }
 
 class SelectPiece extends ChessEvent {
@@ -118,4 +123,19 @@ class SetGameMode extends ChessEvent {
   final GameMode gameMode;
 
   const SetGameMode(this.gameMode);
+}
+
+// 新增：AI移动事件
+class MakeAIMove extends ChessEvent {
+  const MakeAIMove();
+}
+
+// 新增：设置AI难度
+class SetAIDifficulty extends ChessEvent {
+  final AIDifficulty difficulty;
+
+  const SetAIDifficulty(this.difficulty);
+
+  @override
+  List<Object?> get props => [difficulty];
 }

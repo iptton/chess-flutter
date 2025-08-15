@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../screens/game_screen.dart';
-import '../services/settings_service.dart';
+import '../services/chess_ai.dart';
 
 enum PieceType {
   king,
@@ -202,6 +202,9 @@ class GameState extends Equatable {
   final bool isInteractive;
   final PieceColor? allowedPlayer;
   final GameMode gameMode;
+  final AIDifficulty? aiDifficulty;
+  final PieceColor? aiColor;
+  final bool isAIThinking;
 
   const GameState({
     required this.board,
@@ -225,6 +228,9 @@ class GameState extends Equatable {
     this.isInteractive = true,
     this.allowedPlayer,
     this.gameMode = GameMode.offline,
+    this.aiDifficulty,
+    this.aiColor,
+    this.isAIThinking = false,
   });
 
   GameState copyWith({
@@ -249,6 +255,9 @@ class GameState extends Equatable {
     bool? isInteractive,
     PieceColor? allowedPlayer,
     GameMode? gameMode,
+    AIDifficulty? aiDifficulty,
+    PieceColor? aiColor,
+    bool? isAIThinking,
   }) {
     return GameState(
       board: board ?? this.board,
@@ -272,6 +281,9 @@ class GameState extends Equatable {
       isInteractive: isInteractive ?? this.isInteractive,
       allowedPlayer: allowedPlayer ?? this.allowedPlayer,
       gameMode: gameMode ?? this.gameMode,
+      aiDifficulty: aiDifficulty ?? this.aiDifficulty,
+      aiColor: aiColor ?? this.aiColor,
+      isAIThinking: isAIThinking ?? this.isAIThinking,
     );
   }
 
@@ -280,6 +292,8 @@ class GameState extends Equatable {
     bool isInteractive = true,
     PieceColor? allowedPlayer,
     GameMode gameMode = GameMode.offline,
+    AIDifficulty? aiDifficulty,
+    PieceColor? aiColor,
   }) async {
     final board = List.generate(8, (row) {
       return List.generate(8, (col) {
@@ -310,6 +324,8 @@ class GameState extends Equatable {
       isInteractive: isInteractive,
       allowedPlayer: allowedPlayer,
       gameMode: gameMode,
+      aiDifficulty: aiDifficulty,
+      aiColor: aiColor,
     );
   }
 
@@ -391,5 +407,8 @@ class GameState extends Equatable {
     isInteractive,
     allowedPlayer,
     gameMode,
+    aiDifficulty,
+    aiColor,
+    isAIThinking,
   ];
 }

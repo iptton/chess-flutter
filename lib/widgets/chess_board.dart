@@ -10,6 +10,7 @@ import '../models/game_history.dart';
 import '../screens/game_screen.dart';
 import '../utils/chess_rules.dart';
 import '../services/settings_service.dart';
+import '../services/chess_ai.dart';
 import '../utils/chess_constants.dart';
 import '../utils/chess_formatters.dart';
 import '../services/game_history_service.dart';
@@ -23,6 +24,8 @@ class ChessBoard extends StatelessWidget {
   final List<List<ChessPiece?>>? initialBoard;
   final PieceColor? initialPlayer;
   final List<ChessMove>? initialMoves;
+  final AIDifficulty? aiDifficulty;
+  final PieceColor? aiColor;
 
   const ChessBoard({
     super.key,
@@ -33,6 +36,8 @@ class ChessBoard extends StatelessWidget {
     this.initialBoard,
     this.initialPlayer,
     this.initialMoves,
+    this.aiDifficulty,
+    this.aiColor,
   });
 
   @override
@@ -56,6 +61,8 @@ class ChessBoard extends StatelessWidget {
               initialBoard: initialBoard,
               initialPlayer: initialPlayer,
               initialMoves: initialMoves,
+              aiDifficulty: aiDifficulty,
+              aiColor: aiColor,
             )),
           child: _ChessBoardView(
             gameMode: gameMode,
@@ -199,12 +206,47 @@ class _ChessBoardView extends StatelessWidget {
   Widget _buildTurnIndicator(BuildContext context) {
     return BlocBuilder<ChessBloc, GameState>(
       builder: (context, state) {
-        return Text(
-          '当前回合: ${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}',
-          style: const TextStyle(fontSize: 20),
+        String turnText = '当前回合: ${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}';
+
+        // 如果是单机对战模式，显示AI状态
+        if (state.gameMode == GameMode.offline && state.aiColor != null) {
+          if (state.currentPlayer == state.aiColor) {
+            if (state.isAIThinking) {
+              turnText += ' (AI思考中...)';
+            } else {
+              turnText += ' (AI)';
+            }
+          } else {
+            turnText += ' (玩家)';
+          }
+        }
+
+        return Column(
+          children: [
+            Text(
+              turnText,
+              style: const TextStyle(fontSize: 20),
+            ),
+            if (state.gameMode == GameMode.offline && state.aiDifficulty != null)
+              Text(
+                'AI难度: ${_getDifficultyText(state.aiDifficulty!)}',
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              ),
+          ],
         );
       },
     );
+  }
+
+  String _getDifficultyText(AIDifficulty difficulty) {
+    switch (difficulty) {
+      case AIDifficulty.easy:
+        return '简单';
+      case AIDifficulty.medium:
+        return '中等';
+      case AIDifficulty.hard:
+        return '困难';
+    }
   }
 
   Widget _buildSpecialMoveIndicator(BuildContext context) {

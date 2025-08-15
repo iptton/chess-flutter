@@ -2,9 +2,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../models/chess_models.dart';
 import '../screens/game_screen.dart';
 import '../utils/chess_rules.dart';
+import '../services/chess_ai.dart';
 import 'chess_event.dart';
 
 class ChessBloc extends Bloc<ChessEvent, GameState> {
+  ChessAI? _chessAI;
+
   ChessBloc() : super(GameState.initial()) {
     on<InitializeGame>(_onInitializeGame);
     on<SelectPiece>(_onSelectPiece);
@@ -18,6 +21,8 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     on<StartNewGameFromCurrentPosition>(_onStartNewGameFromCurrentPosition);
     on<SetBoardInteractivity>(_onSetBoardInteractivity);
     on<SetGameMode>(_onSetGameMode);
+    on<MakeAIMove>(_onMakeAIMove);
+    on<SetAIDifficulty>(_onSetAIDifficulty);
   }
 
   void _onInitializeGame(InitializeGame event, Emitter<GameState> emit) async {
@@ -28,6 +33,8 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
         isInteractive: event.isInteractive,
         allowedPlayer: event.allowedPlayer,
         gameMode: event.gameMode,
+        aiDifficulty: event.aiDifficulty,
+        aiColor: event.aiColor,
       );
 
       // 生成所有中间状态
@@ -76,6 +83,8 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
         isInteractive: event.isInteractive,
         allowedPlayer: event.allowedPlayer,
         gameMode: event.gameMode,
+        aiDifficulty: event.aiDifficulty,
+        aiColor: event.aiColor,
       );
 
       // 如果有初始移动历史，应用这些移动
@@ -96,8 +105,19 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isInteractive: event.isInteractive,
       allowedPlayer: event.allowedPlayer,
       gameMode: event.gameMode,
+      aiDifficulty: event.aiDifficulty,
+      aiColor: event.aiColor,
     );
+
+    // 初始化AI（如果需要）
+    if (event.gameMode == GameMode.offline && event.aiDifficulty != null) {
+      _chessAI = ChessAI(difficulty: event.aiDifficulty!);
+    }
+
     emit(initialState);
+
+    // 检查是否需要AI先手
+    _checkForAIMove(emit);
   }
 
   Future<GameState> _applyMove(GameState state, ChessMove move) async {
@@ -189,12 +209,41 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
   }
 
   void _onMovePiece(MovePiece event, Emitter<GameState> emit) {
-    if (state.selectedPosition == null) return;
+    // 检查是否是AI移动（AI移动时不需要先选中棋子）
+    final isAIMove = state.isAIThinking ||
+                     (state.gameMode == GameMode.offline &&
+                      state.aiColor == state.currentPlayer);
 
-    final isValidMove = state.validMoves.any(
-      (pos) => pos.row == event.to.row && pos.col == event.to.col
-    );
-    if (!isValidMove) return;
+    if (!isAIMove && state.selectedPosition == null) {
+      return;
+    }
+
+    // 对于AI移动，我们需要验证移动是否合法
+    if (isAIMove) {
+      // 获取该位置棋子的合法移动
+      final piece = state.board[event.from.row][event.from.col];
+      if (piece == null || piece.color != state.currentPlayer) {
+        return;
+      }
+
+      // 使用chess规则验证移动
+      final validMoves = ChessRules.getValidMoves(state.board, event.from);
+      final isValidMove = validMoves.any(
+        (pos) => pos.row == event.to.row && pos.col == event.to.col
+      );
+
+      if (!isValidMove) {
+        return;
+      }
+    } else {
+      // 人类移动的原有逻辑
+      final isValidMove = state.validMoves.any(
+        (pos) => pos.row == event.to.row && pos.col == event.to.col
+      );
+      if (!isValidMove) {
+        return;
+      }
+    }
 
     final movingPiece = state.board[event.from.row][event.from.col]!;
     final capturedPiece = state.board[event.to.row][event.to.col];
@@ -306,7 +355,11 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isStalemate: isStalemate,
       undoStates: newUndoStates,
       redoStates: [], // 清空重做列表
+      isAIThinking: false, // 清除AI思考状态
     ));
+
+    // 检查是否需要AI移动
+    _checkForAIMove(emit);
   }
 
   bool _isPawnDoubleMove(ChessPiece movingPiece, MovePiece event) {
@@ -421,7 +474,11 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isStalemate: isStalemate,
       undoStates: newUndoStates,
       redoStates: [], // 清空重做列表
+      isAIThinking: false, // 清除AI思考状态
     ));
+
+    // 检查是否需要AI移动
+    _checkForAIMove(emit);
   }
 
   bool _isPawnPromotion(ChessPiece movingPiece, MovePiece event) {
@@ -444,11 +501,15 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     final newLastPawnDoubleMoved = Map<PieceColor, Position?>.from(state.lastPawnDoubleMoved);
     final newLastPawnDoubleMovedNumber = Map<PieceColor, int>.from(state.lastPawnDoubleMovedNumber);
 
+    // 切换玩家
+    final nextPlayer = state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white;
+
     // 保存当前状态到撤销列表
     final newUndoStates = List<GameState>.from(state.undoStates)..add(state);
 
     emit(state.copyWith(
       board: newBoard,
+      currentPlayer: nextPlayer,
       selectedPosition: null,
       validMoves: [],
       lastPawnDoubleMoved: newLastPawnDoubleMoved,
@@ -458,7 +519,11 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       lastMove: move,
       undoStates: newUndoStates,
       redoStates: [], // 清空重做列表
+      isAIThinking: false, // 清除AI思考状态
     ));
+
+    // 检查是否需要AI移动
+    _checkForAIMove(emit);
   }
 
   void _handleRegularMove(MovePiece event, ChessPiece movingPiece, ChessPiece? capturedPiece, List<List<ChessPiece?>> newBoard, Position? newLastPawnDoubleMoved, Emitter<GameState> emit) {
@@ -568,7 +633,11 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isStalemate: isStalemate,
       undoStates: newUndoStates,
       redoStates: [], // 清空重做列表
+      isAIThinking: false, // 清除AI思考状态
     ));
+
+    // 检查是否需要AI移动
+    _checkForAIMove(emit);
   }
 
   String _getPositionName(Position position) {
@@ -771,5 +840,98 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     emit(state.copyWith(
       gameMode: event.gameMode,
     ));
+  }
+
+  void _onMakeAIMove(
+    MakeAIMove event,
+    Emitter<GameState> emit,
+  ) async {
+    // 检查是否是AI的回合
+    if (state.gameMode != GameMode.offline ||
+        state.aiColor == null ||
+        state.currentPlayer != state.aiColor ||
+        state.isAIThinking ||
+        state.isCheckmate ||
+        state.isStalemate) {
+      return;
+    }
+
+    // 设置AI思考状态
+    emit(state.copyWith(isAIThinking: true));
+
+    try {
+      // 初始化AI（如果还没有初始化）
+      if (_chessAI == null || _chessAI!.difficulty != state.aiDifficulty) {
+        _chessAI = ChessAI(difficulty: state.aiDifficulty ?? AIDifficulty.medium);
+      }
+
+      // 获取AI移动
+      final aiMove = await _chessAI!.getBestMove(
+        state.board,
+        state.currentPlayer,
+        hasKingMoved: state.hasKingMoved,
+        hasRookMoved: state.hasRookMoved,
+        enPassantTarget: _getEnPassantTarget(state),
+        halfMoveClock: 0, // 简化处理
+        fullMoveNumber: (state.currentMoveNumber ~/ 2) + 1,
+      );
+
+      if (aiMove != null) {
+        // 执行AI移动
+        add(MovePiece(aiMove.from, aiMove.to));
+      } else {
+        // AI没有找到合法移动，清除思考状态
+        emit(state.copyWith(isAIThinking: false));
+      }
+    } catch (e) {
+      // AI移动失败，清除思考状态
+      emit(state.copyWith(isAIThinking: false));
+    }
+  }
+
+  void _onSetAIDifficulty(
+    SetAIDifficulty event,
+    Emitter<GameState> emit,
+  ) {
+    emit(state.copyWith(aiDifficulty: event.difficulty));
+    // 重新初始化AI
+    _chessAI = ChessAI(difficulty: event.difficulty);
+  }
+
+  /// 获取吃过路兵目标位置
+  Position? _getEnPassantTarget(GameState state) {
+    final opponentColor = state.currentPlayer == PieceColor.white
+        ? PieceColor.black
+        : PieceColor.white;
+
+    final lastPawnDoubleMoved = state.lastPawnDoubleMoved[opponentColor];
+    final lastPawnDoubleMovedNumber = state.lastPawnDoubleMovedNumber[opponentColor];
+
+    if (lastPawnDoubleMoved != null &&
+        lastPawnDoubleMovedNumber == state.currentMoveNumber - 1) {
+      // 计算吃过路兵的目标位置
+      final direction = opponentColor == PieceColor.white ? 1 : -1;
+      return Position(
+        row: lastPawnDoubleMoved.row + direction,
+        col: lastPawnDoubleMoved.col,
+      );
+    }
+
+    return null;
+  }
+
+  /// 检查是否应该触发AI移动
+  void _checkForAIMove(Emitter<GameState> emit) {
+    if (state.gameMode == GameMode.offline &&
+        state.aiColor != null &&
+        state.currentPlayer == state.aiColor &&
+        !state.isAIThinking &&
+        !state.isCheckmate &&
+        !state.isStalemate) {
+      // 延迟一点时间让UI更新，然后触发AI移动
+      Future.delayed(const Duration(milliseconds: 500), () {
+        add(const MakeAIMove());
+      });
+    }
   }
 }

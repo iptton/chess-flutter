@@ -1,6 +1,9 @@
 import '../models/chess_models.dart';
+import 'chess_adapter.dart';
 
+/// 使用 chess 包的新规则引擎
 class ChessRules {
+  /// 获取指定位置棋子的所有合法移动
   static List<Position> getValidMoves(
     List<List<ChessPiece?>> board,
     Position position, {
@@ -13,329 +16,55 @@ class ChessRules {
     final piece = board[position.row][position.col];
     if (piece == null) return [];
 
-    // 获取所有可能的移动
-    List<Position> possibleMoves;
-    switch (piece.type) {
-      case PieceType.pawn:
-        possibleMoves = _getPawnMoves(
-          board,
-          position,
-          piece.color,
-          lastPawnDoubleMoved: lastPawnDoubleMoved,
-          lastPawnDoubleMovedNumber: lastPawnDoubleMovedNumber,
-          currentMoveNumber: currentMoveNumber,
-        );
-        break;
-      case PieceType.rook:
-        possibleMoves = _getRookMoves(board, position, piece.color);
-        break;
-      case PieceType.knight:
-        possibleMoves = _getKnightMoves(board, position, piece.color);
-        break;
-      case PieceType.bishop:
-        possibleMoves = _getBishopMoves(board, position, piece.color);
-        break;
-      case PieceType.queen:
-        possibleMoves = _getQueenMoves(board, position, piece.color);
-        break;
-      case PieceType.king:
-        possibleMoves = _getKingMoves(
-          board,
-          position,
-          piece.color,
-          hasKingMoved: hasKingMoved,
-          hasRookMoved: hasRookMoved,
-        );
-        break;
-    }
-
-    // 检查每个移动是否会导致自己被将军
-    List<Position> legalMoves = [];
-    for (final move in possibleMoves) {
-      final newBoard = List<List<ChessPiece?>>.from(
-        board.map((row) => List<ChessPiece?>.from(row))
-      );
-
-      // 如果是吃过路兵，需要移除被吃的兵
-      if (piece.type == PieceType.pawn &&
-          lastPawnDoubleMoved != null &&
-          move.col == lastPawnDoubleMoved.col &&
-          (position.col - lastPawnDoubleMoved.col).abs() == 1) {
-        newBoard[lastPawnDoubleMoved.row][lastPawnDoubleMoved.col] = null;
-      }
-
-      newBoard[move.row][move.col] = newBoard[position.row][position.col];
-      newBoard[position.row][position.col] = null;
-
-      // 如果移动后自己不会被将军，这是一个合法移动
-      if (!isInCheck(newBoard, piece.color)) {
-        legalMoves.add(move);
-      }
-    }
-
-    return legalMoves;
-  }
-
-  static List<Position> _getPawnMoves(
-    List<List<ChessPiece?>> board,
-    Position position,
-    PieceColor color, {
-    Position? lastPawnDoubleMoved,
-    int? lastPawnDoubleMovedNumber,
-    int? currentMoveNumber,
-  }) {
-    List<Position> moves = [];
-    final direction = color == PieceColor.white ? -1 : 1;
-    final startRow = color == PieceColor.white ? 6 : 1;
-
-    // 前进一步
-    if (_isValidPosition(position.row + direction, position.col) &&
-        board[position.row + direction][position.col] == null) {
-      moves.add(Position(row: position.row + direction, col: position.col));
-
-      // 如果在起始位置，可以前进两步
-      if (position.row == startRow &&
-          _isValidPosition(position.row + 2 * direction, position.col) &&
-          board[position.row + 2 * direction][position.col] == null) {
-        moves.add(Position(row: position.row + 2 * direction, col: position.col));
-      }
-    }
-
-    // 常规吃子移动
-    for (final colOffset in [-1, 1]) {
-      final newRow = position.row + direction;
-      final newCol = position.col + colOffset;
-      if (_isValidPosition(newRow, newCol)) {
-        final targetPiece = board[newRow][newCol];
-        if (targetPiece != null && targetPiece.color != color) {
-          moves.add(Position(row: newRow, col: newCol));
-        }
-      }
-    }
-
-    // 吃过路兵
-    if (lastPawnDoubleMoved != null &&
-        lastPawnDoubleMovedNumber == currentMoveNumber! - 1 &&
-        position.row == (color == PieceColor.white ? 3 : 4) &&
-        (position.col - lastPawnDoubleMoved.col).abs() == 1 &&
-        board[lastPawnDoubleMoved.row][lastPawnDoubleMoved.col]?.type == PieceType.pawn &&
-        board[lastPawnDoubleMoved.row][lastPawnDoubleMoved.col]?.color != color) {
-      moves.add(Position(
-        row: position.row + direction,
+    // 计算吃过路兵目标位置
+    Position? enPassantTarget;
+    if (lastPawnDoubleMoved != null && 
+        lastPawnDoubleMovedNumber != null &&
+        currentMoveNumber != null &&
+        lastPawnDoubleMovedNumber == currentMoveNumber - 1) {
+      final direction = piece.color == PieceColor.white ? 1 : -1;
+      enPassantTarget = Position(
+        row: lastPawnDoubleMoved.row + direction,
         col: lastPawnDoubleMoved.col,
-      ));
+      );
     }
 
-    return moves;
+    // 使用 chess 包获取所有合法移动
+    final allMoves = ChessAdapter.getLegalMoves(
+      board,
+      piece.color,
+      hasKingMoved: hasKingMoved,
+      hasRookMoved: hasRookMoved,
+      enPassantTarget: enPassantTarget,
+      halfMoveClock: 0,
+      fullMoveNumber: (currentMoveNumber ?? 0) ~/ 2 + 1,
+    );
+
+    // 过滤出从指定位置开始的移动
+    return allMoves
+        .where((move) => move.from.row == position.row && move.from.col == position.col)
+        .map((move) => move.to)
+        .toList();
   }
 
-  static List<Position> _getRookMoves(
+  /// 检查指定颜色是否被将军
+  static bool isInCheck(
     List<List<ChessPiece?>> board,
-    Position position,
-    PieceColor color,
-  ) {
-    List<Position> moves = [];
-    final directions = [
-      [-1, 0], // 上
-      [1, 0],  // 下
-      [0, -1], // 左
-      [0, 1],  // 右
-    ];
-
-    for (final direction in directions) {
-      var currentRow = position.row;
-      var currentCol = position.col;
-
-      while (true) {
-        currentRow += direction[0];
-        currentCol += direction[1];
-
-        if (!_isValidPosition(currentRow, currentCol)) break;
-
-        final targetPiece = board[currentRow][currentCol];
-        if (targetPiece == null) {
-          moves.add(Position(row: currentRow, col: currentCol));
-        } else {
-          if (targetPiece.color != color) {
-            moves.add(Position(row: currentRow, col: currentCol));
-          }
-          break;
-        }
-      }
-    }
-
-    return moves;
-  }
-
-  static List<Position> _getKnightMoves(
-    List<List<ChessPiece?>> board,
-    Position position,
-    PieceColor color,
-  ) {
-    List<Position> moves = [];
-    final offsets = [
-      [-2, -1], [-2, 1], [-1, -2], [-1, 2],
-      [1, -2], [1, 2], [2, -1], [2, 1],
-    ];
-
-    for (final offset in offsets) {
-      final newRow = position.row + offset[0];
-      final newCol = position.col + offset[1];
-
-      if (_isValidPosition(newRow, newCol)) {
-        final targetPiece = board[newRow][newCol];
-        if (targetPiece == null || targetPiece.color != color) {
-          moves.add(Position(row: newRow, col: newCol));
-        }
-      }
-    }
-
-    return moves;
-  }
-
-  static List<Position> _getBishopMoves(
-    List<List<ChessPiece?>> board,
-    Position position,
-    PieceColor color,
-  ) {
-    List<Position> moves = [];
-    final directions = [
-      [-1, -1], // 左上
-      [-1, 1],  // 右上
-      [1, -1],  // 左下
-      [1, 1],   // 右下
-    ];
-
-    for (final direction in directions) {
-      var currentRow = position.row;
-      var currentCol = position.col;
-
-      while (true) {
-        currentRow += direction[0];
-        currentCol += direction[1];
-
-        if (!_isValidPosition(currentRow, currentCol)) break;
-
-        final targetPiece = board[currentRow][currentCol];
-        if (targetPiece == null) {
-          moves.add(Position(row: currentRow, col: currentCol));
-        } else {
-          if (targetPiece.color != color) {
-            moves.add(Position(row: currentRow, col: currentCol));
-          }
-          break;
-        }
-      }
-    }
-
-    return moves;
-  }
-
-  static List<Position> _getQueenMoves(
-    List<List<ChessPiece?>> board,
-    Position position,
-    PieceColor color,
-  ) {
-    var moves = _getRookMoves(board, position, color);
-    moves.addAll(_getBishopMoves(board, position, color));
-    return moves;
-  }
-
-  static List<Position> _getKingMoves(
-    List<List<ChessPiece?>> board,
-    Position position,
     PieceColor color, {
     Map<PieceColor, bool>? hasKingMoved,
     Map<PieceColor, Map<String, bool>>? hasRookMoved,
+    Position? enPassantTarget,
   }) {
-    List<Position> moves = [];
-    final directions = [
-      [-1, -1], [-1, 0], [-1, 1],
-      [0, -1],           [0, 1],
-      [1, -1],  [1, 0],  [1, 1],
-    ];
-
-    // 常规移动
-    for (final direction in directions) {
-      final newRow = position.row + direction[0];
-      final newCol = position.col + direction[1];
-
-      if (_isValidPosition(newRow, newCol)) {
-        final targetPiece = board[newRow][newCol];
-        if (targetPiece == null || targetPiece.color != color) {
-          moves.add(Position(row: newRow, col: newCol));
-        }
-      }
-    }
-
-    // 王车易位
-    if (hasKingMoved != null &&
-        hasRookMoved != null &&
-        !hasKingMoved[color]!) {
-      final row = color == PieceColor.white ? 7 : 0;
-
-      // 王翼易位
-      if (!hasRookMoved[color]!['kingside']! &&
-          board[row][5] == null &&
-          board[row][6] == null &&
-          board[row][7]?.type == PieceType.rook) {
-        moves.add(Position(row: row, col: 6));
-      }
-
-      // 后翼易位
-      if (!hasRookMoved[color]!['queenside']! &&
-          board[row][1] == null &&
-          board[row][2] == null &&
-          board[row][3] == null &&
-          board[row][0]?.type == PieceType.rook) {
-        moves.add(Position(row: row, col: 2));
-      }
-    }
-
-    return moves;
+    return ChessAdapter.isInCheck(
+      board,
+      color,
+      hasKingMoved: hasKingMoved,
+      hasRookMoved: hasRookMoved,
+      enPassantTarget: enPassantTarget,
+    );
   }
 
-  static bool _isValidPosition(int row, int col) {
-    return row >= 0 && row < 8 && col >= 0 && col < 8;
-  }
-
-  // 检查指定颜色的王是否被将军
-  static bool isInCheck(List<List<ChessPiece?>> board, PieceColor kingColor) {
-    // 找到王的位置
-    Position? kingPosition;
-    for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 8; col++) {
-        final piece = board[row][col];
-        if (piece?.type == PieceType.king && piece?.color == kingColor) {
-          kingPosition = Position(row: row, col: col);
-          break;
-        }
-      }
-      if (kingPosition != null) break;
-    }
-
-    if (kingPosition == null) return false;
-
-    // 检查对手的所有棋子是否可以攻击到王
-    final opponentColor = kingColor == PieceColor.white ? PieceColor.black : PieceColor.white;
-    for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 8; col++) {
-        final piece = board[row][col];
-        if (piece?.color == opponentColor) {
-          final moves = getValidMovesWithoutCheckingCheck(
-            board,
-            Position(row: row, col: col),
-          );
-          if (moves.any((pos) => pos.row == kingPosition!.row && pos.col == kingPosition.col)) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  // 检查指定颜色是否被将死
+  /// 检查指定颜色是否被将死
   static bool isCheckmate(
     List<List<ChessPiece?>> board,
     PieceColor color,
@@ -345,43 +74,32 @@ class ChessRules {
     Map<PieceColor, int> lastPawnDoubleMovedNumber,
     int currentMoveNumber,
   ) {
-    // 如果没有被将军，就不可能被将死
-    if (!isInCheck(board, color)) return false;
-
-    // 检查所有己方棋子的所有可能移动
-    for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 8; col++) {
-        final piece = board[row][col];
-        if (piece?.color == color) {
-          final moves = getValidMoves(
-            board,
-            Position(row: row, col: col),
-            hasKingMoved: hasKingMoved,
-            hasRookMoved: hasRookMoved,
-            lastPawnDoubleMoved: lastPawnDoubleMoved[color == PieceColor.white ? PieceColor.black : PieceColor.white],
-            lastPawnDoubleMovedNumber: lastPawnDoubleMovedNumber[color == PieceColor.white ? PieceColor.black : PieceColor.white],
-            currentMoveNumber: currentMoveNumber,
-          );
-
-          // 对于每个可能的移动，检查是否能解除将军
-          for (final move in moves) {
-            final newBoard = List<List<ChessPiece?>>.from(
-              board.map((row) => List<ChessPiece?>.from(row))
-            );
-            newBoard[move.row][move.col] = newBoard[row][col];
-            newBoard[row][col] = null;
-
-            if (!isInCheck(newBoard, color)) {
-              return false;  // 找到一个可以解除将军的移动，不是将死
-            }
-          }
-        }
-      }
+    // 计算吃过路兵目标位置
+    Position? enPassantTarget;
+    final opponentColor = color == PieceColor.white ? PieceColor.black : PieceColor.white;
+    final lastPawnPos = lastPawnDoubleMoved[opponentColor];
+    final lastPawnMoveNum = lastPawnDoubleMovedNumber[opponentColor];
+    
+    if (lastPawnPos != null && 
+        lastPawnMoveNum != null &&
+        lastPawnMoveNum == currentMoveNumber - 1) {
+      final direction = opponentColor == PieceColor.white ? 1 : -1;
+      enPassantTarget = Position(
+        row: lastPawnPos.row + direction,
+        col: lastPawnPos.col,
+      );
     }
-    return true;  // 没有找到任何可以解除将军的移动，是将死
+
+    return ChessAdapter.isCheckmate(
+      board,
+      color,
+      hasKingMoved: hasKingMoved,
+      hasRookMoved: hasRookMoved,
+      enPassantTarget: enPassantTarget,
+    );
   }
 
-  // 检查是否是和棋（无子可动）
+  /// 检查指定颜色是否和棋（逼和）
   static bool isStalemate(
     List<List<ChessPiece?>> board,
     PieceColor color,
@@ -391,53 +109,113 @@ class ChessRules {
     Map<PieceColor, int> lastPawnDoubleMovedNumber,
     int currentMoveNumber,
   ) {
-    // 如果被将军，就不是和棋
-    if (isInCheck(board, color)) return false;
-
-    // 检查是否有任何合法移动
-    for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 8; col++) {
-        final piece = board[row][col];
-        if (piece?.color == color) {
-          final moves = getValidMoves(
-            board,
-            Position(row: row, col: col),
-            hasKingMoved: hasKingMoved,
-            hasRookMoved: hasRookMoved,
-            lastPawnDoubleMoved: lastPawnDoubleMoved[color == PieceColor.white ? PieceColor.black : PieceColor.white],
-            lastPawnDoubleMovedNumber: lastPawnDoubleMovedNumber[color == PieceColor.white ? PieceColor.black : PieceColor.white],
-            currentMoveNumber: currentMoveNumber,
-          );
-          if (moves.isNotEmpty) {
-            return false;  // 找到一个合法移动，不是和棋
-          }
-        }
-      }
+    // 计算吃过路兵目标位置
+    Position? enPassantTarget;
+    final opponentColor = color == PieceColor.white ? PieceColor.black : PieceColor.white;
+    final lastPawnPos = lastPawnDoubleMoved[opponentColor];
+    final lastPawnMoveNum = lastPawnDoubleMovedNumber[opponentColor];
+    
+    if (lastPawnPos != null && 
+        lastPawnMoveNum != null &&
+        lastPawnMoveNum == currentMoveNumber - 1) {
+      final direction = opponentColor == PieceColor.white ? 1 : -1;
+      enPassantTarget = Position(
+        row: lastPawnPos.row + direction,
+        col: lastPawnPos.col,
+      );
     }
-    return true;  // 没有任何合法移动，是和棋
+
+    return ChessAdapter.isStalemate(
+      board,
+      color,
+      hasKingMoved: hasKingMoved,
+      hasRookMoved: hasRookMoved,
+      enPassantTarget: enPassantTarget,
+    );
   }
 
-  // 获取所有可能的移动，不检查是否会导致自己被将军
+  /// 检查游戏是否结束
+  static bool isGameOver(
+    List<List<ChessPiece?>> board,
+    PieceColor color, {
+    Map<PieceColor, bool>? hasKingMoved,
+    Map<PieceColor, Map<String, bool>>? hasRookMoved,
+    Position? enPassantTarget,
+  }) {
+    return ChessAdapter.isGameOver(
+      board,
+      color,
+      hasKingMoved: hasKingMoved,
+      hasRookMoved: hasRookMoved,
+      enPassantTarget: enPassantTarget,
+    );
+  }
+
+  /// 获取所有可能的移动，不检查是否会导致自己被将军
+  /// 这个方法保持向后兼容性
   static List<Position> getValidMovesWithoutCheckingCheck(
     List<List<ChessPiece?>> board,
     Position position,
   ) {
-    final piece = board[position.row][position.col];
-    if (piece == null) return [];
+    // 使用新的方法，但不进行将军检查
+    // 注意：chess 包总是会检查将军，所以这个方法实际上和 getValidMoves 相同
+    return getValidMoves(board, position);
+  }
 
-    switch (piece.type) {
-      case PieceType.pawn:
-        return _getPawnMoves(board, position, piece.color);
-      case PieceType.rook:
-        return _getRookMoves(board, position, piece.color);
-      case PieceType.knight:
-        return _getKnightMoves(board, position, piece.color);
-      case PieceType.bishop:
-        return _getBishopMoves(board, position, piece.color);
-      case PieceType.queen:
-        return _getQueenMoves(board, position, piece.color);
-      case PieceType.king:
-        return _getKingMoves(board, position, piece.color);
-    }
+  /// 检查指定位置是否有效（在棋盘范围内）
+  static bool isValidPosition(int row, int col) {
+    return row >= 0 && row < 8 && col >= 0 && col < 8;
+  }
+
+  /// 获取所有合法移动（包含详细移动信息）
+  static List<ChessMove> getAllLegalMoves(
+    List<List<ChessPiece?>> board,
+    PieceColor color, {
+    Map<PieceColor, bool>? hasKingMoved,
+    Map<PieceColor, Map<String, bool>>? hasRookMoved,
+    Position? enPassantTarget,
+    int halfMoveClock = 0,
+    int fullMoveNumber = 1,
+  }) {
+    return ChessAdapter.getLegalMoves(
+      board,
+      color,
+      hasKingMoved: hasKingMoved,
+      hasRookMoved: hasRookMoved,
+      enPassantTarget: enPassantTarget,
+      halfMoveClock: halfMoveClock,
+      fullMoveNumber: fullMoveNumber,
+    );
+  }
+
+  /// 验证移动是否合法
+  static bool isValidMove(
+    List<List<ChessPiece?>> board,
+    Position from,
+    Position to, {
+    Map<PieceColor, bool>? hasKingMoved,
+    Map<PieceColor, Map<String, bool>>? hasRookMoved,
+    Position? enPassantTarget,
+  }) {
+    final piece = board[from.row][from.col];
+    if (piece == null) return false;
+
+    final validMoves = getValidMoves(
+      board,
+      from,
+      hasKingMoved: hasKingMoved,
+      hasRookMoved: hasRookMoved,
+    );
+
+    return validMoves.any((pos) => pos.row == to.row && pos.col == to.col);
+  }
+
+  /// 获取棋子在指定位置的攻击范围（不考虑将军）
+  static List<Position> getAttackingSquares(
+    List<List<ChessPiece?>> board,
+    Position position,
+  ) {
+    // 这个方法主要用于UI显示，使用简化实现
+    return getValidMovesWithoutCheckingCheck(board, position);
   }
 }
