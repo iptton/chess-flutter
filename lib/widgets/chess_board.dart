@@ -40,7 +40,11 @@ class ChessBoard extends StatelessWidget {
     return FutureBuilder<bool>(
       future: SettingsService.getDefaultHintMode(),
       builder: (context, snapshot) {
-        final defaultHintMode = snapshot.data ?? false;
+        // 修复：在未拿到设置前不要初始化对局，避免默认使用 false
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final defaultHintMode = snapshot.data!;
         return BlocProvider(
           create: (context) => ChessBloc()
             ..add(InitializeGame(
