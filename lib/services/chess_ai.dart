@@ -143,32 +143,41 @@ class ChessAI {
     return ChessAdapter.fromChessLibMove(bestMove, chess);
   }
 
-  /// 简单难度：主要随机选择，偶尔选择好的移动
+  /// 简单难度：使用浅层搜索，带较多随机性
   chess_lib.Move _getEasyMove(chess_lib.Chess chess, List<chess_lib.Move> moves) {
-    // 30% 概率选择最佳移动，70% 概率随机选择
-    if (_random.nextDouble() < 0.3) {
-      return _minimax(chess, 1, true, double.negativeInfinity, double.infinity).move!;
-    } else {
-      return moves[_random.nextInt(moves.length)];
-    }
-  }
-
-  /// 中等难度：使用浅层搜索，带一些随机性
-  chess_lib.Move _getMediumMove(chess_lib.Chess chess, List<chess_lib.Move> moves) {
     final result = _minimax(chess, 2, true, double.negativeInfinity, double.infinity);
-    
-    // 10% 概率选择次优移动增加变化
-    if (_random.nextDouble() < 0.1 && moves.length > 1) {
-      moves.shuffle(_random);
-      return moves.first;
+
+    // 20% 概率选择次优移动增加变化
+    if (_random.nextDouble() < 0.2 && moves.length > 1) {
+      // 获取前几个较好的移动
+      final evaluatedMoves = <_EvaluatedMove>[];
+      for (final move in moves.take(10)) { // 只评估前10个移动以节省时间
+        chess.make_move(move);
+        final score = _evaluatePosition(chess);
+        chess.undo_move();
+        evaluatedMoves.add(_EvaluatedMove(move, score));
+      }
+
+      // 按分数排序
+      evaluatedMoves.sort((a, b) => b.score.compareTo(a.score));
+
+      // 从前3个移动中随机选择
+      final topMoves = evaluatedMoves.take(3).toList();
+      return topMoves[_random.nextInt(topMoves.length)].move;
     }
-    
+
     return result.move!;
   }
 
-  /// 困难难度：使用较深搜索，很少随机性
+  /// 中等难度：使用中等深度搜索
+  chess_lib.Move _getMediumMove(chess_lib.Chess chess, List<chess_lib.Move> moves) {
+    final result = _minimax(chess, 3, true, double.negativeInfinity, double.infinity);
+    return result.move!;
+  }
+
+  /// 困难难度：使用较深搜索
   chess_lib.Move _getHardMove(chess_lib.Chess chess, List<chess_lib.Move> moves) {
-    final depth = moves.length > 30 ? 3 : 4; // 根据移动数量调整深度
+    final depth = moves.length > 35 ? 4 : 5; // 根据移动数量调整深度
     final result = _minimax(chess, depth, true, double.negativeInfinity, double.infinity);
     return result.move!;
   }
@@ -227,41 +236,48 @@ class ChessAI {
     }
   }
 
-  /// 评估当前局面
+  /// 评估当前局面（从当前玩家的视角）
   double _evaluatePosition(chess_lib.Chess chess) {
     if (chess.in_checkmate) {
-      return chess.turn == chess_lib.Color.WHITE ? -9999 : 9999;
+      return -9999; // 当前玩家被将死是最坏的结果
     }
-    
+
     if (chess.in_stalemate || chess.in_draw) {
       return 0;
     }
 
     double score = 0;
+    final currentPlayer = chess.turn;
 
     // 计算材料价值和位置价值
     for (int square = 0; square < 64; square++) {
       final piece = chess.board[square];
       if (piece != null) {
         final pieceValue = _getPieceValue(piece, square);
-        score += piece.color == chess_lib.Color.WHITE ? pieceValue : -pieceValue;
+        // 从当前玩家视角评估：己方棋子为正，对方棋子为负
+        if (piece.color == currentPlayer) {
+          score += pieceValue;
+        } else {
+          score -= pieceValue;
+        }
       }
     }
 
     // 移动能力评估
-    final whiteMoves = chess.turn == chess_lib.Color.WHITE 
-        ? chess.generate_moves().length 
-        : _countMoves(chess, chess_lib.Color.WHITE);
-    final blackMoves = chess.turn == chess_lib.Color.BLACK 
-        ? chess.generate_moves().length 
-        : _countMoves(chess, chess_lib.Color.BLACK);
-    
-    score += (whiteMoves - blackMoves) * 10;
+    final currentPlayerMoves = chess.generate_moves().length;
+    final opponentMoves = _countMoves(chess, currentPlayer == chess_lib.Color.WHITE
+        ? chess_lib.Color.BLACK
+        : chess_lib.Color.WHITE);
+
+    score += (currentPlayerMoves - opponentMoves) * 10;
 
     // 王的安全性
     if (chess.in_check) {
-      score += chess.turn == chess_lib.Color.WHITE ? -50 : 50;
+      score -= 50; // 被将军是不好的
     }
+
+    // 控制中心的奖励
+    score += _evaluateCenterControl(chess, currentPlayer);
 
     return score;
   }
@@ -309,6 +325,27 @@ class ChessAI {
     chess.turn = originalTurn;
     return moveCount;
   }
+
+  /// 评估中心控制
+  double _evaluateCenterControl(chess_lib.Chess chess, chess_lib.Color color) {
+    double score = 0;
+
+    // 中心四格：e4, e5, d4, d5
+    final centerSquares = [28, 29, 36, 37]; // chess库中的方格编号
+
+    for (final square in centerSquares) {
+      final piece = chess.board[square];
+      if (piece != null) {
+        if (piece.color == color) {
+          score += piece.type == chess_lib.Chess.PAWN ? 20 : 10;
+        } else {
+          score -= piece.type == chess_lib.Chess.PAWN ? 20 : 10;
+        }
+      }
+    }
+
+    return score;
+  }
 }
 
 /// Minimax算法结果
@@ -317,4 +354,12 @@ class _MinimaxResult {
   final chess_lib.Move? move;
 
   _MinimaxResult(this.score, this.move);
+}
+
+/// 评估过的移动
+class _EvaluatedMove {
+  final chess_lib.Move move;
+  final double score;
+
+  _EvaluatedMove(this.move, this.score);
 }

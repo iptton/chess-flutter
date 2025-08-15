@@ -1,5 +1,4 @@
 import { FlutterEngine, Log } from '@ohos/flutter_ohos';
-import InAppWebViewFlutterPlugin from 'flutter_inappwebview_ohos';
 import FluttertoastPlugin from 'fluttertoast';
 import SharedPreferencesPlugin from 'shared_preferences_ohos';
 
@@ -15,7 +14,6 @@ export class GeneratedPluginRegistrant {
 
   static registerWith(flutterEngine: FlutterEngine) {
     try {
-      flutterEngine.getPlugins()?.add(new InAppWebViewFlutterPlugin());
       flutterEngine.getPlugins()?.add(new FluttertoastPlugin());
       flutterEngine.getPlugins()?.add(new SharedPreferencesPlugin());
     } catch (e) {
