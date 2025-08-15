@@ -24,6 +24,10 @@ dependencies:
     git:
       url: "https://gitee.com/openharmony-sig/flutter_fluttertoast.git"
   intl: ^0.18.1
+  flutter_inappwebview:
+    git:
+      url: https://gitee.com/openharmony-sig/flutter_inappwebview.git
+      path: "flutter_inappwebview"
 
 dev_dependencies:
   flutter_test:

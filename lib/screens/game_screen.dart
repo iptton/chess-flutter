@@ -23,20 +23,20 @@ class GameScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildGameButton(
-              context,
-              '单机对战（开发中）',
-              Icons.person,
-              () => _startGame(context, GameMode.offline),
-            ),
-            const SizedBox(height: 16),
-            _buildGameButton(
-              context,
-              '联网对战（开发中）',
-              Icons.cloud,
-              () => _startGame(context, GameMode.online),
-            ),
-            const SizedBox(height: 16),
+            // _buildGameButton(
+            //   context,
+            //   '单机对战（开发中）',
+            //   Icons.person,
+            //   () => _startGame(context, GameMode.offline),
+            // ),
+            // const SizedBox(height: 16),
+            // _buildGameButton(
+            //   context,
+            //   '联网对战（开发中）',
+            //   Icons.cloud,
+            //   () => _startGame(context, GameMode.online),
+            // ),
+            // const SizedBox(height: 16),
             _buildGameButton(
               context,
               '面对面对战',
