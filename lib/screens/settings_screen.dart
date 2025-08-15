@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/settings_service.dart';
-import '../widgets/web_view_page.dart';
+import '../widgets/privacy_page.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -51,7 +51,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () async {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const WebPage(initialUrl: "https://chess.pan2017.cn/?privacy")),
+                MaterialPageRoute(builder: (context) => const PrivacyPage()),
               );
             },
           ),

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:testflutter/widgets/privacy_content.dart';
 
 class PrivacyDialog extends StatefulWidget {
   final FutureOr<void> Function() onAccept;
@@ -36,7 +37,7 @@ class _PrivacyDialogState extends State<PrivacyDialog> {
       if (text.trim().isEmpty) {
         throw Exception('隐私文本为空');
       }
-      final widgets = _buildWidgetsFromText(text);
+      final widgets = PrivacyTextParser.buildWidgetsFromText(text);
       if (!mounted) return;
       setState(() {
         _content = widgets;
@@ -49,77 +50,6 @@ class _PrivacyDialogState extends State<PrivacyDialog> {
         _loading = false;
       });
     }
-  }
-
-  List<Widget> _buildWidgetsFromText(String text) {
-    final lines = text.replaceAll('\r\n', '\n').split('\n');
-    final children = <Widget>[];
-
-    final buffer = StringBuffer();
-    void flushParagraph() {
-      final para = buffer.toString().trim();
-      if (para.isNotEmpty) {
-        children.add(
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(para, style: const TextStyle(fontSize: 14, height: 1.5)),
-          ),
-        );
-      }
-      buffer.clear();
-    }
-
-    for (final raw in lines) {
-      final line = raw.trimRight();
-      if (line.trim().isEmpty) {
-        flushParagraph();
-        continue;
-      }
-      // 简单识别标题与列表
-      if (RegExp(r'^#{1,3}\s').hasMatch(line)) {
-        flushParagraph();
-        // 统计前导 # 数量（1~3）
-        int level = 0;
-        while (level < line.length && line[level] == '#') {
-          level++;
-        }
-        final title = line.replaceFirst(RegExp(r'^#{1,3}\s*'), '');
-        final size = level == 1 ? 20.0 : (level == 2 ? 18.0 : 16.0);
-        final weight = level == 1 ? FontWeight.w700 : FontWeight.w600;
-        children.add(
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(title, style: TextStyle(fontSize: size, fontWeight: weight)),
-          ),
-        );
-        continue;
-      }
-      if (RegExp(r'^(\d+\.|[-•])\s').hasMatch(line)) {
-        flushParagraph();
-        final bullet = RegExp(r'^(\d+\.|[-•])\s').firstMatch(line)!.group(1)!;
-        final content = line.replaceFirst(RegExp(r'^(\d+\.|[-•])\s'), '');
-        children.add(
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(bullet + ' ', style: const TextStyle(fontSize: 14)),
-                Expanded(child: Text(content, style: const TextStyle(fontSize: 14, height: 1.5))),
-              ],
-            ),
-          ),
-        );
-        continue;
-      }
-      buffer.writeln(line);
-    }
-    flushParagraph();
-
-    if (children.isEmpty) {
-      children.add(Text(text, style: const TextStyle(fontSize: 14, height: 1.5)));
-    }
-    return children;
   }
 
   @override
