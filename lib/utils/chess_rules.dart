@@ -50,39 +50,29 @@ class ChessRules {
     }
 
     // 检查每个移动是否会导致自己被将军
-    return _filterLegalMoves(board, position, piece, possibleMoves, lastPawnDoubleMoved);
-  }
-
-  static List<Position> _filterLegalMoves(
-    List<List<ChessPiece?>> board,
-    Position piecePosition,
-    ChessPiece piece,
-    List<Position> possibleMoves,
-    Position? lastPawnDoubleMoved,
-  ) {
     List<Position> legalMoves = [];
     for (final move in possibleMoves) {
       final newBoard = List<List<ChessPiece?>>.from(
         board.map((row) => List<ChessPiece?>.from(row))
       );
 
-      // Simulate the move
-      newBoard[move.row][move.col] = piece;
-      newBoard[piecePosition.row][piecePosition.col] = null;
-
-      // If it's an en passant capture, remove the captured pawn
+      // 如果是吃过路兵，需要移除被吃的兵
       if (piece.type == PieceType.pawn &&
           lastPawnDoubleMoved != null &&
           move.col == lastPawnDoubleMoved.col &&
-          move.row == (piece.color == PieceColor.white ? lastPawnDoubleMoved.row - 1 : lastPawnDoubleMoved.row + 1) &&
-          (piecePosition.col - lastPawnDoubleMoved.col).abs() == 1) {
+          (position.col - lastPawnDoubleMoved.col).abs() == 1) {
         newBoard[lastPawnDoubleMoved.row][lastPawnDoubleMoved.col] = null;
       }
-      
+
+      newBoard[move.row][move.col] = newBoard[position.row][position.col];
+      newBoard[position.row][position.col] = null;
+
+      // 如果移动后自己不会被将军，这是一个合法移动
       if (!isInCheck(newBoard, piece.color)) {
         legalMoves.add(move);
       }
     }
+
     return legalMoves;
   }
 
@@ -95,45 +85,23 @@ class ChessRules {
     int? currentMoveNumber,
   }) {
     List<Position> moves = [];
-    _addPawnForwardMoves(board, position, color, moves);
-    _addPawnCaptureMoves(board, position, color, moves);
-    _addEnPassantMoves(board, position, color, lastPawnDoubleMoved, lastPawnDoubleMovedNumber, currentMoveNumber, moves);
-    return moves;
-  }
-
-  static void _addPawnForwardMoves(
-    List<List<ChessPiece?>> board,
-    Position position,
-    PieceColor color,
-    List<Position> moves,
-  ) {
     final direction = color == PieceColor.white ? -1 : 1;
     final startRow = color == PieceColor.white ? 6 : 1;
 
-    // Forward one step
-    final oneStepForwardRow = position.row + direction;
-    if (_isValidPosition(oneStepForwardRow, position.col) &&
-        board[oneStepForwardRow][position.col] == null) {
-      moves.add(Position(row: oneStepForwardRow, col: position.col));
+    // 前进一步
+    if (_isValidPosition(position.row + direction, position.col) &&
+        board[position.row + direction][position.col] == null) {
+      moves.add(Position(row: position.row + direction, col: position.col));
 
-      // Forward two steps from start
-      if (position.row == startRow) {
-        final twoStepsForwardRow = position.row + 2 * direction;
-        if (_isValidPosition(twoStepsForwardRow, position.col) &&
-            board[twoStepsForwardRow][position.col] == null) {
-          moves.add(Position(row: twoStepsForwardRow, col: position.col));
-        }
+      // 如果在起始位置，可以前进两步
+      if (position.row == startRow &&
+          _isValidPosition(position.row + 2 * direction, position.col) &&
+          board[position.row + 2 * direction][position.col] == null) {
+        moves.add(Position(row: position.row + 2 * direction, col: position.col));
       }
     }
-  }
-  
-  static void _addPawnCaptureMoves(
-    List<List<ChessPiece?>> board,
-    Position position,
-    PieceColor color,
-    List<Position> moves,
-  ) {
-    final direction = color == PieceColor.white ? -1 : 1;
+
+    // 常规吃子移动
     for (final colOffset in [-1, 1]) {
       final newRow = position.row + direction;
       final newCol = position.col + colOffset;
@@ -144,40 +112,21 @@ class ChessRules {
         }
       }
     }
-  }
 
-  static void _addEnPassantMoves(
-    List<List<ChessPiece?>> board,
-    Position position,
-    PieceColor color,
-    Position? lastPawnDoubleMoved,
-    int? lastPawnDoubleMovedNumber,
-    int? currentMoveNumber,
-    List<Position> moves,
-  ) {
-    if (lastPawnDoubleMoved == null || lastPawnDoubleMovedNumber == null || currentMoveNumber == null) {
-      return;
-    }
-    if (lastPawnDoubleMovedNumber != currentMoveNumber - 1) {
-      return;
-    }
-
-    final direction = color == PieceColor.white ? -1 : 1;
-    final enPassantRow = color == PieceColor.white ? 3 : 4; // Row where the current pawn must be
-
-    if (position.row == enPassantRow &&
+    // 吃过路兵
+    if (lastPawnDoubleMoved != null &&
+        lastPawnDoubleMovedNumber == currentMoveNumber! - 1 &&
+        position.row == (color == PieceColor.white ? 3 : 4) &&
         (position.col - lastPawnDoubleMoved.col).abs() == 1 &&
-        lastPawnDoubleMoved.row == enPassantRow) { // Opponent's pawn must be on the same rank
-        // Target square for en passant capture
-        final targetRow = position.row + direction;
-        final targetCol = lastPawnDoubleMoved.col;
-        
-        // Check if the opponent's piece that double-stepped is actually a pawn and of opponent color
-        final opponentPawn = board[lastPawnDoubleMoved.row][lastPawnDoubleMoved.col];
-        if (opponentPawn != null && opponentPawn.type == PieceType.pawn && opponentPawn.color != color) {
-             moves.add(Position(row: targetRow, col: targetCol));
-        }
+        board[lastPawnDoubleMoved.row][lastPawnDoubleMoved.col]?.type == PieceType.pawn &&
+        board[lastPawnDoubleMoved.row][lastPawnDoubleMoved.col]?.color != color) {
+      moves.add(Position(
+        row: position.row + direction,
+        col: lastPawnDoubleMoved.col,
+      ));
     }
+
+    return moves;
   }
 
   static List<Position> _getRookMoves(
@@ -300,23 +249,13 @@ class ChessRules {
     Map<PieceColor, Map<String, bool>>? hasRookMoved,
   }) {
     List<Position> moves = [];
-    _addStandardKingMoves(board, position, color, moves);
-    _addCastlingMoves(board, position, color, hasKingMoved, hasRookMoved, moves);
-    return moves;
-  }
-
-  static void _addStandardKingMoves(
-    List<List<ChessPiece?>> board,
-    Position position,
-    PieceColor color,
-    List<Position> moves,
-  ) {
     final directions = [
       [-1, -1], [-1, 0], [-1, 1],
       [0, -1],           [0, 1],
       [1, -1],  [1, 0],  [1, 1],
     ];
 
+    // 常规移动
     for (final direction in directions) {
       final newRow = position.row + direction[0];
       final newCol = position.col + direction[1];
@@ -328,50 +267,32 @@ class ChessRules {
         }
       }
     }
-  }
 
-  static void _addCastlingMoves(
-    List<List<ChessPiece?>> board,
-    Position position, // King's current position
-    PieceColor color,
-    Map<PieceColor, bool>? hasKingMoved,
-    Map<PieceColor, Map<String, bool>>? hasRookMoved,
-    List<Position> moves,
-  ) {
-    if (hasKingMoved == null || hasRookMoved == null || hasKingMoved[color] == true) {
-      return;
-    }
+    // 王车易位
+    if (hasKingMoved != null &&
+        hasRookMoved != null &&
+        !hasKingMoved[color]!) {
+      final row = color == PieceColor.white ? 7 : 0;
 
-    final kingRow = position.row; // King's current row, should match color's standard row
+      // 王翼易位
+      if (!hasRookMoved[color]!['kingside']! &&
+          board[row][5] == null &&
+          board[row][6] == null &&
+          board[row][7]?.type == PieceType.rook) {
+        moves.add(Position(row: row, col: 6));
+      }
 
-    // Kingside castling
-    if (hasRookMoved[color]?['kingside'] == false &&
-        board[kingRow][position.col + 1] == null &&
-        board[kingRow][position.col + 2] == null &&
-        board[kingRow][position.col + 3]?.type == PieceType.rook &&
-        board[kingRow][position.col + 3]?.color == color) {
-      // Check if squares king moves over are attacked
-      if (!_isSquareAttacked(board, Position(row: kingRow, col: position.col + 1), color) &&
-          !_isSquareAttacked(board, Position(row: kingRow, col: position.col + 2), color) &&
-          !isInCheck(board, color)) { // King not currently in check
-        moves.add(Position(row: kingRow, col: position.col + 2));
+      // 后翼易位
+      if (!hasRookMoved[color]!['queenside']! &&
+          board[row][1] == null &&
+          board[row][2] == null &&
+          board[row][3] == null &&
+          board[row][0]?.type == PieceType.rook) {
+        moves.add(Position(row: row, col: 2));
       }
     }
 
-    // Queenside castling
-    if (hasRookMoved[color]?['queenside'] == false &&
-        board[kingRow][position.col - 1] == null &&
-        board[kingRow][position.col - 2] == null &&
-        board[kingRow][position.col - 3] == null &&
-        board[kingRow][position.col - 4]?.type == PieceType.rook &&
-        board[kingRow][position.col - 4]?.color == color) {
-      // Check if squares king moves over are attacked
-      if (!_isSquareAttacked(board, Position(row: kingRow, col: position.col - 1), color) &&
-          !_isSquareAttacked(board, Position(row: kingRow, col: position.col - 2), color) &&
-           !isInCheck(board, color)) { // King not currently in check
-        moves.add(Position(row: kingRow, col: position.col - 2));
-      }
-    }
+    return moves;
   }
 
   static bool _isValidPosition(int row, int col) {
@@ -380,69 +301,32 @@ class ChessRules {
 
   // 检查指定颜色的王是否被将军
   static bool isInCheck(List<List<ChessPiece?>> board, PieceColor kingColor) {
-    final kingPosition = _findKingPosition(board, kingColor);
-    if (kingPosition == null) return false; // Should not happen in a valid game
-
-    return _isSquareAttacked(board, kingPosition, kingColor);
-  }
-
-  static Position? _findKingPosition(List<List<ChessPiece?>> board, PieceColor kingColor) {
-    for (int r = 0; r < 8; r++) {
-      for (int c = 0; c < 8; c++) {
-        final piece = board[r][c];
-        if (piece != null && piece.type == PieceType.king && piece.color == kingColor) {
-          return Position(row: r, col: c);
+    // 找到王的位置
+    Position? kingPosition;
+    for (int row = 0; row < 8; row++) {
+      for (int col = 0; col < 8; col++) {
+        final piece = board[row][col];
+        if (piece?.type == PieceType.king && piece?.color == kingColor) {
+          kingPosition = Position(row: row, col: col);
+          break;
         }
       }
+      if (kingPosition != null) break;
     }
-    return null;
-  }
 
-  static bool _isSquareAttacked(List<List<ChessPiece?>> board, Position square, PieceColor byPlayerColor) {
-    // Check if any piece of the opponent can attack the given square.
-    // Note: byPlayerColor is the color of the player *being attacked* on the square,
-    // so we look for attackers of the opposite color.
-    final attackerColor = byPlayerColor == PieceColor.white ? PieceColor.black : PieceColor.white;
-    for (int r = 0; r < 8; r++) {
-      for (int c = 0; c < 8; c++) {
-        final piece = board[r][c];
-        if (piece != null && piece.color == attackerColor) {
-          // Use getValidMovesWithoutCheckingCheck to see if the attacker can move to the square.
-          // This avoids recursion with isInCheck.
-          final moves = getValidMovesWithoutCheckingCheck(board, Position(row: r, col: c));
-          if (moves.any((move) => move.row == square.row && move.col == square.col)) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
+    if (kingPosition == null) return false;
 
-  static bool _hasAnyLegalMove(
-    List<List<ChessPiece?>> board,
-    PieceColor color,
-    Map<PieceColor, bool> hasKingMoved,
-    Map<PieceColor, Map<String, bool>> hasRookMoved,
-    Map<PieceColor, Position?> lastPawnDoubleMoved, // Full map for both colors
-    Map<PieceColor, int> lastPawnDoubleMovedNumber, // Full map
-    int currentMoveNumber,
-  ) {
-    for (int r = 0; r < 8; r++) {
-      for (int c = 0; c < 8; c++) {
-        final piece = board[r][c];
-        if (piece != null && piece.color == color) {
-          final opponentColor = color == PieceColor.white ? PieceColor.black : PieceColor.white;
-          final moves = getValidMoves(
+    // 检查对手的所有棋子是否可以攻击到王
+    final opponentColor = kingColor == PieceColor.white ? PieceColor.black : PieceColor.white;
+    for (int row = 0; row < 8; row++) {
+      for (int col = 0; col < 8; col++) {
+        final piece = board[row][col];
+        if (piece?.color == opponentColor) {
+          final moves = getValidMovesWithoutCheckingCheck(
             board,
-            Position(row: r, col: c),
-            hasKingMoved: hasKingMoved,
-            hasRookMoved: hasRookMoved,
-            lastPawnDoubleMoved: lastPawnDoubleMoved[opponentColor], // Pass opponent's last double move
-            lastPawnDoubleMovedNumber: lastPawnDoubleMovedNumber[opponentColor], // Pass opponent's number
-            currentMoveNumber: currentMoveNumber,
+            Position(row: row, col: col),
           );
-          if (moves.isNotEmpty) {
+          if (moves.any((pos) => pos.row == kingPosition!.row && pos.col == kingPosition.col)) {
             return true;
           }
         }
@@ -450,7 +334,7 @@ class ChessRules {
     }
     return false;
   }
-  
+
   // 检查指定颜色是否被将死
   static bool isCheckmate(
     List<List<ChessPiece?>> board,
@@ -461,8 +345,40 @@ class ChessRules {
     Map<PieceColor, int> lastPawnDoubleMovedNumber,
     int currentMoveNumber,
   ) {
+    // 如果没有被将军，就不可能被将死
     if (!isInCheck(board, color)) return false;
-    return !_hasAnyLegalMove(board, color, hasKingMoved, hasRookMoved, lastPawnDoubleMoved, lastPawnDoubleMovedNumber, currentMoveNumber);
+
+    // 检查所有己方棋子的所有可能移动
+    for (int row = 0; row < 8; row++) {
+      for (int col = 0; col < 8; col++) {
+        final piece = board[row][col];
+        if (piece?.color == color) {
+          final moves = getValidMoves(
+            board,
+            Position(row: row, col: col),
+            hasKingMoved: hasKingMoved,
+            hasRookMoved: hasRookMoved,
+            lastPawnDoubleMoved: lastPawnDoubleMoved[color == PieceColor.white ? PieceColor.black : PieceColor.white],
+            lastPawnDoubleMovedNumber: lastPawnDoubleMovedNumber[color == PieceColor.white ? PieceColor.black : PieceColor.white],
+            currentMoveNumber: currentMoveNumber,
+          );
+
+          // 对于每个可能的移动，检查是否能解除将军
+          for (final move in moves) {
+            final newBoard = List<List<ChessPiece?>>.from(
+              board.map((row) => List<ChessPiece?>.from(row))
+            );
+            newBoard[move.row][move.col] = newBoard[row][col];
+            newBoard[row][col] = null;
+
+            if (!isInCheck(newBoard, color)) {
+              return false;  // 找到一个可以解除将军的移动，不是将死
+            }
+          }
+        }
+      }
+    }
+    return true;  // 没有找到任何可以解除将军的移动，是将死
   }
 
   // 检查是否是和棋（无子可动）
@@ -475,8 +391,30 @@ class ChessRules {
     Map<PieceColor, int> lastPawnDoubleMovedNumber,
     int currentMoveNumber,
   ) {
+    // 如果被将军，就不是和棋
     if (isInCheck(board, color)) return false;
-    return !_hasAnyLegalMove(board, color, hasKingMoved, hasRookMoved, lastPawnDoubleMoved, lastPawnDoubleMovedNumber, currentMoveNumber);
+
+    // 检查是否有任何合法移动
+    for (int row = 0; row < 8; row++) {
+      for (int col = 0; col < 8; col++) {
+        final piece = board[row][col];
+        if (piece?.color == color) {
+          final moves = getValidMoves(
+            board,
+            Position(row: row, col: col),
+            hasKingMoved: hasKingMoved,
+            hasRookMoved: hasRookMoved,
+            lastPawnDoubleMoved: lastPawnDoubleMoved[color == PieceColor.white ? PieceColor.black : PieceColor.white],
+            lastPawnDoubleMovedNumber: lastPawnDoubleMovedNumber[color == PieceColor.white ? PieceColor.black : PieceColor.white],
+            currentMoveNumber: currentMoveNumber,
+          );
+          if (moves.isNotEmpty) {
+            return false;  // 找到一个合法移动，不是和棋
+          }
+        }
+      }
+    }
+    return true;  // 没有任何合法移动，是和棋
   }
 
   // 获取所有可能的移动，不检查是否会导致自己被将军
