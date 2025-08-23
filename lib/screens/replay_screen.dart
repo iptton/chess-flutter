@@ -67,9 +67,6 @@ class _ReplayScreenState extends State<ReplayScreen> {
 
   Widget _buildGameHistoryItem(GameHistory game) {
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm');
-    final duration = game.endTime.difference(game.startTime);
-    final minutes = duration.inMinutes;
-    final seconds = duration.inSeconds % 60;
 
     String getGameResult() {
       if (!game.isCompleted) return '未完成';
@@ -97,7 +94,7 @@ class _ReplayScreenState extends State<ReplayScreen> {
           ],
         ),
         subtitle: Text(
-          '对局时长: $minutes分${seconds}秒 • 回合数: ${game.moves.length} • ${game.gameMode == GameMode.faceToFace ? "面对面对战" : "单机对战"}',
+          '回合数: ${game.moves.length} • ${game.gameMode == GameMode.faceToFace ? "面对面对战" : "单机对战"}',
         ),
         onTap: () {
           Navigator.of(context).push(
