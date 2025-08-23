@@ -25,6 +25,9 @@ dependencies:
       url: "https://gitee.com/openharmony-sig/flutter_fluttertoast.git"
   intl: ^0.18.1
   chess: ^0.8.1
+  stockfish_chess_engine:
+    git:
+      url: "https://gitcode.com/iptton/stockfishchessengine_ohos.git"
 
 dev_dependencies:
   flutter_test:

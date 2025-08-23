@@ -720,6 +720,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.11.1"
+  stockfish_chess_engine:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: HEAD
+      resolved-ref: d8b7f46376f01af3ae52f59b32911aaf05d4936e
+      url: "https://gitcode.com/iptton/stockfishchessengine_ohos.git"
+    source: git
+    version: "0.8.2"
   stream_channel:
     dependency: transitive
     description:

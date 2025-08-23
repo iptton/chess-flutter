@@ -94,10 +94,15 @@ class _ChessBoardView extends StatelessWidget {
     if (state.moveHistory.isNotEmpty) {
       final history = GameHistory(
         id: GameHistoryService.generateGameId(),
-        startTime: DateTime.now().subtract(Duration(minutes: state.moveHistory.length)), // 估算开始时间
+        startTime: DateTime.now()
+            .subtract(Duration(minutes: state.moveHistory.length)), // 估算开始时间
         endTime: DateTime.now(),
         moves: state.moveHistory,
-        winner: state.isCheckmate ? (state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white) : null,
+        winner: state.isCheckmate
+            ? (state.currentPlayer == PieceColor.white
+                ? PieceColor.black
+                : PieceColor.white)
+            : null,
         gameMode: gameMode,
         isCompleted: state.isCheckmate || state.isStalemate,
       );
@@ -157,12 +162,18 @@ class _ChessBoardView extends StatelessWidget {
                           if (shouldSave && state.moveHistory.isNotEmpty) {
                             final history = GameHistory(
                               id: GameHistoryService.generateGameId(),
-                              startTime: DateTime.now().subtract(Duration(minutes: state.moveHistory.length)), // 估算开始时间
+                              startTime: DateTime.now().subtract(Duration(
+                                  minutes: state.moveHistory.length)), // 估算开始时间
                               endTime: DateTime.now(),
                               moves: state.moveHistory,
-                              winner: state.isCheckmate ? (state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white) : null,
+                              winner: state.isCheckmate
+                                  ? (state.currentPlayer == PieceColor.white
+                                      ? PieceColor.black
+                                      : PieceColor.white)
+                                  : null,
                               gameMode: gameMode,
-                              isCompleted: state.isCheckmate || state.isStalemate,
+                              isCompleted:
+                                  state.isCheckmate || state.isStalemate,
                             );
                             await GameHistoryService.saveGame(history);
                           }
@@ -180,7 +191,9 @@ class _ChessBoardView extends StatelessWidget {
           },
           child: Scaffold(
             appBar: AppBar(
-              title: Text(isReplayMode ? '对局复盘' : ChessFormatters.getGameModeTitle(gameMode)),
+              title: Text(isReplayMode
+                  ? '对局复盘'
+                  : ChessFormatters.getGameModeTitle(gameMode)),
               actions: [
                 if (isReplayMode)
                   IconButton(
@@ -206,7 +219,8 @@ class _ChessBoardView extends StatelessWidget {
   Widget _buildTurnIndicator(BuildContext context) {
     return BlocBuilder<ChessBloc, GameState>(
       builder: (context, state) {
-        String turnText = '当前回合: ${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}';
+        String turnText =
+            '当前回合: ${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}';
 
         // 如果是单机对战模式，显示AI状态
         if (state.gameMode == GameMode.offline && state.aiColor != null) {
@@ -223,14 +237,46 @@ class _ChessBoardView extends StatelessWidget {
 
         return Column(
           children: [
-            Text(
-              turnText,
-              style: const TextStyle(fontSize: 20),
+            // 第一行：回合信息和提示按钮
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  turnText,
+                  style: const TextStyle(fontSize: 20),
+                ),
+                if (!isReplayMode) ...[
+                  const SizedBox(width: 20),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      context.read<ChessBloc>().add(const ToggleHintMode());
+                    },
+                    icon: Icon(state.hintMode
+                        ? Icons.lightbulb
+                        : Icons.lightbulb_outline),
+                    label: Text(state.hintMode ? '关闭提示' : '开启提示'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: state.hintMode
+                          ? Colors.yellow[100]
+                          : Colors.grey[100],
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      textStyle: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ],
+              ],
             ),
-            if (state.gameMode == GameMode.offline && state.aiDifficulty != null)
-              Text(
-                'AI难度: ${_getDifficultyText(state.aiDifficulty!)}',
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            // 第二行：AI难度信息
+            if (state.gameMode == GameMode.offline &&
+                state.aiDifficulty != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'AI难度: ${_getDifficultyText(state.aiDifficulty!)}',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
               ),
           ],
         );
@@ -280,9 +326,11 @@ class _ChessBoardView extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           ElevatedButton.icon(
-            onPressed: state.undoStates.isEmpty ? null : () {
-              context.read<ChessBloc>().add(const UndoMove());
-            },
+            onPressed: state.undoStates.isEmpty
+                ? null
+                : () {
+                    context.read<ChessBloc>().add(const UndoMove());
+                  },
             icon: const Icon(Icons.undo),
             label: Text(isReplayMode ? '上一步' : '前一步'),
             style: ElevatedButton.styleFrom(
@@ -296,12 +344,13 @@ class _ChessBoardView extends StatelessWidget {
               '$currentStep/$totalSteps',
               style: const TextStyle(fontSize: 16),
             ),
-          if (isReplayMode)
-            const SizedBox(width: 20),
+          if (isReplayMode) const SizedBox(width: 20),
           ElevatedButton.icon(
-            onPressed: state.redoStates.isEmpty ? null : () {
-              context.read<ChessBloc>().add(const RedoMove());
-            },
+            onPressed: state.redoStates.isEmpty
+                ? null
+                : () {
+                    context.read<ChessBloc>().add(const RedoMove());
+                  },
             icon: const Icon(Icons.redo),
             label: Text(isReplayMode ? '下一步' : '后一步'),
             style: ElevatedButton.styleFrom(
@@ -309,20 +358,6 @@ class _ChessBoardView extends StatelessWidget {
               foregroundColor: Colors.black,
             ),
           ),
-          if (!isReplayMode) ...[
-            const SizedBox(width: 20),
-            ElevatedButton.icon(
-              onPressed: () {
-                context.read<ChessBloc>().add(const ToggleHintMode());
-              },
-              icon: Icon(state.hintMode ? Icons.lightbulb : Icons.lightbulb_outline),
-              label: Text(state.hintMode ? '关闭提示' : '开启提示'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: state.hintMode ? Colors.yellow[100] : Colors.grey[100],
-                foregroundColor: Colors.black,
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -387,10 +422,12 @@ class ChessBoardLayout extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: ChessConstants.topBarHeight),
-                ...topContent.expand((widget) => [
-                  widget,
-                  const SizedBox(height: ChessConstants.spacing),
-                ]).toList(),
+                ...topContent
+                    .expand((widget) => [
+                          widget,
+                          const SizedBox(height: ChessConstants.spacing),
+                        ])
+                    .toList(),
                 ChessBoardGrid(boardSize: boardSize),
                 const SizedBox(height: ChessConstants.spacing),
               ],
@@ -405,13 +442,12 @@ class ChessBoardLayout extends StatelessWidget {
     final availableHeight = constraints.maxHeight;
     final availableWidth = constraints.maxWidth;
 
-    final maxBoardSize = availableHeight - (
-      ChessConstants.topBarHeight +
-      ChessConstants.turnIndicatorHeight +
-      ChessConstants.specialMoveHeight +
-      ChessConstants.controlButtonsHeight +
-      ChessConstants.spacing * 5
-    );
+    final maxBoardSize = availableHeight -
+        (ChessConstants.topBarHeight +
+            ChessConstants.turnIndicatorHeight +
+            ChessConstants.specialMoveHeight +
+            ChessConstants.controlButtonsHeight +
+            ChessConstants.spacing * 5);
 
     return min(
       min(maxBoardSize, availableWidth * 0.9),
@@ -534,25 +570,35 @@ class ChessSquare extends StatelessWidget {
     final col = index % 8;
     final isDark = (row + col) % 2 == 1;
     final isSelected = state.selectedPosition?.row == row &&
-                     state.selectedPosition?.col == col;
-    final isValidMove = state.validMoves.any(
-      (pos) => pos.row == row && pos.col == col
-    );
+        state.selectedPosition?.col == col;
+    final isValidMove =
+        state.validMoves.any((pos) => pos.row == row && pos.col == col);
     final isMovablePiece = _isMovablePiece(state, row, col);
+
+    // 检查是否是最后移动的位置
+    final isLastMoveFrom =
+        state.lastMove?.from.row == row && state.lastMove?.from.col == col;
+    final isLastMoveTo =
+        state.lastMove?.to.row == row && state.lastMove?.to.col == col;
 
     return GestureDetector(
       onTap: state.isInteractive ? () => _handleTap(context, row, col) : null,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          _buildBackground(isDark),
+          _buildBackground(isDark, isLastMoveTo),
           if (state.board[row][col] != null)
             _buildPiece(state.board[row][col]!),
-          if (state.hintMode && isValidMove)
-            _buildMoveHint(isDark),
-          if (isSelected || (state.hintMode && (isValidMove || isMovablePiece)) ||
-              (state.isCheck && !state.hintMode && (state.isCheck ? isMovablePiece : !isMovablePiece)))
-            _buildHighlight(isSelected, state.hintMode, isValidMove, isMovablePiece),
+          if (state.hintMode && isValidMove) _buildMoveHint(isDark),
+          if (isSelected ||
+              (state.hintMode && (isValidMove || isMovablePiece)) ||
+              (state.isCheck &&
+                  !state.hintMode &&
+                  (state.isCheck ? isMovablePiece : !isMovablePiece)))
+            _buildHighlight(
+                isSelected, state.hintMode, isValidMove, isMovablePiece),
+          // 添加最后移动的原位置标记（虚框）
+          if (isLastMoveFrom) _buildLastMoveFromIndicator(),
         ],
       ),
     );
@@ -567,15 +613,29 @@ class ChessSquare extends StatelessWidget {
       Position(row: row, col: col),
       hasKingMoved: state.hasKingMoved,
       hasRookMoved: state.hasRookMoved,
-      lastPawnDoubleMoved: state.lastPawnDoubleMoved[piece?.color == PieceColor.white ? PieceColor.black : PieceColor.white],
-      lastPawnDoubleMovedNumber: state.lastPawnDoubleMovedNumber[piece?.color == PieceColor.white ? PieceColor.black : PieceColor.white],
+      lastPawnDoubleMoved: state.lastPawnDoubleMoved[
+          piece?.color == PieceColor.white
+              ? PieceColor.black
+              : PieceColor.white],
+      lastPawnDoubleMovedNumber: state.lastPawnDoubleMovedNumber[
+          piece?.color == PieceColor.white
+              ? PieceColor.black
+              : PieceColor.white],
       currentMoveNumber: state.currentMoveNumber,
     ).isNotEmpty;
   }
 
-  Widget _buildBackground(bool isDark) {
+  Widget _buildBackground(bool isDark, [bool isLastMoveTo = false]) {
+    Color backgroundColor;
+    if (isLastMoveTo) {
+      // 最后移动的目标位置使用特殊背景色
+      backgroundColor = isDark ? Colors.amber[600]! : Colors.amber[200]!;
+    } else {
+      backgroundColor = isDark ? Colors.brown[300]! : Colors.brown[100]!;
+    }
+
     return Container(
-      color: isDark ? Colors.brown[300] : Colors.brown[100],
+      color: backgroundColor,
     );
   }
 
@@ -601,13 +661,26 @@ class ChessSquare extends StatelessWidget {
     );
   }
 
-  Widget _buildHighlight(bool isSelected, bool hintMode, bool isValidMove, bool isMovablePiece) {
+  Widget _buildHighlight(
+      bool isSelected, bool hintMode, bool isValidMove, bool isMovablePiece) {
     return Container(
       color: isSelected
           ? Colors.blue.withOpacity(0.3)
           : hintMode && (isValidMove || isMovablePiece)
               ? Colors.yellow.withOpacity(0.3)
               : Colors.grey.withOpacity(0.5),
+    );
+  }
+
+  Widget _buildLastMoveFromIndicator() {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Colors.red,
+          width: 3.0,
+          style: BorderStyle.solid,
+        ),
+      ),
     );
   }
 
@@ -822,7 +895,7 @@ class MoveMessageContent extends StatelessWidget {
 
     final moveMessage = state.specialMoveMessage ??
         (ChessFormatters.buildDefaultMoveMessage(lastMove) +
-        ChessFormatters.buildMoveStateMessage(state));
+            ChessFormatters.buildMoveStateMessage(state));
 
     return Row(
       mainAxisSize: MainAxisSize.min,
