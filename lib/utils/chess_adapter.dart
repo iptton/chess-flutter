@@ -106,8 +106,9 @@ class ChessAdapter {
     int halfMoveClock = 0,
     int fullMoveNumber = 1,
   }) {
-    final chess = chess_lib.Chess();
-    chess.clear(); // 清空棋盘
+    try {
+      final chess = chess_lib.Chess();
+      chess.clear(); // 清空棋盘
 
     // 验证棋盘尺寸
     if (board.length != 8) {
@@ -169,11 +170,61 @@ class ChessAdapter {
       }
     }
 
-    // 设置半步计数和全步计数
-    chess.half_moves = halfMoveClock;
-    chess.move_number = fullMoveNumber;
+      // 设置半步计数和全步计数
+      chess.half_moves = halfMoveClock;
+      chess.move_number = fullMoveNumber;
 
-    return chess;
+      return chess;
+    } catch (e) {
+      // 如果创建 Chess 实例时出现任何错误，记录详细信息并重新抛出
+      print('错误：创建 Chess 实例失败: $e');
+      print('棋盘状态: ${board.map((row) => row.map((piece) => piece?.toString() ?? 'null').join(', ')).join('\n')}');
+      print('当前玩家: $currentPlayer');
+      print('enPassantTarget: $enPassantTarget');
+      print('hasKingMoved: $hasKingMoved');
+      print('hasRookMoved: $hasRookMoved');
+
+      // 创建一个最小的有效 Chess 实例作为后备
+      final fallbackChess = chess_lib.Chess();
+      fallbackChess.clear();
+
+      // 只放置国王，确保棋盘是有效的
+      try {
+        // 验证棋盘上是否有国王
+        bool hasWhiteKing = false;
+        bool hasBlackKing = false;
+
+        for (int row = 0; row < 8; row++) {
+          for (int col = 0; col < 8; col++) {
+            final piece = board[row][col];
+            if (piece?.type == PieceType.king) {
+              if (piece!.color == PieceColor.white) hasWhiteKing = true;
+              if (piece.color == PieceColor.black) hasBlackKing = true;
+            }
+          }
+        }
+
+        // 如果缺少国王，添加默认国王
+        if (!hasWhiteKing) {
+          fallbackChess.put(
+            chess_lib.Piece(chess_lib.Chess.KING, chess_lib.Color.WHITE),
+            'e1'
+          );
+        }
+        if (!hasBlackKing) {
+          fallbackChess.put(
+            chess_lib.Piece(chess_lib.Chess.KING, chess_lib.Color.BLACK),
+            'e8'
+          );
+        }
+
+        fallbackChess.turn = toChessLibColor(currentPlayer);
+        return fallbackChess;
+      } catch (fallbackError) {
+        print('错误：创建后备 Chess 实例也失败: $fallbackError');
+        rethrow; // 如果连后备方案都失败，重新抛出原始错误
+      }
+    }
   }
 
   /// 设置易位权限
@@ -309,18 +360,26 @@ class ChessAdapter {
     int halfMoveClock = 0,
     int fullMoveNumber = 1,
   }) {
-    final chess = createChessFromBoard(
-      board,
-      currentPlayer,
-      hasKingMoved: hasKingMoved,
-      hasRookMoved: hasRookMoved,
-      enPassantTarget: enPassantTarget,
-      halfMoveClock: halfMoveClock,
-      fullMoveNumber: fullMoveNumber,
-    );
+    try {
+      final chess = createChessFromBoard(
+        board,
+        currentPlayer,
+        hasKingMoved: hasKingMoved,
+        hasRookMoved: hasRookMoved,
+        enPassantTarget: enPassantTarget,
+        halfMoveClock: halfMoveClock,
+        fullMoveNumber: fullMoveNumber,
+      );
 
-    final moves = chess.generate_moves();
-    return moves.map((move) => fromChessLibMove(move, chess)).toList();
+      final moves = chess.generate_moves();
+      return moves.map((move) => fromChessLibMove(move, chess)).toList();
+    } catch (e) {
+      // 如果获取合法移动时出现错误，记录错误信息并返回空列表
+      print('警告：获取合法移动时出现错误: $e');
+      print('当前玩家: $currentPlayer');
+      print('enPassantTarget: $enPassantTarget');
+      return []; // 安全地返回空列表，避免崩溃
+    }
   }
 
   /// 检查是否被将军

@@ -10,14 +10,9 @@ void main() {
     bool stockfishAvailable = false;
 
     setUpAll(() async {
-      // 尝试初始化Stockfish，如果失败则跳过相关测试
-      try {
-        await StockfishAdapter.initialize();
-        stockfishAvailable = true;
-      } catch (e) {
-        stockfishAvailable = false;
-        // 在测试环境中Stockfish可能不可用，这是正常的
-      }
+      // 在测试环境中，StockfishAdapter 使用 Mock 实现
+      await StockfishAdapter.initialize();
+      stockfishAvailable = true; // Mock 适配器总是可用的
     });
 
     tearDownAll(() async {

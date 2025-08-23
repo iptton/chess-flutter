@@ -1,0 +1,41 @@
+# Enable CORS headers for WebAssembly multithreading support
+# Required for SharedArrayBuffer and Atomics in Chrome
+
+# Set Cross-Origin-Embedder-Policy header
+Header always set Cross-Origin-Embedder-Policy "require-corp"
+
+# Set Cross-Origin-Opener-Policy header  
+Header always set Cross-Origin-Opener-Policy "same-origin"
+
+# Enable CORS for WASM files
+<FilesMatch "\.(wasm|js)$">
+    Header set Cross-Origin-Resource-Policy "cross-origin"
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type"
+</FilesMatch>
+
+# Set proper MIME types for WebAssembly
+AddType application/wasm .wasm
+
+# Enable compression for better performance
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/wasm
+</IfModule>
+
+# Cache control for static assets
+<IfModule mod_expires.c>
+    ExpiresActive on
+    ExpiresByType application/wasm "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType text/css "access plus 1 month"
+</IfModule>

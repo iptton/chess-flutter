@@ -767,7 +767,20 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
   void _onPromotePawn(PromotePawn event, Emitter<GameState> emit) {
     final newBoard = List<List<ChessPiece?>>.from(
         state.board.map((row) => List<ChessPiece?>.from(row)));
-    final pawn = newBoard[event.position.row][event.position.col]!;
+
+    // 验证位置是否有效
+    if (event.position.row < 0 || event.position.row >= 8 ||
+        event.position.col < 0 || event.position.col >= 8) {
+      print('错误：升变位置超出边界: (${event.position.row}, ${event.position.col})');
+      return;
+    }
+
+    final pawn = newBoard[event.position.row][event.position.col];
+    if (pawn == null) {
+      print('错误：升变位置没有棋子: (${event.position.row}, ${event.position.col})');
+      return;
+    }
+
     final promotedPiece = ChessPiece(
       type: event.promotionType,
       color: pawn.color,

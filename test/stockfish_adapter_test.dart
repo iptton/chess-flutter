@@ -5,17 +5,13 @@ import 'package:testflutter/models/chess_models.dart';
 void main() {
   group('StockfishAdapter Tests', () {
     test('should handle initialization gracefully', () async {
-      // 测试初始化不会抛出异常
-      try {
-        await StockfishAdapter.initialize();
-        expect(true, isTrue); // 如果没有异常，测试通过
-      } catch (e) {
-        // 在测试环境中Stockfish可能不可用，这是正常的
-        expect(e, isNotNull);
-      }
+      // 在测试环境中，StockfishAdapter 应该使用 Mock 实现
+      // 因为 FLUTTER_CI 环境变量在测试中默认为 true
+      await StockfishAdapter.initialize();
+      expect(StockfishAdapter.isReady, isTrue);
     });
 
-    test('should handle getBestMove gracefully when engine not available',
+    test('should handle getBestMove gracefully in test environment',
         () async {
       // 创建一个简单的棋盘
       final board = List.generate(8, (i) => List<ChessPiece?>.filled(8, null));
@@ -26,29 +22,32 @@ void main() {
       board[6][4] =
           const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
 
-      // 测试获取最佳移动不会抛出异常
+      // 在测试环境中，应该使用 Mock 适配器
       final move = await StockfishAdapter.getBestMove(board, PieceColor.white);
 
-      // 在测试环境中，可能返回null（因为Stockfish不可用）或者一个有效的移动
-      // 两种情况都是可接受的
+      // Mock 适配器应该返回一个有效的移动或 null
       expect(move == null || move is ChessMove, isTrue);
-    });
 
-    test('should handle dispose gracefully', () async {
-      // 测试清理资源不会抛出异常
-      try {
-        await StockfishAdapter.dispose();
-        expect(true, isTrue);
-      } catch (e) {
-        // 不应该抛出异常
-        fail('Dispose should not throw exception: $e');
+      if (move != null) {
+        expect(move.piece.color, PieceColor.white);
+        expect(move.from.row >= 0 && move.from.row <= 7, isTrue);
+        expect(move.from.col >= 0 && move.from.col <= 7, isTrue);
+        expect(move.to.row >= 0 && move.to.row <= 7, isTrue);
+        expect(move.to.col >= 0 && move.to.col <= 7, isTrue);
       }
     });
 
+    test('should handle dispose gracefully', () async {
+      // 在测试环境中，dispose 应该正常工作
+      await StockfishAdapter.dispose();
+      expect(true, isTrue); // 如果没有异常，测试通过
+    });
+
     test('isReady should return boolean', () {
-      // 测试isReady属性
+      // 在测试环境中，isReady 应该返回 true（Mock 适配器）
       final isReady = StockfishAdapter.isReady;
       expect(isReady, isA<bool>());
+      expect(isReady, isTrue); // Mock 适配器应该总是 ready
     });
   });
 }
