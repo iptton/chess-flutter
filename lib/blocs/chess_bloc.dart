@@ -769,8 +769,10 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
         state.board.map((row) => List<ChessPiece?>.from(row)));
 
     // 验证位置是否有效
-    if (event.position.row < 0 || event.position.row >= 8 ||
-        event.position.col < 0 || event.position.col >= 8) {
+    if (event.position.row < 0 ||
+        event.position.row >= 8 ||
+        event.position.col < 0 ||
+        event.position.col >= 8) {
       print('错误：升变位置超出边界: (${event.position.row}, ${event.position.col})');
       return;
     }
@@ -824,8 +826,10 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
 
       // 验证坐标有效性
       if (position != null &&
-          position.row >= 0 && position.row <= 7 &&
-          position.col >= 0 && position.col <= 7) {
+          position.row >= 0 &&
+          position.row <= 7 &&
+          position.col >= 0 &&
+          position.col <= 7) {
         cleanLastPawnDoubleMoved[color] = position;
         cleanLastPawnDoubleMovedNumber[color] = moveNumber ?? -1;
       } else {

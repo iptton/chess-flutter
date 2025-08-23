@@ -726,7 +726,7 @@ packages:
       path: "."
       ref: HEAD
       resolved-ref: d8b7f46376f01af3ae52f59b32911aaf05d4936e
-      url: "https://gitcode.com/iptton/stockfishchessengine_ohos.git"
+      url: "https://github.com/iptton-ai/StockfishChessEngineFlutter.git"
     source: git
     version: "0.8.2"
   stream_channel:

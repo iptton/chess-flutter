@@ -27,7 +27,7 @@ class StockfishMockAdapter {
     int thinkingTimeMs = 1000,
   }) async {
     print('StockfishMockAdapter: 获取最佳移动 (Mock)...');
-    
+
     if (!_isInitialized) {
       await initialize();
     }
@@ -40,24 +40,59 @@ class StockfishMockAdapter {
       for (int col = 0; col < 8; col++) {
         final piece = board[row][col];
         if (piece?.color == aiColor) {
-          // 尝试一个简单的移动（向前一步，如果是兵）
-          if (piece!.type == PieceType.pawn) {
-            final direction = aiColor == PieceColor.white ? -1 : 1;
-            final newRow = row + direction;
-            
-            if (newRow >= 0 && newRow < 8 && board[newRow][col] == null) {
-              print('StockfishMockAdapter: 返回 Mock 移动: ($row,$col) -> ($newRow,$col)');
-              return ChessMove(
-                from: Position(row: row, col: col),
-                to: Position(row: newRow, col: col),
-                piece: piece,
-                capturedPiece: null,
-                isPromotion: false,
-                isEnPassant: false,
-                isCastling: false,
-                promotionPiece: null,
-              );
-            }
+          // 尝试不同类型棋子的移动
+          switch (piece!.type) {
+            case PieceType.pawn:
+              // 兵的移动
+              final direction = aiColor == PieceColor.white ? -1 : 1;
+              final newRow = row + direction;
+
+              if (newRow >= 0 && newRow < 8 && board[newRow][col] == null) {
+                print(
+                    'StockfishMockAdapter: 返回兵移动: ($row,$col) -> ($newRow,$col)');
+                return ChessMove(
+                  from: Position(row: row, col: col),
+                  to: Position(row: newRow, col: col),
+                  piece: piece,
+                  capturedPiece: null,
+                  isPromotion: false,
+                  isEnPassant: false,
+                  isCastling: false,
+                  promotionType: null,
+                );
+              }
+              break;
+
+            case PieceType.queen:
+            case PieceType.rook:
+            case PieceType.bishop:
+            case PieceType.knight:
+            case PieceType.king:
+              // 其他棋子的基本移动
+              final directions = _getMoveDirections(piece.type);
+              for (final direction in directions) {
+                final newRow = row + direction[0];
+                final newCol = col + direction[1];
+
+                if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+                  final targetPiece = board[newRow][newCol];
+                  if (targetPiece == null || targetPiece.color != aiColor) {
+                    print(
+                        'StockfishMockAdapter: 返回${piece.type}移动: ($row,$col) -> ($newRow,$newCol)');
+                    return ChessMove(
+                      from: Position(row: row, col: col),
+                      to: Position(row: newRow, col: newCol),
+                      piece: piece,
+                      capturedPiece: targetPiece,
+                      isPromotion: false,
+                      isEnPassant: false,
+                      isCastling: false,
+                      promotionType: null,
+                    );
+                  }
+                }
+              }
+              break;
           }
         }
       }
@@ -77,6 +112,61 @@ class StockfishMockAdapter {
 
   /// 检查 Mock 引擎是否准备就绪
   static bool get isReady => _isInitialized;
+
+  /// 获取棋子的基本移动方向
+  static List<List<int>> _getMoveDirections(PieceType type) {
+    switch (type) {
+      case PieceType.king:
+        return [
+          [-1, -1],
+          [-1, 0],
+          [-1, 1],
+          [0, -1],
+          [0, 1],
+          [1, -1],
+          [1, 0],
+          [1, 1]
+        ];
+      case PieceType.queen:
+        return [
+          [-1, -1],
+          [-1, 0],
+          [-1, 1],
+          [0, -1],
+          [0, 1],
+          [1, -1],
+          [1, 0],
+          [1, 1]
+        ];
+      case PieceType.rook:
+        return [
+          [-1, 0],
+          [1, 0],
+          [0, -1],
+          [0, 1]
+        ];
+      case PieceType.bishop:
+        return [
+          [-1, -1],
+          [-1, 1],
+          [1, -1],
+          [1, 1]
+        ];
+      case PieceType.knight:
+        return [
+          [-2, -1],
+          [-2, 1],
+          [-1, -2],
+          [-1, 2],
+          [1, -2],
+          [1, 2],
+          [2, -1],
+          [2, 1]
+        ];
+      case PieceType.pawn:
+        return []; // 兵的移动已经在上面单独处理
+    }
+  }
 }
 
 // 导出平台特定的API (Mock 版本)

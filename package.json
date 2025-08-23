@@ -1,5 +1,12 @@
 {
+  "name": "flutter-chess-web",
+  "version": "1.0.0",
+  "description": "Flutter Chess Game with Stockfish WebAssembly",
   "dependencies": {
     "stockfish.wasm": "^0.10.0"
+  },
+  "scripts": {
+    "postinstall": "npm run copy-stockfish",
+    "copy-stockfish": "cp node_modules/stockfish.wasm/stockfish.js web/stockfish/ && cp node_modules/stockfish.wasm/stockfish.wasm web/stockfish/ && cp node_modules/stockfish.wasm/stockfish.worker.js web/stockfish/"
   }
 }

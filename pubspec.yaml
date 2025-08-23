@@ -28,7 +28,7 @@ dependencies:
   chess: ^0.8.1
   stockfish_chess_engine:
     git:
-      url: "https://gitcode.com/iptton/stockfishchessengine_ohos.git"
+      url: "https://github.com/iptton-ai/StockfishChessEngineFlutter.git"
 
 dev_dependencies:
   flutter_test:
