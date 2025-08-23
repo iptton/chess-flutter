@@ -20,9 +20,25 @@ class ChessFormatters {
   }
 
   static String getPositionName(Position position) {
-    final col = String.fromCharCode('A'.codeUnitAt(0) + position.col);
-    final row = 8 - position.row;
-    return '$col$row';
+    // 添加坐标验证以防止超出范围的索引
+    if (position.col < 0 ||
+        position.col > 7 ||
+        position.row < 0 ||
+        position.row > 7) {
+      // 如果坐标异常，返回一个错误指示，并记录详细信息用于调试
+      print('警告：getPositionName收到无效坐标: row=${position.row}, col=${position.col}');
+      return '无效位置(${position.row},${position.col})';
+    }
+
+    // 添加额外的安全检查，防止String.fromCharCode出现异常
+    try {
+      final col = String.fromCharCode('A'.codeUnitAt(0) + position.col);
+      final row = 8 - position.row;
+      return '$col$row';
+    } catch (e) {
+      print('错误：getPositionName计算失败: row=${position.row}, col=${position.col}, 错误: $e');
+      return '计算错误(${position.row},${position.col})';
+    }
   }
 
   static String getPieceTypeName(PieceType type) {
@@ -75,6 +91,10 @@ class ChessFormatters {
 
   static String getColumnLabel(int col, {bool isFlipped = false}) {
     final colIndex = isFlipped ? (7 - col) : col;
+    // 添加坐标验证以防止超出范围的索引
+    if (colIndex < 0 || colIndex > 7) {
+      return '?'; // 返回一个安全的默认值
+    }
     return String.fromCharCode('A'.codeUnitAt(0) + colIndex);
   }
-} 
+}

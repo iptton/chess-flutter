@@ -42,6 +42,8 @@ class ChessAI {
           break;
       }
 
+      print('ChessAI: 开始计算最佳移动, 难度=$difficulty, 思考时间=${thinkingTimeMs}ms');
+
       // 使用Stockfish获取最佳移动
       final bestMove = await StockfishAdapter.getBestMove(
         board,
@@ -54,6 +56,8 @@ class ChessAI {
         thinkingTimeMs: thinkingTimeMs,
       );
 
+      print('ChessAI: Stockfish返回结果: $bestMove');
+
       // 对于简单难度，添加一些随机性
       if (difficulty == AIDifficulty.easy && bestMove != null) {
         return _addRandomnessToMove(board, aiColor, bestMove,
@@ -64,8 +68,9 @@ class ChessAI {
 
       return bestMove;
     } catch (e) {
-      print('AI move calculation error: $e');
+      print('ChessAI: AI移动计算错误: $e');
       // 如果Stockfish失败，回退到随机移动
+      print('ChessAI: 回退到随机移动');
       return _getRandomMove(board, aiColor,
           hasKingMoved: hasKingMoved,
           hasRookMoved: hasRookMoved,

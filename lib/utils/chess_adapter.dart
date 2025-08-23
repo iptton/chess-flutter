@@ -70,6 +70,13 @@ class ChessAdapter {
 
   /// 将现有的 Position 转换为 chess 包的方格表示法 (如 'e4')
   static String toChessLibSquare(Position position) {
+    // 添加坐标验证以防止超出范围的索引
+    if (position.col < 0 ||
+        position.col > 7 ||
+        position.row < 0 ||
+        position.row > 7) {
+      throw ArgumentError('无效的位置坐标: (${position.row}, ${position.col})');
+    }
     final file = String.fromCharCode('a'.codeUnitAt(0) + position.col);
     final rank = (8 - position.row).toString();
     return '$file$rank';
@@ -82,10 +89,10 @@ class ChessAdapter {
     }
     final file = square[0].toLowerCase();
     final rank = int.parse(square[1]);
-    
+
     final col = file.codeUnitAt(0) - 'a'.codeUnitAt(0);
     final row = 8 - rank;
-    
+
     return Position(row: row, col: col);
   }
 
@@ -101,35 +108,71 @@ class ChessAdapter {
   }) {
     final chess = chess_lib.Chess();
     chess.clear(); // 清空棋盘
-    
-    // 设置棋子
+
+    // 验证棋盘尺寸
+    if (board.length != 8) {
+      throw ArgumentError('棋盘必须是8x8的尺寸，当前行数: ${board.length}');
+    }
+
+    // 设置棋子，添加严格的边界检查
     for (int row = 0; row < 8; row++) {
+      if (board[row].length != 8) {
+        throw ArgumentError('棋盘第$row行必须有8列，当前列数: ${board[row].length}');
+      }
+
       for (int col = 0; col < 8; col++) {
         final piece = board[row][col];
         if (piece != null) {
-          final square = toChessLibSquare(Position(row: row, col: col));
-          chess.put(toChessLibPiece(piece), square);
+          // 添加额外的坐标验证
+          if (row < 0 || row > 7 || col < 0 || col > 7) {
+            throw ArgumentError('无效的棋盘坐标: ($row, $col)');
+          }
+
+          try {
+            final square = toChessLibSquare(Position(row: row, col: col));
+            chess.put(toChessLibPiece(piece), square);
+          } catch (e) {
+            // 如果坐标转换失败，记录错误但继续处理
+            print('警告：无法在位置($row, $col)放置棋子 ${piece.type}，错误: $e');
+          }
         }
       }
     }
-    
+
     // 设置当前玩家
     chess.turn = toChessLibColor(currentPlayer);
-    
+
     // 设置易位权限
     if (hasKingMoved != null && hasRookMoved != null) {
       _setCastlingRights(chess, hasKingMoved, hasRookMoved);
     }
-    
+
     // 设置吃过路兵目标
     if (enPassantTarget != null) {
-      chess.ep_square = chess_lib.Chess.SQUARES[toChessLibSquare(enPassantTarget)];
+      // 添加边界检查，确保坐标有效
+      if (enPassantTarget.row >= 0 &&
+          enPassantTarget.row <= 7 &&
+          enPassantTarget.col >= 0 &&
+          enPassantTarget.col <= 7) {
+        try {
+          final squareNotation = toChessLibSquare(enPassantTarget);
+          chess.ep_square = chess_lib.Chess.SQUARES[squareNotation];
+        } catch (e) {
+          // 如果坐标转换失败，忽略enPassantTarget设置
+          print(
+              '警告：无效的enPassantTarget坐标 (${enPassantTarget.row}, ${enPassantTarget.col})，已忽略');
+        }
+      } else {
+        // 坐标超出边界，忽略enPassantTarget设置
+        print(
+            '警告：enPassantTarget坐标超出边界 (${enPassantTarget.row}, ${enPassantTarget.col})，已忽略');
+      }
     }
-    
+
     // 设置半步计数和全步计数
     chess.half_moves = halfMoveClock;
     chess.move_number = fullMoveNumber;
-    
+
     return chess;
   }
 
@@ -142,24 +185,28 @@ class ChessAdapter {
     // 重置易位权限
     chess.castling[chess_lib.Color.WHITE] = 0;
     chess.castling[chess_lib.Color.BLACK] = 0;
-    
+
     // 白方易位权限
     if (!(hasKingMoved[PieceColor.white] ?? true)) {
       if (!(hasRookMoved[PieceColor.white]?['kingside'] ?? true)) {
-        chess.castling[chess_lib.Color.WHITE] |= 1; // 王翼易位
+        chess.castling[chess_lib.Color.WHITE] |=
+            chess_lib.Chess.BITS_KSIDE_CASTLE; // 王翼易位
       }
       if (!(hasRookMoved[PieceColor.white]?['queenside'] ?? true)) {
-        chess.castling[chess_lib.Color.WHITE] |= 2; // 后翼易位
+        chess.castling[chess_lib.Color.WHITE] |=
+            chess_lib.Chess.BITS_QSIDE_CASTLE; // 后翼易位
       }
     }
-    
+
     // 黑方易位权限
     if (!(hasKingMoved[PieceColor.black] ?? true)) {
       if (!(hasRookMoved[PieceColor.black]?['kingside'] ?? true)) {
-        chess.castling[chess_lib.Color.BLACK] |= 1; // 王翼易位
+        chess.castling[chess_lib.Color.BLACK] |=
+            chess_lib.Chess.BITS_KSIDE_CASTLE; // 王翼易位
       }
       if (!(hasRookMoved[PieceColor.black]?['queenside'] ?? true)) {
-        chess.castling[chess_lib.Color.BLACK] |= 2; // 后翼易位
+        chess.castling[chess_lib.Color.BLACK] |=
+            chess_lib.Chess.BITS_QSIDE_CASTLE; // 后翼易位
       }
     }
   }
@@ -170,7 +217,7 @@ class ChessAdapter {
       8,
       (row) => List.generate(8, (col) => null as ChessPiece?),
     );
-    
+
     for (int row = 0; row < 8; row++) {
       for (int col = 0; col < 8; col++) {
         final square = toChessLibSquare(Position(row: row, col: col));
@@ -180,12 +227,13 @@ class ChessAdapter {
         }
       }
     }
-    
+
     return board;
   }
 
   /// 将 chess 包的移动转换为现有的 ChessMove
-  static ChessMove fromChessLibMove(chess_lib.Move move, chess_lib.Chess chess) {
+  static ChessMove fromChessLibMove(
+      chess_lib.Move move, chess_lib.Chess chess) {
     final from = fromChessLibSquare(chess_lib.Chess.algebraic(move.from));
     final to = fromChessLibSquare(chess_lib.Chess.algebraic(move.to));
 
@@ -202,18 +250,17 @@ class ChessAdapter {
     if (capturedPieceOnBoard != null) {
       capturedPiece = fromChessLibPiece(capturedPieceOnBoard);
     }
-    
+
     // 检查特殊移动
     final isPromotion = move.promotion != null;
-    final promotionType = move.promotion != null 
-        ? fromChessLibPieceType(move.promotion!) 
-        : null;
-    
+    final promotionType =
+        move.promotion != null ? fromChessLibPieceType(move.promotion!) : null;
+
     final isCastling = (move.flags & chess_lib.Chess.BITS_KSIDE_CASTLE) != 0 ||
-                      (move.flags & chess_lib.Chess.BITS_QSIDE_CASTLE) != 0;
-    
+        (move.flags & chess_lib.Chess.BITS_QSIDE_CASTLE) != 0;
+
     final isEnPassant = (move.flags & chess_lib.Chess.BITS_EP_CAPTURE) != 0;
-    
+
     return ChessMove(
       from: from,
       to: to,
@@ -271,7 +318,7 @@ class ChessAdapter {
       halfMoveClock: halfMoveClock,
       fullMoveNumber: fullMoveNumber,
     );
-    
+
     final moves = chess.generate_moves();
     return moves.map((move) => fromChessLibMove(move, chess)).toList();
   }
@@ -284,15 +331,21 @@ class ChessAdapter {
     Map<PieceColor, Map<String, bool>>? hasRookMoved,
     Position? enPassantTarget,
   }) {
-    final chess = createChessFromBoard(
-      board,
-      color,
-      hasKingMoved: hasKingMoved,
-      hasRookMoved: hasRookMoved,
-      enPassantTarget: enPassantTarget,
-    );
-    
-    return chess.in_check;
+    try {
+      final chess = createChessFromBoard(
+        board,
+        color,
+        hasKingMoved: hasKingMoved,
+        hasRookMoved: hasRookMoved,
+        enPassantTarget: enPassantTarget,
+      );
+
+      return chess.in_check;
+    } catch (e) {
+      // 如果检查将军时出现错误，记录错误信息并返回false
+      print('警告：检查将军状态时出现错误: $e');
+      return false; // 安全地返回false，避免崩溃
+    }
   }
 
   /// 检查是否将死
@@ -303,15 +356,24 @@ class ChessAdapter {
     Map<PieceColor, Map<String, bool>>? hasRookMoved,
     Position? enPassantTarget,
   }) {
-    final chess = createChessFromBoard(
-      board,
-      color,
-      hasKingMoved: hasKingMoved,
-      hasRookMoved: hasRookMoved,
-      enPassantTarget: enPassantTarget,
-    );
-    
-    return chess.in_checkmate;
+    try {
+      final chess = createChessFromBoard(
+        board,
+        color,
+        hasKingMoved: hasKingMoved,
+        hasRookMoved: hasRookMoved,
+        enPassantTarget: enPassantTarget,
+      );
+
+      return chess.in_checkmate;
+    } catch (e) {
+      // 如果检查将死时出现错误，记录错误信息并返回false
+      print('警告：检查将死状态时出现错误: $e');
+      print('棋盘状态: ${board.map((row) => row.map((piece) => piece?.toString() ?? 'null').join(', ')).join('\n')}');
+      print('当前玩家: $color');
+      print('enPassantTarget: $enPassantTarget');
+      return false; // 安全地返回false，避免崩溃
+    }
   }
 
   /// 检查是否和棋
@@ -322,15 +384,21 @@ class ChessAdapter {
     Map<PieceColor, Map<String, bool>>? hasRookMoved,
     Position? enPassantTarget,
   }) {
-    final chess = createChessFromBoard(
-      board,
-      color,
-      hasKingMoved: hasKingMoved,
-      hasRookMoved: hasRookMoved,
-      enPassantTarget: enPassantTarget,
-    );
-    
-    return chess.in_stalemate;
+    try {
+      final chess = createChessFromBoard(
+        board,
+        color,
+        hasKingMoved: hasKingMoved,
+        hasRookMoved: hasRookMoved,
+        enPassantTarget: enPassantTarget,
+      );
+
+      return chess.in_stalemate;
+    } catch (e) {
+      // 如果检查和棋时出现错误，记录错误信息并返回false
+      print('警告：检查和棋状态时出现错误: $e');
+      return false; // 安全地返回false，避免崩溃
+    }
   }
 
   /// 检查是否游戏结束
@@ -348,7 +416,7 @@ class ChessAdapter {
       hasRookMoved: hasRookMoved,
       enPassantTarget: enPassantTarget,
     );
-    
+
     return chess.game_over;
   }
 }

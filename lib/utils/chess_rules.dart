@@ -18,15 +18,25 @@ class ChessRules {
 
     // 计算吃过路兵目标位置
     Position? enPassantTarget;
-    if (lastPawnDoubleMoved != null && 
+    if (lastPawnDoubleMoved != null &&
         lastPawnDoubleMovedNumber != null &&
         currentMoveNumber != null &&
         lastPawnDoubleMovedNumber == currentMoveNumber - 1) {
-      final direction = piece.color == PieceColor.white ? 1 : -1;
-      enPassantTarget = Position(
-        row: lastPawnDoubleMoved.row + direction,
-        col: lastPawnDoubleMoved.col,
-      );
+      // 修复：坐标系统中，行号0是黑方，行号7是白方
+      // 白方兵向上移动时行号减少，黑方兵向下移动时行号增加
+      final direction = piece.color == PieceColor.white ? -1 : 1;
+      final targetRow = lastPawnDoubleMoved.row + direction;
+
+      // 添加边界检查，防止坐标越界
+      if (targetRow >= 0 &&
+          targetRow <= 7 &&
+          lastPawnDoubleMoved.col >= 0 &&
+          lastPawnDoubleMoved.col <= 7) {
+        enPassantTarget = Position(
+          row: targetRow,
+          col: lastPawnDoubleMoved.col,
+        );
+      }
     }
 
     // 使用 chess 包获取所有合法移动
@@ -42,7 +52,8 @@ class ChessRules {
 
     // 过滤出从指定位置开始的移动
     return allMoves
-        .where((move) => move.from.row == position.row && move.from.col == position.col)
+        .where((move) =>
+            move.from.row == position.row && move.from.col == position.col)
         .map((move) => move.to)
         .toList();
   }
@@ -76,18 +87,30 @@ class ChessRules {
   ) {
     // 计算吃过路兵目标位置
     Position? enPassantTarget;
-    final opponentColor = color == PieceColor.white ? PieceColor.black : PieceColor.white;
+    final opponentColor =
+        color == PieceColor.white ? PieceColor.black : PieceColor.white;
     final lastPawnPos = lastPawnDoubleMoved[opponentColor];
     final lastPawnMoveNum = lastPawnDoubleMovedNumber[opponentColor];
-    
-    if (lastPawnPos != null && 
+
+    if (lastPawnPos != null &&
         lastPawnMoveNum != null &&
         lastPawnMoveNum == currentMoveNumber - 1) {
-      final direction = opponentColor == PieceColor.white ? 1 : -1;
-      enPassantTarget = Position(
-        row: lastPawnPos.row + direction,
-        col: lastPawnPos.col,
-      );
+      // 修复：坐标系统中，行号0是黑方，行号7是白方
+      // 对手是白方时，吃过路兵目标在其兵的上方（行号-1）
+      // 对手是黑方时，吃过路兵目标在其兵的下方（行号+1）
+      final direction = opponentColor == PieceColor.white ? -1 : 1;
+      final targetRow = lastPawnPos.row + direction;
+
+      // 添加边界检查，防止坐标越界
+      if (targetRow >= 0 &&
+          targetRow <= 7 &&
+          lastPawnPos.col >= 0 &&
+          lastPawnPos.col <= 7) {
+        enPassantTarget = Position(
+          row: targetRow,
+          col: lastPawnPos.col,
+        );
+      }
     }
 
     return ChessAdapter.isCheckmate(
@@ -111,18 +134,30 @@ class ChessRules {
   ) {
     // 计算吃过路兵目标位置
     Position? enPassantTarget;
-    final opponentColor = color == PieceColor.white ? PieceColor.black : PieceColor.white;
+    final opponentColor =
+        color == PieceColor.white ? PieceColor.black : PieceColor.white;
     final lastPawnPos = lastPawnDoubleMoved[opponentColor];
     final lastPawnMoveNum = lastPawnDoubleMovedNumber[opponentColor];
-    
-    if (lastPawnPos != null && 
+
+    if (lastPawnPos != null &&
         lastPawnMoveNum != null &&
         lastPawnMoveNum == currentMoveNumber - 1) {
-      final direction = opponentColor == PieceColor.white ? 1 : -1;
-      enPassantTarget = Position(
-        row: lastPawnPos.row + direction,
-        col: lastPawnPos.col,
-      );
+      // 修复：坐标系统中，行号0是黑方，行号7是白方
+      // 对手是白方时，吃过路兵目标在其兵的上方（行号-1）
+      // 对手是黑方时，吃过路兵目标在其兵的下方（行号+1）
+      final direction = opponentColor == PieceColor.white ? -1 : 1;
+      final targetRow = lastPawnPos.row + direction;
+
+      // 添加边界检查，防止坐标越界
+      if (targetRow >= 0 &&
+          targetRow <= 7 &&
+          lastPawnPos.col >= 0 &&
+          lastPawnPos.col <= 7) {
+        enPassantTarget = Position(
+          row: targetRow,
+          col: lastPawnPos.col,
+        );
+      }
     }
 
     return ChessAdapter.isStalemate(

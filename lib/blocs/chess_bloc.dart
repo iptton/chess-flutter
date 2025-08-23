@@ -154,7 +154,9 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     // 更新状态
     return state.copyWith(
       board: newBoard,
-      currentPlayer: state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white,
+      currentPlayer: state.currentPlayer == PieceColor.white
+          ? PieceColor.black
+          : PieceColor.white,
       selectedPosition: null,
       validMoves: const [],
       moveHistory: List.from(state.moveHistory)..add(move),
@@ -173,7 +175,8 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     }
 
     // 如果设置了允许操作的玩家方，检查当前是否允许操作
-    if (state.allowedPlayer != null && state.currentPlayer != state.allowedPlayer) {
+    if (state.allowedPlayer != null &&
+        state.currentPlayer != state.allowedPlayer) {
       emit(state.copyWith(
         selectedPosition: null,
         validMoves: [],
@@ -197,8 +200,15 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       event.position,
       hasKingMoved: state.hasKingMoved,
       hasRookMoved: state.hasRookMoved,
-      lastPawnDoubleMoved: state.lastPawnDoubleMoved[piece?.color == PieceColor.white ? PieceColor.black : PieceColor.white],
-      lastPawnDoubleMovedNumber: state.lastPawnDoubleMovedNumber[piece?.color == PieceColor.white ? PieceColor.black : PieceColor.white],
+      // 修复：对于吃过路兵，应该根据当前回合玩家来传递对手的双步兵位置
+      lastPawnDoubleMoved:
+          state.lastPawnDoubleMoved[state.currentPlayer == PieceColor.white
+              ? PieceColor.black // 如果当前是白方回合，则查找黑方的双步兵
+              : PieceColor.white], // 如果当前是黑方回合，则查找白方的双步兵
+      lastPawnDoubleMovedNumber: state.lastPawnDoubleMovedNumber[
+          state.currentPlayer == PieceColor.white
+              ? PieceColor.black
+              : PieceColor.white],
       currentMoveNumber: state.currentMoveNumber,
     );
 
@@ -211,8 +221,8 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
   void _onMovePiece(MovePiece event, Emitter<GameState> emit) {
     // 检查是否是AI移动（AI移动时不需要先选中棋子）
     final isAIMove = state.isAIThinking ||
-                     (state.gameMode == GameMode.offline &&
-                      state.aiColor == state.currentPlayer);
+        (state.gameMode == GameMode.offline &&
+            state.aiColor == state.currentPlayer);
 
     if (!isAIMove && state.selectedPosition == null) {
       return;
@@ -227,19 +237,32 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       }
 
       // 使用chess规则验证移动
-      final validMoves = ChessRules.getValidMoves(state.board, event.from);
-      final isValidMove = validMoves.any(
-        (pos) => pos.row == event.to.row && pos.col == event.to.col
+      final validMoves = ChessRules.getValidMoves(
+        state.board,
+        event.from,
+        hasKingMoved: state.hasKingMoved,
+        hasRookMoved: state.hasRookMoved,
+        // 修复：为AI移动验证也添加吃过路兵参数，根据当前回合玩家传递对手双步兵信息
+        lastPawnDoubleMoved: state.lastPawnDoubleMoved[
+            state.currentPlayer == PieceColor.white
+                ? PieceColor.black
+                : PieceColor.white],
+        lastPawnDoubleMovedNumber: state.lastPawnDoubleMovedNumber[
+            state.currentPlayer == PieceColor.white
+                ? PieceColor.black
+                : PieceColor.white],
+        currentMoveNumber: state.currentMoveNumber,
       );
+      final isValidMove = validMoves
+          .any((pos) => pos.row == event.to.row && pos.col == event.to.col);
 
       if (!isValidMove) {
         return;
       }
     } else {
       // 人类移动的原有逻辑
-      final isValidMove = state.validMoves.any(
-        (pos) => pos.row == event.to.row && pos.col == event.to.col
-      );
+      final isValidMove = state.validMoves
+          .any((pos) => pos.row == event.to.row && pos.col == event.to.col);
       if (!isValidMove) {
         return;
       }
@@ -248,8 +271,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     final movingPiece = state.board[event.from.row][event.from.col]!;
     final capturedPiece = state.board[event.to.row][event.to.col];
     final newBoard = List<List<ChessPiece?>>.from(
-      state.board.map((row) => List<ChessPiece?>.from(row))
-    );
+        state.board.map((row) => List<ChessPiece?>.from(row)));
 
     // 处理王车易位
     if (_isCastlingMove(movingPiece, event)) {
@@ -276,26 +298,52 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     }
 
     // 执行常规移动
-    _handleRegularMove(event, movingPiece, capturedPiece, newBoard, newLastPawnDoubleMoved, emit);
+    _handleRegularMove(event, movingPiece, capturedPiece, newBoard,
+        newLastPawnDoubleMoved, emit);
   }
 
   bool _isCastlingMove(ChessPiece movingPiece, MovePiece event) {
     return movingPiece.type == PieceType.king &&
-           (event.from.col - event.to.col).abs() == 2;
+        (event.from.col - event.to.col).abs() == 2;
   }
 
-  void _handleCastling(MovePiece event, ChessPiece movingPiece, List<List<ChessPiece?>> newBoard, Emitter<GameState> emit) {
+  void _handleCastling(MovePiece event, ChessPiece movingPiece,
+      List<List<ChessPiece?>> newBoard, Emitter<GameState> emit) {
     final isKingside = event.to.col > event.from.col;
     final rookFromCol = isKingside ? 7 : 0;
     final rookToCol = isKingside ? 5 : 3;
 
+    // 移动王
     newBoard[event.to.row][event.to.col] = movingPiece;
     newBoard[event.from.row][event.from.col] = null;
-    newBoard[event.from.row][rookToCol] = newBoard[event.from.row][rookFromCol];
+
+    // 移动车 - 修复：确保车正确移动
+    final rook = newBoard[event.from.row][rookFromCol];
+    print(
+        '王车易位: 车从(${event.from.row}, $rookFromCol)移动到(${event.from.row}, $rookToCol)');
+    print('车棋子: $rook');
+    newBoard[event.from.row][rookToCol] = rook;
     newBoard[event.from.row][rookFromCol] = null;
 
+    // 更新王的移动状态
     final newHasKingMoved = Map<PieceColor, bool>.from(state.hasKingMoved);
     newHasKingMoved[movingPiece.color] = true;
+
+    // 修复：更新车的移动状态
+    final newHasRookMoved = Map<PieceColor, Map<String, bool>>.from(
+      state.hasRookMoved.map(
+        (color, value) => MapEntry(
+          color,
+          Map<String, bool>.from(value),
+        ),
+      ),
+    );
+    // 标记参与易位的车为已移动
+    if (isKingside) {
+      newHasRookMoved[movingPiece.color]!['kingside'] = true;
+    } else {
+      newHasRookMoved[movingPiece.color]!['queenside'] = true;
+    }
 
     final move = ChessMove(
       from: event.from,
@@ -304,33 +352,39 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isCastling: true,
     );
 
-    String message = '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}王从${_getPositionName(event.from)}进行${isKingside ? "王翼" : "后翼"}易位到${_getPositionName(event.to)}';
+    String message =
+        '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}王从${_getPositionName(event.from)}进行${isKingside ? "王翼" : "后翼"}易位到${_getPositionName(event.to)}';
 
     // 检查对手是否被将军或将死
-    final nextPlayer = state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white;
+    final nextPlayer = state.currentPlayer == PieceColor.white
+        ? PieceColor.black
+        : PieceColor.white;
     final isCheck = ChessRules.isInCheck(newBoard, nextPlayer);
-    final isCheckmate = isCheck && ChessRules.isCheckmate(
-      newBoard,
-      nextPlayer,
-      newHasKingMoved,
-      state.hasRookMoved,
-      state.lastPawnDoubleMoved,
-      state.lastPawnDoubleMovedNumber,
-      state.currentMoveNumber + 1,
-    );
-    final isStalemate = !isCheck && ChessRules.isStalemate(
-      newBoard,
-      nextPlayer,
-      newHasKingMoved,
-      state.hasRookMoved,
-      state.lastPawnDoubleMoved,
-      state.lastPawnDoubleMovedNumber,
-      state.currentMoveNumber + 1,
-    );
+    final isCheckmate = isCheck &&
+        ChessRules.isCheckmate(
+          newBoard,
+          nextPlayer,
+          newHasKingMoved,
+          newHasRookMoved, // 使用更新后的车移动状态
+          state.lastPawnDoubleMoved,
+          state.lastPawnDoubleMovedNumber,
+          state.currentMoveNumber + 1,
+        );
+    final isStalemate = !isCheck &&
+        ChessRules.isStalemate(
+          newBoard,
+          nextPlayer,
+          newHasKingMoved,
+          newHasRookMoved, // 使用更新后的车移动状态
+          state.lastPawnDoubleMoved,
+          state.lastPawnDoubleMovedNumber,
+          state.currentMoveNumber + 1,
+        );
 
     // 添加将军或将死的提示
     if (isCheckmate) {
-      message += ' 将死！${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
+      message +=
+          ' 将死！${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
     } else if (isCheck) {
       message += ' 将军！';
     } else if (isStalemate) {
@@ -346,6 +400,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       selectedPosition: null,
       validMoves: [],
       hasKingMoved: newHasKingMoved,
+      hasRookMoved: newHasRookMoved, // 修复：添加缺失的车移动状态更新
       currentMoveNumber: state.currentMoveNumber + 1,
       moveHistory: [...state.moveHistory, move],
       specialMoveMessage: message,
@@ -364,14 +419,19 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
 
   bool _isPawnDoubleMove(ChessPiece movingPiece, MovePiece event) {
     return movingPiece.type == PieceType.pawn &&
-           (event.from.row - event.to.row).abs() == 2;
+        (event.from.row - event.to.row).abs() == 2;
   }
 
-  bool _isEnPassantMove(ChessPiece movingPiece, MovePiece event, ChessPiece? capturedPiece) {
+  bool _isEnPassantMove(
+      ChessPiece movingPiece, MovePiece event, ChessPiece? capturedPiece) {
     // 获取对手的双步兵记录
-    final opponentColor = movingPiece.color == PieceColor.white ? PieceColor.black : PieceColor.white;
-    final opponentLastPawnDoubleMoved = state.lastPawnDoubleMoved[opponentColor];
-    final opponentLastMoveNumber = state.lastPawnDoubleMovedNumber[opponentColor];
+    final opponentColor = movingPiece.color == PieceColor.white
+        ? PieceColor.black
+        : PieceColor.white;
+    final opponentLastPawnDoubleMoved =
+        state.lastPawnDoubleMoved[opponentColor];
+    final opponentLastMoveNumber =
+        state.lastPawnDoubleMovedNumber[opponentColor];
 
     if (movingPiece.type != PieceType.pawn ||
         opponentLastPawnDoubleMoved == null ||
@@ -383,26 +443,32 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     // 检查是否是吃过路兵的位置
     if (movingPiece.color == PieceColor.white) {
       return event.from.row == 3 && // 白方兵在第5行
-             opponentLastPawnDoubleMoved.row == 3 && // 黑方兵在第5行
-             opponentLastPawnDoubleMoved.col == event.to.col && // 目标列与黑方兵相同
-             (event.from.col - event.to.col).abs() == 1; // 斜向移动一格
+          opponentLastPawnDoubleMoved.row == 3 && // 黑方兵在第5行
+          opponentLastPawnDoubleMoved.col == event.to.col && // 目标列与黑方兵相同
+          (event.from.col - event.to.col).abs() == 1; // 斜向移动一格
     } else {
       return event.from.row == 4 && // 黑方兵在第4行
-             opponentLastPawnDoubleMoved.row == 4 && // 白方兵在第4行
-             opponentLastPawnDoubleMoved.col == event.to.col && // 目标列与白方兵相同
-             (event.from.col - event.to.col).abs() == 1; // 斜向移动一格
+          opponentLastPawnDoubleMoved.row == 4 && // 白方兵在第4行
+          opponentLastPawnDoubleMoved.col == event.to.col && // 目标列与白方兵相同
+          (event.from.col - event.to.col).abs() == 1; // 斜向移动一格
     }
   }
 
-  void _handleEnPassant(MovePiece event, ChessPiece movingPiece, List<List<ChessPiece?>> newBoard, Emitter<GameState> emit) {
-    final opponentColor = movingPiece.color == PieceColor.white ? PieceColor.black : PieceColor.white;
-    final opponentLastPawnDoubleMoved = state.lastPawnDoubleMoved[opponentColor]!;
+  void _handleEnPassant(MovePiece event, ChessPiece movingPiece,
+      List<List<ChessPiece?>> newBoard, Emitter<GameState> emit) {
+    final opponentColor = movingPiece.color == PieceColor.white
+        ? PieceColor.black
+        : PieceColor.white;
+    final opponentLastPawnDoubleMoved =
+        state.lastPawnDoubleMoved[opponentColor]!;
 
     // 获取被吃的兵
-    final capturedPawn = state.board[opponentLastPawnDoubleMoved.row][opponentLastPawnDoubleMoved.col]!;
+    final capturedPawn = state.board[opponentLastPawnDoubleMoved.row]
+        [opponentLastPawnDoubleMoved.col]!;
 
     // 移除被吃的兵
-    newBoard[opponentLastPawnDoubleMoved.row][opponentLastPawnDoubleMoved.col] = null;
+    newBoard[opponentLastPawnDoubleMoved.row][opponentLastPawnDoubleMoved.col] =
+        null;
 
     // 移动吃子的兵
     newBoard[event.to.row][event.to.col] = movingPiece;
@@ -417,38 +483,46 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     );
 
     // 创建新的双步兵记录
-    final newLastPawnDoubleMoved = Map<PieceColor, Position?>.from(state.lastPawnDoubleMoved);
-    final newLastPawnDoubleMovedNumber = Map<PieceColor, int>.from(state.lastPawnDoubleMovedNumber);
+    final newLastPawnDoubleMoved =
+        Map<PieceColor, Position?>.from(state.lastPawnDoubleMoved);
+    final newLastPawnDoubleMovedNumber =
+        Map<PieceColor, int>.from(state.lastPawnDoubleMovedNumber);
     newLastPawnDoubleMoved[opponentColor] = null;
     newLastPawnDoubleMovedNumber[opponentColor] = -1;
 
-    String message = '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}兵从${_getPositionName(event.from)}吃过路兵到${_getPositionName(event.to)}';
+    String message =
+        '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}兵从${_getPositionName(event.from)}吃过路兵到${_getPositionName(event.to)}';
 
     // 检查对手是否被将军或将死
-    final nextPlayer = state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white;
+    final nextPlayer = state.currentPlayer == PieceColor.white
+        ? PieceColor.black
+        : PieceColor.white;
     final isCheck = ChessRules.isInCheck(newBoard, nextPlayer);
-    final isCheckmate = isCheck && ChessRules.isCheckmate(
-      newBoard,
-      nextPlayer,
-      state.hasKingMoved,
-      state.hasRookMoved,
-      newLastPawnDoubleMoved,
-      newLastPawnDoubleMovedNumber,
-      state.currentMoveNumber + 1,
-    );
-    final isStalemate = !isCheck && ChessRules.isStalemate(
-      newBoard,
-      nextPlayer,
-      state.hasKingMoved,
-      state.hasRookMoved,
-      newLastPawnDoubleMoved,
-      newLastPawnDoubleMovedNumber,
-      state.currentMoveNumber + 1,
-    );
+    final isCheckmate = isCheck &&
+        ChessRules.isCheckmate(
+          newBoard,
+          nextPlayer,
+          state.hasKingMoved,
+          state.hasRookMoved,
+          newLastPawnDoubleMoved,
+          newLastPawnDoubleMovedNumber,
+          state.currentMoveNumber + 1,
+        );
+    final isStalemate = !isCheck &&
+        ChessRules.isStalemate(
+          newBoard,
+          nextPlayer,
+          state.hasKingMoved,
+          state.hasRookMoved,
+          newLastPawnDoubleMoved,
+          newLastPawnDoubleMovedNumber,
+          state.currentMoveNumber + 1,
+        );
 
     // 添加将军或将死的提示
     if (isCheckmate) {
-      message += ' 将死！${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
+      message +=
+          ' 将死！${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
     } else if (isCheck) {
       message += ' 将军！';
     } else if (isStalemate) {
@@ -483,10 +557,14 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
 
   bool _isPawnPromotion(ChessPiece movingPiece, MovePiece event) {
     return movingPiece.type == PieceType.pawn &&
-           (event.to.row == 0 || event.to.row == 7);
+        (event.to.row == 0 || event.to.row == 7);
   }
 
-  void _handlePawnPromotion(MovePiece event, ChessPiece movingPiece, List<List<ChessPiece?>> newBoard, Emitter<GameState> emit) {
+  void _handlePawnPromotion(MovePiece event, ChessPiece movingPiece,
+      List<List<ChessPiece?>> newBoard, Emitter<GameState> emit) {
+    // 修复：在升变前保存当前状态，使升变作为整体操作
+    final newUndoStates = List<GameState>.from(state.undoStates)..add(state);
+
     newBoard[event.to.row][event.to.col] = movingPiece;
     newBoard[event.from.row][event.from.col] = null;
 
@@ -498,18 +576,16 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     );
 
     // 创建新的双步兵记录
-    final newLastPawnDoubleMoved = Map<PieceColor, Position?>.from(state.lastPawnDoubleMoved);
-    final newLastPawnDoubleMovedNumber = Map<PieceColor, int>.from(state.lastPawnDoubleMovedNumber);
+    final newLastPawnDoubleMoved =
+        Map<PieceColor, Position?>.from(state.lastPawnDoubleMoved);
+    final newLastPawnDoubleMovedNumber =
+        Map<PieceColor, int>.from(state.lastPawnDoubleMovedNumber);
 
-    // 切换玩家
-    final nextPlayer = state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white;
-
-    // 保存当前状态到撤销列表
-    final newUndoStates = List<GameState>.from(state.undoStates)..add(state);
+    // 修复：升变时不切换玩家，等待用户选择升变类型后再切换
 
     emit(state.copyWith(
       board: newBoard,
-      currentPlayer: nextPlayer,
+      // 修复：不切换currentPlayer，保持当前玩家不变
       selectedPosition: null,
       validMoves: [],
       lastPawnDoubleMoved: newLastPawnDoubleMoved,
@@ -522,11 +598,16 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isAIThinking: false, // 清除AI思考状态
     ));
 
-    // 检查是否需要AI移动
-    _checkForAIMove(emit);
+    // 修复：升变时不检查AI移动，等升变完成后再检查
   }
 
-  void _handleRegularMove(MovePiece event, ChessPiece movingPiece, ChessPiece? capturedPiece, List<List<ChessPiece?>> newBoard, Position? newLastPawnDoubleMoved, Emitter<GameState> emit) {
+  void _handleRegularMove(
+      MovePiece event,
+      ChessPiece movingPiece,
+      ChessPiece? capturedPiece,
+      List<List<ChessPiece?>> newBoard,
+      Position? newLastPawnDoubleMoved,
+      Emitter<GameState> emit) {
     newBoard[event.to.row][event.to.col] = movingPiece;
     newBoard[event.from.row][event.from.col] = null;
 
@@ -547,16 +628,20 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       }
     }
 
-    Map<PieceColor, bool> newHasKingMoved = Map<PieceColor, bool>.from(state.hasKingMoved);
+    Map<PieceColor, bool> newHasKingMoved =
+        Map<PieceColor, bool>.from(state.hasKingMoved);
     if (movingPiece.type == PieceType.king) {
       newHasKingMoved[movingPiece.color] = true;
     }
 
     // 更新双步兵记录
-    final newLastPawnDoubleMoved = Map<PieceColor, Position?>.from(state.lastPawnDoubleMoved);
-    final newLastPawnDoubleMovedNumber = Map<PieceColor, int>.from(state.lastPawnDoubleMovedNumber);
+    final newLastPawnDoubleMoved =
+        Map<PieceColor, Position?>.from(state.lastPawnDoubleMoved);
+    final newLastPawnDoubleMovedNumber =
+        Map<PieceColor, int>.from(state.lastPawnDoubleMovedNumber);
 
-    if (movingPiece.type == PieceType.pawn && (event.from.row - event.to.row).abs() == 2) {
+    if (movingPiece.type == PieceType.pawn &&
+        (event.from.row - event.to.row).abs() == 2) {
       newLastPawnDoubleMoved[movingPiece.color] = event.to;
       newLastPawnDoubleMovedNumber[movingPiece.color] = state.currentMoveNumber;
     } else {
@@ -576,36 +661,43 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     // 生成移动提示信息
     String message;
     if (capturedPiece != null) {
-      message = '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}${_getPieceTypeName(movingPiece.type)}(${_getPositionName(event.from)})吃掉${capturedPiece.color == PieceColor.white ? "白方" : "黑方"}${_getPieceTypeName(capturedPiece.type)}(${_getPositionName(event.to)})';
+      message =
+          '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}${_getPieceTypeName(movingPiece.type)}(${_getPositionName(event.from)})吃掉${capturedPiece.color == PieceColor.white ? "白方" : "黑方"}${_getPieceTypeName(capturedPiece.type)}(${_getPositionName(event.to)})';
     } else {
-      message = '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}${_getPieceTypeName(movingPiece.type)}从${_getPositionName(event.from)}移动到${_getPositionName(event.to)}';
+      message =
+          '${movingPiece.color == PieceColor.white ? "白方" : "黑方"}${_getPieceTypeName(movingPiece.type)}从${_getPositionName(event.from)}移动到${_getPositionName(event.to)}';
     }
 
     // 检查对手是否被将军或将死
-    final nextPlayer = state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white;
+    final nextPlayer = state.currentPlayer == PieceColor.white
+        ? PieceColor.black
+        : PieceColor.white;
     final isCheck = ChessRules.isInCheck(newBoard, nextPlayer);
-    final isCheckmate = isCheck && ChessRules.isCheckmate(
-      newBoard,
-      nextPlayer,
-      newHasKingMoved,
-      newHasRookMoved ?? state.hasRookMoved,
-      newLastPawnDoubleMoved,
-      newLastPawnDoubleMovedNumber,
-      state.currentMoveNumber + 1,
-    );
-    final isStalemate = !isCheck && ChessRules.isStalemate(
-      newBoard,
-      nextPlayer,
-      newHasKingMoved,
-      newHasRookMoved ?? state.hasRookMoved,
-      newLastPawnDoubleMoved,
-      newLastPawnDoubleMovedNumber,
-      state.currentMoveNumber + 1,
-    );
+    final isCheckmate = isCheck &&
+        ChessRules.isCheckmate(
+          newBoard,
+          nextPlayer,
+          newHasKingMoved,
+          newHasRookMoved ?? state.hasRookMoved,
+          newLastPawnDoubleMoved,
+          newLastPawnDoubleMovedNumber,
+          state.currentMoveNumber + 1,
+        );
+    final isStalemate = !isCheck &&
+        ChessRules.isStalemate(
+          newBoard,
+          nextPlayer,
+          newHasKingMoved,
+          newHasRookMoved ?? state.hasRookMoved,
+          newLastPawnDoubleMoved,
+          newLastPawnDoubleMovedNumber,
+          state.currentMoveNumber + 1,
+        );
 
     // 添加将军或将死的提示
     if (isCheckmate) {
-      message += ' 将死！${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
+      message +=
+          ' 将死！${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
     } else if (isCheck) {
       message += ' 将军！';
     } else if (isStalemate) {
@@ -641,6 +733,15 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
   }
 
   String _getPositionName(Position position) {
+    // 添加坐标验证以防止超出范围的索引
+    if (position.col < 0 ||
+        position.col > 7 ||
+        position.row < 0 ||
+        position.row > 7) {
+      // 如果坐标异常，返回一个错误指示
+      return '无效位置(${position.row},${position.col})';
+    }
+
     final col = String.fromCharCode('A'.codeUnitAt(0) + position.col);
     final row = 8 - position.row;
     return '$col$row';
@@ -665,8 +766,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
 
   void _onPromotePawn(PromotePawn event, Emitter<GameState> emit) {
     final newBoard = List<List<ChessPiece?>>.from(
-      state.board.map((row) => List<ChessPiece?>.from(row))
-    );
+        state.board.map((row) => List<ChessPiece?>.from(row)));
     final pawn = newBoard[event.position.row][event.position.col]!;
     final promotedPiece = ChessPiece(
       type: event.promotionType,
@@ -675,63 +775,110 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
 
     newBoard[event.position.row][event.position.col] = promotedPiece;
 
-    // 获取最后一步移动
-    final lastMove = state.moveHistory.last.copyWith(
-      isPromotion: true,
-      promotionType: event.promotionType,
-    );
+    // 获取最后一步移动，如果没有历史记录则创建一个默认移动
+    ChessMove lastMove;
+    if (state.moveHistory.isNotEmpty) {
+      lastMove = state.moveHistory.last.copyWith(
+        isPromotion: true,
+        promotionType: event.promotionType,
+      );
+    } else {
+      // 如果没有历史记录，创建一个默认的升变移动
+      // 对于升变，起始位置应该是兵升变前的位置
+      final isWhite = pawn.color == PieceColor.white;
+      final fromRow = isWhite ? 6 : 1; // 白方从第6行升变到第0行，黑方从第1行升变到第7行
+      lastMove = ChessMove(
+        from: Position(row: fromRow, col: event.position.col), // 使用正确的起始位置
+        to: event.position, // 升变目标位置
+        piece: pawn,
+        isPromotion: true,
+        promotionType: event.promotionType,
+      );
+    }
 
     // 检查对手是否被将军或将死
-    final nextPlayer = state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white;
-    final isCheck = ChessRules.isInCheck(newBoard, nextPlayer);
-    final isCheckmate = isCheck && ChessRules.isCheckmate(
-      newBoard,
-      nextPlayer,
-      state.hasKingMoved,
-      state.hasRookMoved,
-      state.lastPawnDoubleMoved,
-      state.lastPawnDoubleMovedNumber,
-      state.currentMoveNumber + 1,
-    );
-    final isStalemate = !isCheck && ChessRules.isStalemate(
-      newBoard,
-      nextPlayer,
-      state.hasKingMoved,
-      state.hasRookMoved,
-      state.lastPawnDoubleMoved,
-      state.lastPawnDoubleMovedNumber,
-      state.currentMoveNumber + 1,
-    );
+    final nextPlayer = state.currentPlayer == PieceColor.white
+        ? PieceColor.black
+        : PieceColor.white;
 
-    String message = '${pawn.color == PieceColor.white ? "白方" : "黑方"}兵从${_getPositionName(lastMove.from)}升变为${_getPieceTypeName(event.promotionType)}到${_getPositionName(lastMove.to)}';
+    // 创建清理后的双步兵记录，确保没有无效坐标
+    final cleanLastPawnDoubleMoved = <PieceColor, Position?>{};
+    final cleanLastPawnDoubleMovedNumber = <PieceColor, int>{};
+
+    for (final color in PieceColor.values) {
+      final position = state.lastPawnDoubleMoved[color];
+      final moveNumber = state.lastPawnDoubleMovedNumber[color];
+
+      // 验证坐标有效性
+      if (position != null &&
+          position.row >= 0 && position.row <= 7 &&
+          position.col >= 0 && position.col <= 7) {
+        cleanLastPawnDoubleMoved[color] = position;
+        cleanLastPawnDoubleMovedNumber[color] = moveNumber ?? -1;
+      } else {
+        cleanLastPawnDoubleMoved[color] = null;
+        cleanLastPawnDoubleMovedNumber[color] = -1;
+      }
+    }
+
+    final isCheck = ChessRules.isInCheck(newBoard, nextPlayer);
+    final isCheckmate = isCheck &&
+        ChessRules.isCheckmate(
+          newBoard,
+          nextPlayer,
+          state.hasKingMoved,
+          state.hasRookMoved,
+          cleanLastPawnDoubleMoved,
+          cleanLastPawnDoubleMovedNumber,
+          state.currentMoveNumber + 1,
+        );
+    final isStalemate = !isCheck &&
+        ChessRules.isStalemate(
+          newBoard,
+          nextPlayer,
+          state.hasKingMoved,
+          state.hasRookMoved,
+          cleanLastPawnDoubleMoved,
+          cleanLastPawnDoubleMovedNumber,
+          state.currentMoveNumber + 1,
+        );
+
+    String message =
+        '${pawn.color == PieceColor.white ? "白方" : "黑方"}兵从${_getPositionName(lastMove.from)}升变为${_getPieceTypeName(event.promotionType)}到${_getPositionName(lastMove.to)}';
 
     // 添加将军或将死的提示
     if (isCheckmate) {
-      message += ' 将死！${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
+      message +=
+          ' 将死！${state.currentPlayer == PieceColor.white ? "白方" : "黑方"}获胜！';
     } else if (isCheck) {
       message += ' 将军！';
     } else if (isStalemate) {
       message += ' 和棋！';
     }
 
-    // 保存当前状态到撤销列表
-    final newUndoStates = List<GameState>.from(state.undoStates)..add(state);
+    // 修复：不再重复保存撤销状态，因为_handlePawnPromotion已经保存了
+    // 只更新棋盘和玩家状态
 
     emit(state.copyWith(
       board: newBoard,
-      currentPlayer: nextPlayer,
-      moveHistory: [
-        ...state.moveHistory.sublist(0, state.moveHistory.length - 1),
-        lastMove,
-      ],
+      currentPlayer: nextPlayer, // 修复：添加缺失的玩家切换
+      moveHistory: state.moveHistory.isNotEmpty
+          ? [
+              ...state.moveHistory.sublist(0, state.moveHistory.length - 1),
+              lastMove,
+            ]
+          : [lastMove], // 如果没有历史记录，直接添加新移动
       specialMoveMessage: message,
       lastMove: lastMove,
       isCheck: isCheck,
       isCheckmate: isCheckmate,
       isStalemate: isStalemate,
-      undoStates: newUndoStates,
+      // 修复：不更新撤销状态，保持现有的撤销列表
       redoStates: [], // 清空重做列表
     ));
+
+    // 检查是否需要AI移动
+    _checkForAIMove(emit);
   }
 
   void _onUndoMove(UndoMove event, Emitter<GameState> emit) {
@@ -743,10 +890,12 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
 
     // 将当前状态添加到重做列表的开头
     final newRedoStates = List<GameState>.from(state.redoStates)
-      ..insert(0, state.copyWith(
-        undoStates: newUndoStates,
-        redoStates: [],
-      ));
+      ..insert(
+          0,
+          state.copyWith(
+            undoStates: newUndoStates,
+            redoStates: [],
+          ));
 
     emit(previousState.copyWith(
       moveHistory: state.moveHistory,
@@ -856,16 +1005,22 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       return;
     }
 
+    print('AI开始思考...');
     // 设置AI思考状态
-    emit(state.copyWith(isAIThinking: true));
+    if (!emit.isDone) {
+      emit(state.copyWith(isAIThinking: true));
+    }
 
     try {
       // 初始化AI（如果还没有初始化）
       if (_chessAI == null || _chessAI!.difficulty != state.aiDifficulty) {
-        _chessAI = ChessAI(difficulty: state.aiDifficulty ?? AIDifficulty.medium);
+        _chessAI =
+            ChessAI(difficulty: state.aiDifficulty ?? AIDifficulty.medium);
+        print('初始化AI: 难度=${state.aiDifficulty}');
       }
 
       // 获取AI移动
+      print('调用AI获取最佳移动...');
       final aiMove = await _chessAI!.getBestMove(
         state.board,
         state.currentPlayer,
@@ -877,15 +1032,26 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       );
 
       if (aiMove != null) {
-        // 执行AI移动
-        add(MovePiece(aiMove.from, aiMove.to));
+        print('AI找到移动: 从${aiMove.from}到${aiMove.to}');
+        // 使用Future.microtask延迟发送移动事件，避免emitter重复使用
+        Future.microtask(() {
+          if (!isClosed) {
+            add(MovePiece(aiMove.from, aiMove.to));
+          }
+        });
       } else {
+        print('AI没有找到合法移动');
         // AI没有找到合法移动，清除思考状态
-        emit(state.copyWith(isAIThinking: false));
+        if (!emit.isDone) {
+          emit(state.copyWith(isAIThinking: false));
+        }
       }
     } catch (e) {
+      print('AI移动失败: $e');
       // AI移动失败，清除思考状态
-      emit(state.copyWith(isAIThinking: false));
+      if (!emit.isDone) {
+        emit(state.copyWith(isAIThinking: false));
+      }
     }
   }
 
@@ -905,16 +1071,22 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
         : PieceColor.white;
 
     final lastPawnDoubleMoved = state.lastPawnDoubleMoved[opponentColor];
-    final lastPawnDoubleMovedNumber = state.lastPawnDoubleMovedNumber[opponentColor];
+    final lastPawnDoubleMovedNumber =
+        state.lastPawnDoubleMovedNumber[opponentColor];
 
     if (lastPawnDoubleMoved != null &&
         lastPawnDoubleMovedNumber == state.currentMoveNumber - 1) {
       // 计算吃过路兵的目标位置
       final direction = opponentColor == PieceColor.white ? 1 : -1;
-      return Position(
-        row: lastPawnDoubleMoved.row + direction,
-        col: lastPawnDoubleMoved.col,
-      );
+      final targetRow = lastPawnDoubleMoved.row + direction;
+
+      // 添加边界检查，防止坐标越界
+      if (targetRow >= 0 && targetRow <= 7) {
+        return Position(
+          row: targetRow,
+          col: lastPawnDoubleMoved.col,
+        );
+      }
     }
 
     return null;
@@ -928,9 +1100,12 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
         !state.isAIThinking &&
         !state.isCheckmate &&
         !state.isStalemate) {
-      // 延迟一点时间让UI更新，然后触发AI移动
-      Future.delayed(const Duration(milliseconds: 500), () {
-        add(const MakeAIMove());
+      // 使用Future.microtask延迟触发AI移动，避免emitter重复使用
+      print('触发AI移动: 当前玩家=${state.currentPlayer}, AI颜色=${state.aiColor}');
+      Future.microtask(() {
+        if (!isClosed) {
+          add(MakeAIMove());
+        }
       });
     }
   }

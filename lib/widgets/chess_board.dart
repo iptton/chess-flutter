@@ -602,21 +602,38 @@ class ChessSquare extends StatelessWidget {
     final piece = state.board[row][col];
     if (piece?.color != state.currentPlayer) return false;
 
-    return ChessRules.getValidMoves(
-      state.board,
-      Position(row: row, col: col),
-      hasKingMoved: state.hasKingMoved,
-      hasRookMoved: state.hasRookMoved,
-      lastPawnDoubleMoved: state.lastPawnDoubleMoved[
-          piece?.color == PieceColor.white
-              ? PieceColor.black
-              : PieceColor.white],
-      lastPawnDoubleMovedNumber: state.lastPawnDoubleMovedNumber[
-          piece?.color == PieceColor.white
-              ? PieceColor.black
-              : PieceColor.white],
-      currentMoveNumber: state.currentMoveNumber,
-    ).isNotEmpty;
+    // 获取对手的双步兵信息，并进行安全性检查
+    final opponentColor = state.currentPlayer == PieceColor.white
+        ? PieceColor.black
+        : PieceColor.white;
+    final opponentLastPawnDoubleMoved = state.lastPawnDoubleMoved[opponentColor];
+
+    // 验证对手双步兵坐标的有效性，防止传递异常坐标给chess库
+    Position? safeLastPawnDoubleMoved;
+    if (opponentLastPawnDoubleMoved != null &&
+        opponentLastPawnDoubleMoved.row >= 0 &&
+        opponentLastPawnDoubleMoved.row <= 7 &&
+        opponentLastPawnDoubleMoved.col >= 0 &&
+        opponentLastPawnDoubleMoved.col <= 7) {
+      safeLastPawnDoubleMoved = opponentLastPawnDoubleMoved;
+    }
+
+    try {
+      return ChessRules.getValidMoves(
+        state.board,
+        Position(row: row, col: col),
+        hasKingMoved: state.hasKingMoved,
+        hasRookMoved: state.hasRookMoved,
+        lastPawnDoubleMoved: safeLastPawnDoubleMoved,
+        lastPawnDoubleMovedNumber: state.lastPawnDoubleMovedNumber[opponentColor],
+        currentMoveNumber: state.currentMoveNumber,
+      ).isNotEmpty;
+    } catch (e) {
+      // 如果获取有效移动时出现错误，记录错误并返回false
+      print('警告：检查棋子是否可移动时出现错误: $e');
+      print('位置: ($row, $col), 棋子: ${piece?.type}, 对手双步兵位置: $opponentLastPawnDoubleMoved');
+      return false; // 安全地返回false，避免显示错误信息给用户
+    }
   }
 
   Widget _buildBackground(bool isDark, [bool isLastMoveTo = false]) {
@@ -716,7 +733,45 @@ class ChessPieceImage extends StatelessWidget {
     return Image.asset(
       ChessFormatters.getPieceImage(piece),
       fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        // 如果图片加载失败，显示一个简单的文本替代
+        return Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Center(
+            child: Text(
+              _getPieceSymbol(piece),
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: piece.color == PieceColor.white
+                    ? Colors.white
+                    : Colors.black,
+              ),
+            ),
+          ),
+        );
+      },
     );
+  }
+
+  String _getPieceSymbol(ChessPiece piece) {
+    switch (piece.type) {
+      case PieceType.king:
+        return piece.color == PieceColor.white ? '♔' : '♚';
+      case PieceType.queen:
+        return piece.color == PieceColor.white ? '♕' : '♛';
+      case PieceType.rook:
+        return piece.color == PieceColor.white ? '♖' : '♜';
+      case PieceType.bishop:
+        return piece.color == PieceColor.white ? '♗' : '♝';
+      case PieceType.knight:
+        return piece.color == PieceColor.white ? '♘' : '♞';
+      case PieceType.pawn:
+        return piece.color == PieceColor.white ? '♙' : '♟';
+    }
   }
 }
 
@@ -791,11 +846,15 @@ class BoardRowLabels extends StatelessWidget {
 Future<void> showPromotionDialog(
     BuildContext context, Position position) async {
   final bloc = context.read<ChessBloc>();
+  final currentState = bloc.state;
+  final piece = currentState.board[position.row][position.col];
+  final pieceColor = piece?.color ?? currentState.currentPlayer;
+
   final promotedPiece = await showDialog<PieceType>(
     context: context,
     barrierDismissible: false,
     builder: (BuildContext context) {
-      return const PromotionDialog();
+      return PromotionDialog(pieceColor: pieceColor);
     },
   );
 
@@ -806,36 +865,38 @@ Future<void> showPromotionDialog(
 
 // 升变对话框组件
 class PromotionDialog extends StatelessWidget {
-  const PromotionDialog({super.key});
+  final PieceColor pieceColor;
+
+  const PromotionDialog({super.key, required this.pieceColor});
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
       child: Container(
         padding: const EdgeInsets.all(16.0),
-        child: const Column(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
+            const Text(
               '选择升变棋子',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  PromotionOption(pieceType: PieceType.queen),
-                  SizedBox(width: 8),
-                  PromotionOption(pieceType: PieceType.rook),
-                  SizedBox(width: 8),
-                  PromotionOption(pieceType: PieceType.bishop),
-                  SizedBox(width: 8),
-                  PromotionOption(pieceType: PieceType.knight),
+                  PromotionOption(pieceType: PieceType.queen, pieceColor: pieceColor),
+                  const SizedBox(width: 8),
+                  PromotionOption(pieceType: PieceType.rook, pieceColor: pieceColor),
+                  const SizedBox(width: 8),
+                  PromotionOption(pieceType: PieceType.bishop, pieceColor: pieceColor),
+                  const SizedBox(width: 8),
+                  PromotionOption(pieceType: PieceType.knight, pieceColor: pieceColor),
                 ],
               ),
             ),
@@ -849,14 +910,18 @@ class PromotionDialog extends StatelessWidget {
 // 升变选项组件
 class PromotionOption extends StatelessWidget {
   final PieceType pieceType;
+  final PieceColor pieceColor;
 
   const PromotionOption({
     super.key,
     required this.pieceType,
+    required this.pieceColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final piece = ChessPiece(type: pieceType, color: pieceColor);
+
     return GestureDetector(
       onTap: () => Navigator.of(context).pop(pieceType),
       child: Container(
@@ -867,10 +932,7 @@ class PromotionOption extends StatelessWidget {
           border: Border.all(color: Colors.grey),
           borderRadius: BorderRadius.circular(8.0),
         ),
-        child: Image.asset(
-          'assets/images/white_${pieceType.toString().split('.').last}.png',
-          fit: BoxFit.contain,
-        ),
+        child: ChessPieceImage(piece: piece),
       ),
     );
   }
