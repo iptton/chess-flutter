@@ -110,8 +110,18 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     );
 
     // 初始化AI（如果需要）
-    if (event.gameMode == GameMode.offline && event.aiDifficulty != null) {
-      _chessAI = ChessAI(difficulty: event.aiDifficulty!);
+    if (event.gameMode == GameMode.offline &&
+        (event.aiDifficulty != null || event.advancedAI != null)) {
+      if (event.advancedAI != null) {
+        // 使用高级AI实例
+        _chessAI = event.advancedAI;
+        print(
+            'ChessBloc: 使用高级AI实例: ${event.advancedAI!.advancedDifficulty.displayName}');
+      } else {
+        // 使用传统AI
+        _chessAI = ChessAI(difficulty: event.aiDifficulty!);
+        print('ChessBloc: 使用传统AI: ${event.aiDifficulty}');
+      }
     }
 
     emit(initialState);

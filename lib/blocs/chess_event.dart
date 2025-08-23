@@ -22,6 +22,7 @@ class InitializeGame extends ChessEvent {
   final List<ChessMove>? initialMoves;
   final AIDifficulty? aiDifficulty;
   final PieceColor? aiColor;
+  final ChessAI? advancedAI; // 新增：高级AI实例
 
   const InitializeGame(
     this.hintMode, {
@@ -34,10 +35,23 @@ class InitializeGame extends ChessEvent {
     this.initialMoves,
     this.aiDifficulty,
     this.aiColor,
+    this.advancedAI, // 新增：高级AI参数
   });
 
   @override
-  List<Object?> get props => [hintMode, isInteractive, allowedPlayer, gameMode, replayGame, initialBoard, initialPlayer, initialMoves, aiDifficulty, aiColor];
+  List<Object?> get props => [
+        hintMode,
+        isInteractive,
+        allowedPlayer,
+        gameMode,
+        replayGame,
+        initialBoard,
+        initialPlayer,
+        initialMoves,
+        aiDifficulty,
+        aiColor,
+        advancedAI
+      ];
 }
 
 class SelectPiece extends ChessEvent {

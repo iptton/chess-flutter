@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../widgets/chess_board.dart';
+import '../widgets/ai_difficulty_selector.dart';
 import '../services/chess_ai.dart';
 import '../models/chess_models.dart';
+import '../utils/ai_difficulty_strategy.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 enum GameMode {
-  offline,   // 单机对战（人机）
-  online,    // 联网对战
+  offline, // 单机对战（人机）
+  online, // 联网对战
   faceToFace, // 面对面对战
 }
 
@@ -97,122 +99,33 @@ class GameScreen extends StatelessWidget {
           timeInSecForIosWeb: 1,
           backgroundColor: Colors.black87,
           textColor: Colors.white,
-          fontSize: 16.0
-          );
+          fontSize: 16.0);
     }
   }
 
   void _showAISettingsDialog(BuildContext context) {
-    AIDifficulty selectedDifficulty = AIDifficulty.medium;
+    AIDifficultyLevel selectedDifficulty = AIDifficultyLevel.intermediate;
     PieceColor playerColor = PieceColor.white;
 
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('单机对战设置'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('选择AI难度:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  ...AIDifficulty.values.map((difficulty) {
-                    return RadioListTile<AIDifficulty>(
-                      title: Text(_getDifficultyName(difficulty)),
-                      subtitle: Text(_getDifficultyDescription(difficulty)),
-                      value: difficulty,
-                      groupValue: selectedDifficulty,
-                      onChanged: (value) {
-                        setState(() {
-                          selectedDifficulty = value!;
-                        });
-                      },
-                    );
-                  }).toList(),
-                  const SizedBox(height: 16),
-                  const Text('选择你的颜色:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: RadioListTile<PieceColor>(
-                          title: const Text('白方'),
-                          subtitle: const Text('先手'),
-                          value: PieceColor.white,
-                          groupValue: playerColor,
-                          onChanged: (value) {
-                            setState(() {
-                              playerColor = value!;
-                            });
-                          },
-                        ),
-                      ),
-                      Expanded(
-                        child: RadioListTile<PieceColor>(
-                          title: const Text('黑方'),
-                          subtitle: const Text('后手'),
-                          value: PieceColor.black,
-                          groupValue: playerColor,
-                          onChanged: (value) {
-                            setState(() {
-                              playerColor = value!;
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('取消'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    _startAIGame(context, selectedDifficulty, playerColor);
-                  },
-                  child: const Text('开始游戏'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (context) => AIDifficultySelector(
+        currentDifficulty: selectedDifficulty,
+        showAdvancedOptions: true,
+        showColorSelection: true,
+        initialPlayerColor: playerColor,
+        onGameStart: (difficulty, color) {
+          Navigator.of(context).pop(true);
+          _startAdvancedAIGame(context, difficulty, color);
+        },
+      ),
     );
   }
 
-  String _getDifficultyName(AIDifficulty difficulty) {
-    switch (difficulty) {
-      case AIDifficulty.easy:
-        return '简单';
-      case AIDifficulty.medium:
-        return '中等';
-      case AIDifficulty.hard:
-        return '困难';
-    }
-  }
-
-  String _getDifficultyDescription(AIDifficulty difficulty) {
-    switch (difficulty) {
-      case AIDifficulty.easy:
-        return '适合初学者';
-      case AIDifficulty.medium:
-        return '适合有一定基础的玩家';
-      case AIDifficulty.hard:
-        return '适合高手挑战';
-    }
-  }
-
-  void _startAIGame(BuildContext context, AIDifficulty difficulty, PieceColor playerColor) {
-    final aiColor = playerColor == PieceColor.white ? PieceColor.black : PieceColor.white;
+  void _startAIGame(
+      BuildContext context, AIDifficulty difficulty, PieceColor playerColor) {
+    final aiColor =
+        playerColor == PieceColor.white ? PieceColor.black : PieceColor.white;
 
     Navigator.push(
       context,
@@ -225,5 +138,64 @@ class GameScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _startAdvancedAIGame(BuildContext context, AIDifficultyLevel difficulty,
+      PieceColor playerColor) async {
+    try {
+      print('GameScreen: === 开始执行 _startAdvancedAIGame ===');
+
+      final aiColor =
+          playerColor == PieceColor.white ? PieceColor.black : PieceColor.white;
+
+      print('GameScreen: 创建高级AI实例...');
+      final ai = ChessAI.advanced(advancedDifficulty: difficulty);
+      print('GameScreen: AI实例创建成功: ${ai.advancedDifficulty.displayName}');
+
+      print('GameScreen: 检查context是否有效...');
+      if (!context.mounted) {
+        print('GameScreen: 错误 - context不可用');
+        return;
+      }
+      print('GameScreen: context有效');
+
+      print('GameScreen: 尝试简单的导航...');
+
+      // 尝试使用传统的导航方式
+      final result = await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) {
+            print('GameScreen: 正在构建ChessBoard...');
+            return ChessBoard(
+              gameMode: GameMode.offline,
+              aiColor: aiColor,
+              allowedPlayer: playerColor,
+              advancedAI: ai,
+            );
+          },
+        ),
+      );
+
+      print('GameScreen: 导航完成，结果: $result');
+    } catch (e, stackTrace) {
+      print('GameScreen: _startAdvancedAIGame发生异常: $e');
+      print('GameScreen: 堆栈跟踪: $stackTrace');
+
+      // 如果高级AI失败，回退到传统AI
+      print('GameScreen: 尝试回退到传统方式...');
+      _startAIGame(context, difficulty._toOldDifficulty(), playerColor);
+    }
+  }
+}
+
+/// 扩展方法：将新难度等级转换为旧的枚举（用于兼容性）
+extension AIDifficultyLevelExtension on AIDifficultyLevel {
+  AIDifficulty _toOldDifficulty() {
+    final result = level <= 3
+        ? AIDifficulty.easy
+        : (level <= 6 ? AIDifficulty.medium : AIDifficulty.hard);
+    print(
+        'AIDifficultyLevelExtension: ${displayName}(级别$level) -> ${result.name}');
+    return result;
   }
 }

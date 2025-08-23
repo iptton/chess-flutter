@@ -26,6 +26,7 @@ class ChessBoard extends StatelessWidget {
   final List<ChessMove>? initialMoves;
   final AIDifficulty? aiDifficulty;
   final PieceColor? aiColor;
+  final ChessAI? advancedAI; // 新增：支持高级AI实例
 
   const ChessBoard({
     super.key,
@@ -38,21 +39,41 @@ class ChessBoard extends StatelessWidget {
     this.initialMoves,
     this.aiDifficulty,
     this.aiColor,
+    this.advancedAI, // 新增：高级AI实例参数
   });
 
   @override
   Widget build(BuildContext context) {
+    print('ChessBoard: build方法被调用');
+    print(
+        'ChessBoard: gameMode=${gameMode.name}, advancedAI=${advancedAI != null ? advancedAI!.advancedDifficulty.displayName : "null"}');
+
     return FutureBuilder<bool>(
       future: SettingsService.getDefaultHintMode(),
       builder: (context, snapshot) {
+        print(
+            'ChessBoard: FutureBuilder - hasData=${snapshot.hasData}, data=${snapshot.data}');
+
         // 修复：在未拿到设置前不要初始化对局，避免默认使用 false
         if (!snapshot.hasData) {
+          print('ChessBoard: 显示加载指示器');
           return const Center(child: CircularProgressIndicator());
         }
+
+        if (snapshot.hasError) {
+          print('ChessBoard: 获取设置失败: ${snapshot.error}');
+          return Center(child: Text('加载失败: ${snapshot.error}'));
+        }
+
         final defaultHintMode = snapshot.data!;
+        print('ChessBoard: 创建BlocProvider, hintMode=$defaultHintMode');
+
         return BlocProvider(
-          create: (context) => ChessBloc()
-            ..add(InitializeGame(
+          create: (context) {
+            print('ChessBoard: 创建ChessBloc...');
+            final bloc = ChessBloc();
+            print('ChessBoard: 正在发送InitializeGame事件...');
+            bloc.add(InitializeGame(
               defaultHintMode,
               isInteractive: replayGame != null ? false : isInteractive,
               allowedPlayer: allowedPlayer,
@@ -63,7 +84,11 @@ class ChessBoard extends StatelessWidget {
               initialMoves: initialMoves,
               aiDifficulty: aiDifficulty,
               aiColor: aiColor,
-            )),
+              advancedAI: advancedAI, // 传递高级AI实例
+            ));
+            print('ChessBoard: InitializeGame事件已发送');
+            return bloc;
+          },
           child: _ChessBoardView(
             gameMode: gameMode,
             isInteractive: replayGame != null ? false : isInteractive,
@@ -606,7 +631,8 @@ class ChessSquare extends StatelessWidget {
     final opponentColor = state.currentPlayer == PieceColor.white
         ? PieceColor.black
         : PieceColor.white;
-    final opponentLastPawnDoubleMoved = state.lastPawnDoubleMoved[opponentColor];
+    final opponentLastPawnDoubleMoved =
+        state.lastPawnDoubleMoved[opponentColor];
 
     // 验证对手双步兵坐标的有效性，防止传递异常坐标给chess库
     Position? safeLastPawnDoubleMoved;
@@ -625,13 +651,15 @@ class ChessSquare extends StatelessWidget {
         hasKingMoved: state.hasKingMoved,
         hasRookMoved: state.hasRookMoved,
         lastPawnDoubleMoved: safeLastPawnDoubleMoved,
-        lastPawnDoubleMovedNumber: state.lastPawnDoubleMovedNumber[opponentColor],
+        lastPawnDoubleMovedNumber:
+            state.lastPawnDoubleMovedNumber[opponentColor],
         currentMoveNumber: state.currentMoveNumber,
       ).isNotEmpty;
     } catch (e) {
       // 如果获取有效移动时出现错误，记录错误并返回false
       print('警告：检查棋子是否可移动时出现错误: $e');
-      print('位置: ($row, $col), 棋子: ${piece?.type}, 对手双步兵位置: $opponentLastPawnDoubleMoved');
+      print(
+          '位置: ($row, $col), 棋子: ${piece?.type}, 对手双步兵位置: $opponentLastPawnDoubleMoved');
       return false; // 安全地返回false，避免显示错误信息给用户
     }
   }
@@ -890,13 +918,17 @@ class PromotionDialog extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  PromotionOption(pieceType: PieceType.queen, pieceColor: pieceColor),
+                  PromotionOption(
+                      pieceType: PieceType.queen, pieceColor: pieceColor),
                   const SizedBox(width: 8),
-                  PromotionOption(pieceType: PieceType.rook, pieceColor: pieceColor),
+                  PromotionOption(
+                      pieceType: PieceType.rook, pieceColor: pieceColor),
                   const SizedBox(width: 8),
-                  PromotionOption(pieceType: PieceType.bishop, pieceColor: pieceColor),
+                  PromotionOption(
+                      pieceType: PieceType.bishop, pieceColor: pieceColor),
                   const SizedBox(width: 8),
-                  PromotionOption(pieceType: PieceType.knight, pieceColor: pieceColor),
+                  PromotionOption(
+                      pieceType: PieceType.knight, pieceColor: pieceColor),
                 ],
               ),
             ),
