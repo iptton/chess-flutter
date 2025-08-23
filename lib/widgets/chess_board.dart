@@ -237,37 +237,31 @@ class _ChessBoardView extends StatelessWidget {
 
         return Column(
           children: [
-            // 第一行：回合信息和提示按钮
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  turnText,
-                  style: const TextStyle(fontSize: 20),
-                ),
-                if (!isReplayMode) ...[
-                  const SizedBox(width: 20),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      context.read<ChessBloc>().add(const ToggleHintMode());
-                    },
-                    icon: Icon(state.hintMode
-                        ? Icons.lightbulb
-                        : Icons.lightbulb_outline),
-                    label: Text(state.hintMode ? '关闭提示' : '开启提示'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: state.hintMode
-                          ? Colors.yellow[100]
-                          : Colors.grey[100],
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      textStyle: const TextStyle(fontSize: 14),
-                    ),
-                  ),
-                ],
-              ],
+            // 第一行：回合信息
+            Text(
+              turnText,
+              style: const TextStyle(fontSize: 20),
             ),
+            // 第二行：提示按钮
+            if (!isReplayMode) ...[
+              const SizedBox(height: 8),
+              ElevatedButton.icon(
+                onPressed: () {
+                  context.read<ChessBloc>().add(const ToggleHintMode());
+                },
+                icon: Icon(
+                    state.hintMode ? Icons.lightbulb : Icons.lightbulb_outline),
+                label: Text(state.hintMode ? '关闭提示' : '开启提示'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      state.hintMode ? Colors.yellow[100] : Colors.grey[100],
+                  foregroundColor: Colors.black,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  textStyle: const TextStyle(fontSize: 14),
+                ),
+              ),
+            ],
             // 第二行：AI难度信息
             if (state.gameMode == GameMode.offline &&
                 state.aiDifficulty != null)
@@ -628,8 +622,8 @@ class ChessSquare extends StatelessWidget {
   Widget _buildBackground(bool isDark, [bool isLastMoveTo = false]) {
     Color backgroundColor;
     if (isLastMoveTo) {
-      // 最后移动的目标位置使用特殊背景色
-      backgroundColor = isDark ? Colors.amber[600]! : Colors.amber[200]!;
+      // 最后移动的目标位置使用更柔和的绿色背景
+      backgroundColor = isDark ? Colors.green[400]! : Colors.green[200]!;
     } else {
       backgroundColor = isDark ? Colors.brown[300]! : Colors.brown[100]!;
     }
@@ -676,8 +670,8 @@ class ChessSquare extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         border: Border.all(
-          color: Colors.red,
-          width: 3.0,
+          color: Colors.orange[400]!,
+          width: 2.0,
           style: BorderStyle.solid,
         ),
       ),
