@@ -205,6 +205,7 @@ class GameState extends Equatable {
   final AIDifficulty? aiDifficulty;
   final PieceColor? aiColor;
   final bool isAIThinking;
+  final bool isAIInitializing;
 
   const GameState({
     required this.board,
@@ -231,6 +232,7 @@ class GameState extends Equatable {
     this.aiDifficulty,
     this.aiColor,
     this.isAIThinking = false,
+    this.isAIInitializing = false,
   });
 
   GameState copyWith({
@@ -258,6 +260,7 @@ class GameState extends Equatable {
     AIDifficulty? aiDifficulty,
     PieceColor? aiColor,
     bool? isAIThinking,
+    bool? isAIInitializing,
   }) {
     return GameState(
       board: board ?? this.board,
@@ -284,6 +287,7 @@ class GameState extends Equatable {
       aiDifficulty: aiDifficulty ?? this.aiDifficulty,
       aiColor: aiColor ?? this.aiColor,
       isAIThinking: isAIThinking ?? this.isAIThinking,
+      isAIInitializing: isAIInitializing ?? this.isAIInitializing,
     );
   }
 
@@ -410,5 +414,6 @@ class GameState extends Equatable {
     aiDifficulty,
     aiColor,
     isAIThinking,
+    isAIInitializing,
   ];
 }

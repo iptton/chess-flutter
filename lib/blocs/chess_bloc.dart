@@ -1027,15 +1027,17 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
         state.aiColor == null ||
         state.currentPlayer != state.aiColor ||
         state.isAIThinking ||
+        state.isAIInitializing ||
         state.isCheckmate ||
         state.isStalemate) {
       return;
     }
 
     print('AI开始思考...');
-    // 设置AI思考状态
+    
+    // 设置AI初始化状态
     if (!emit.isDone) {
-      emit(state.copyWith(isAIThinking: true));
+      emit(state.copyWith(isAIInitializing: true));
     }
 
     try {
@@ -1044,6 +1046,14 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
         _chessAI =
             ChessAI(difficulty: state.aiDifficulty ?? AIDifficulty.medium);
         print('初始化AI: 难度=${state.aiDifficulty}');
+      }
+
+      // 完成初始化，设置思考状态
+      if (!emit.isDone) {
+        emit(state.copyWith(
+          isAIInitializing: false,
+          isAIThinking: true,
+        ));
       }
 
       // 获取AI移动
@@ -1070,14 +1080,20 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
         print('AI没有找到合法移动');
         // AI没有找到合法移动，清除思考状态
         if (!emit.isDone) {
-          emit(state.copyWith(isAIThinking: false));
+          emit(state.copyWith(
+            isAIThinking: false,
+            isAIInitializing: false,
+          ));
         }
       }
     } catch (e) {
       print('AI移动失败: $e');
       // AI移动失败，清除思考状态
       if (!emit.isDone) {
-        emit(state.copyWith(isAIThinking: false));
+        emit(state.copyWith(
+          isAIThinking: false,
+          isAIInitializing: false,
+        ));
       }
     }
   }
@@ -1125,6 +1141,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
         state.aiColor != null &&
         state.currentPlayer == state.aiColor &&
         !state.isAIThinking &&
+        !state.isAIInitializing &&
         !state.isCheckmate &&
         !state.isStalemate) {
       // 使用Future.microtask延迟触发AI移动，避免emitter重复使用

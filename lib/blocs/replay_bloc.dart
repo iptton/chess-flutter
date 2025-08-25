@@ -75,6 +75,7 @@ class ReplayState extends GameState {
     AIDifficulty? aiDifficulty,
     PieceColor? aiColor,
     bool? isAIThinking,
+    bool? isAIInitializing,
   }) {
     return ReplayState(
       board: board ?? this.board,

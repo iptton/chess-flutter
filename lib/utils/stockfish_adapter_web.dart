@@ -13,6 +13,8 @@ external dynamic stockfish;
 class StockfishWebAdapter {
   static dynamic _stockfish;
   static bool _isInitialized = false;
+  static bool _isEngineReady = false;
+  static bool _isInitializing = false;
   static final Completer<void> _initCompleter = Completer<void>();
   static final StreamController<String> _outputController =
       StreamController<String>.broadcast();
@@ -20,10 +22,19 @@ class StockfishWebAdapter {
 
   /// 初始化Stockfish WebAssembly引擎
   static Future<void> initialize() async {
-    if (_isInitialized) {
-      print('StockfishWebAdapter: 引擎已初始化');
+    if (_isInitialized && _isEngineReady) {
+      print('StockfishWebAdapter: 引擎已初始化并准备就绪');
       return;
     }
+
+    if (_isInitializing) {
+      print('StockfishWebAdapter: 正在初始化中，等待完成...');
+      await _initCompleter.future;
+      return;
+    }
+
+    _isInitializing = true;
+    _isEngineReady = false;
 
     try {
       print('StockfishWebAdapter: 开始初始化...');
@@ -60,9 +71,13 @@ class StockfishWebAdapter {
           _outputController.add(message);
 
           // 检查是否准备就绪
-          if (message.contains('uciok') || message.contains('readyok')) {
+          if (message.contains('uciok')) {
+            print('StockfishWebAdapter: 收到uciok，发送isready...');
+            js_util.callMethod(_stockfish, 'postMessage', ['isready']);
+          } else if (message.contains('readyok')) {
+            print('StockfishWebAdapter: 引擎准备就绪');
+            _isEngineReady = true;
             if (!_initCompleter.isCompleted) {
-              print('StockfishWebAdapter: 引擎准备就绪');
               _initCompleter.complete();
             }
           }
@@ -72,19 +87,17 @@ class StockfishWebAdapter {
       // 初始化UCI协议
       print('StockfishWebAdapter: 发送UCI命令...');
       js_util.callMethod(_stockfish, 'postMessage', ['uci']);
-      await Future.delayed(const Duration(milliseconds: 500));
-      js_util.callMethod(_stockfish, 'postMessage', ['isready']);
 
       // 等待引擎准备就绪
       await _initCompleter.future.timeout(
-        const Duration(seconds: 10),
+        const Duration(seconds: 15),
         onTimeout: () {
           throw Exception('Stockfish WebAssembly engine failed to initialize');
         },
       );
 
       _isInitialized = true;
-      print('StockfishWebAdapter: 初始化完成');
+      print('StockfishWebAdapter: 初始化完成，引擎就绪');
     } catch (e) {
       print('StockfishWebAdapter: 初始化失败: $e');
       print('StockfishWebAdapter: 尝试使用回退方案...');
@@ -93,6 +106,7 @@ class StockfishWebAdapter {
       } catch (fallbackError) {
         print('StockfishWebAdapter: 回退方案也失败: $fallbackError');
         _isInitialized = false;
+        _isEngineReady = false;
         if (_stockfish != null) {
           try {
             js_util.callMethod(_stockfish, 'terminate', []);
@@ -101,6 +115,8 @@ class StockfishWebAdapter {
         }
         rethrow;
       }
+    } finally {
+      _isInitializing = false;
     }
   }
 
@@ -127,6 +143,24 @@ class StockfishWebAdapter {
     return completer.future;
   }
 
+  /// 检查引擎是否就绪
+  static bool get isEngineReady => _isInitialized && _isEngineReady;
+
+  /// 等待引擎就绪，如果未初始化则先初始化
+  static Future<void> ensureEngineReady() async {
+    if (isEngineReady) {
+      return;
+    }
+
+    print('StockfishWebAdapter: 引擎未就绪，开始初始化...');
+    await initialize();
+
+    // 双重检查确保引擎真正就绪
+    if (!isEngineReady) {
+      throw StateError('引擎初始化完成但未就绪');
+    }
+  }
+
   /// 检查SharedArrayBuffer支持
   static bool _checkSharedArrayBufferSupport() {
     try {
@@ -147,6 +181,7 @@ class StockfishWebAdapter {
     await Future.delayed(const Duration(milliseconds: 500));
 
     _isInitialized = true;
+    _isEngineReady = true;
     print('StockfishWebAdapter: 回退AI引擎初始化完成');
 
     if (!_initCompleter.isCompleted) {
@@ -332,10 +367,9 @@ class StockfishWebAdapter {
     try {
       print('StockfishWebAdapter: 开始获取最佳移动...');
 
-      if (!_isInitialized) {
-        print('StockfishWebAdapter: 引擎未初始化，正在初始化...');
-        await initialize();
-      }
+      // 确保引擎完全就绪
+      await ensureEngineReady();
+      print('StockfishWebAdapter: 引擎已就绪，继续获取最佳移动');
 
       if (_stockfish == null) {
         throw StateError('Stockfish WebAssembly engine is not initialized');

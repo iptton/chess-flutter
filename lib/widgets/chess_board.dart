@@ -250,7 +250,9 @@ class _ChessBoardView extends StatelessWidget {
         // 如果是单机对战模式，显示AI状态
         if (state.gameMode == GameMode.offline && state.aiColor != null) {
           if (state.currentPlayer == state.aiColor) {
-            if (state.isAIThinking) {
+            if (state.isAIInitializing) {
+              turnText += ' (AI初始化中...)';
+            } else if (state.isAIThinking) {
               turnText += ' (AI思考中...)';
             } else {
               turnText += ' (AI)';
@@ -432,26 +434,80 @@ class ChessBoardLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final boardSize = _calculateBoardSize(constraints);
+    return BlocBuilder<ChessBloc, GameState>(
+      builder: (context, state) {
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final boardSize = _calculateBoardSize(constraints);
 
-        return SingleChildScrollView(
-          child: Center(
-            child: Column(
+            return Stack(
               children: [
-                const SizedBox(height: ChessConstants.topBarHeight),
-                ...topContent
-                    .expand((widget) => [
-                          widget,
-                          const SizedBox(height: ChessConstants.spacing),
-                        ])
-                    .toList(),
-                ChessBoardGrid(boardSize: boardSize),
-                const SizedBox(height: ChessConstants.spacing),
+                // 主体内容
+                SingleChildScrollView(
+                  child: Center(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: ChessConstants.topBarHeight),
+                        ...topContent
+                            .expand((widget) => [
+                                  widget,
+                                  const SizedBox(height: ChessConstants.spacing),
+                                ])
+                            .toList(),
+                        ChessBoardGrid(boardSize: boardSize),
+                        const SizedBox(height: ChessConstants.spacing),
+                      ],
+                    ),
+                  ),
+                ),
+                // AI初始化加载遮罩
+                if (state.isAIInitializing)
+                  Container(
+                    color: Colors.black.withOpacity(0.5),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const CircularProgressIndicator(),
+                            const SizedBox(height: 16),
+                            Text(
+                              'AI引擎初始化中...',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '请稍候，正在加载国际象棋AI引擎',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[500],
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
               ],
-            ),
-          ),
+            );
+          },
         );
       },
     );

@@ -130,6 +130,8 @@ class ChessAI {
     int halfMoveClock = 0,
     int fullMoveNumber = 1,
   }) async {
+    print('ChessAI: 调用引擎计算最佳移动');
+    
     // 根据配置调用Stockfish
     return await StockfishAdapter.getBestMove(
       board,
