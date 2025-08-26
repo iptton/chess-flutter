@@ -451,7 +451,8 @@ class ChessBoardLayout extends StatelessWidget {
                         ...topContent
                             .expand((widget) => [
                                   widget,
-                                  const SizedBox(height: ChessConstants.spacing),
+                                  const SizedBox(
+                                      height: ChessConstants.spacing),
                                 ])
                             .toList(),
                         ChessBoardGrid(boardSize: boardSize),

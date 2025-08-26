@@ -87,15 +87,15 @@ class ChessMove extends Equatable {
 
   @override
   List<Object?> get props => [
-    from,
-    to,
-    piece,
-    capturedPiece,
-    isPromotion,
-    promotionType,
-    isCastling,
-    isEnPassant,
-  ];
+        from,
+        to,
+        piece,
+        capturedPiece,
+        isPromotion,
+        promotionType,
+        isCastling,
+        isEnPassant,
+      ];
 
   Map<String, dynamic> toJson() {
     return {
@@ -111,10 +111,12 @@ class ChessMove extends Equatable {
         'type': piece.type.toString(),
         'color': piece.color.toString(),
       },
-      'capturedPiece': capturedPiece == null ? null : {
-        'type': capturedPiece!.type.toString(),
-        'color': capturedPiece!.color.toString(),
-      },
+      'capturedPiece': capturedPiece == null
+          ? null
+          : {
+              'type': capturedPiece!.type.toString(),
+              'color': capturedPiece!.color.toString(),
+            },
       'isPromotion': isPromotion,
       'promotionType': promotionType?.toString(),
       'isCastling': isCastling,
@@ -140,18 +142,22 @@ class ChessMove extends Equatable {
           (e) => e.toString() == json['piece']['color'],
         ),
       ),
-      capturedPiece: json['capturedPiece'] == null ? null : ChessPiece(
-        type: PieceType.values.firstWhere(
-          (e) => e.toString() == json['capturedPiece']['type'],
-        ),
-        color: PieceColor.values.firstWhere(
-          (e) => e.toString() == json['capturedPiece']['color'],
-        ),
-      ),
+      capturedPiece: json['capturedPiece'] == null
+          ? null
+          : ChessPiece(
+              type: PieceType.values.firstWhere(
+                (e) => e.toString() == json['capturedPiece']['type'],
+              ),
+              color: PieceColor.values.firstWhere(
+                (e) => e.toString() == json['capturedPiece']['color'],
+              ),
+            ),
       isPromotion: json['isPromotion'],
-      promotionType: json['promotionType'] == null ? null : PieceType.values.firstWhere(
-        (e) => e.toString() == json['promotionType'],
-      ),
+      promotionType: json['promotionType'] == null
+          ? null
+          : PieceType.values.firstWhere(
+              (e) => e.toString() == json['promotionType'],
+            ),
       isCastling: json['isCastling'],
       isEnPassant: json['isEnPassant'],
     );
@@ -270,7 +276,8 @@ class GameState extends Equatable {
       hasKingMoved: hasKingMoved ?? this.hasKingMoved,
       hasRookMoved: hasRookMoved ?? this.hasRookMoved,
       lastPawnDoubleMoved: lastPawnDoubleMoved ?? this.lastPawnDoubleMoved,
-      lastPawnDoubleMovedNumber: lastPawnDoubleMovedNumber ?? this.lastPawnDoubleMovedNumber,
+      lastPawnDoubleMovedNumber:
+          lastPawnDoubleMovedNumber ?? this.lastPawnDoubleMovedNumber,
       currentMoveNumber: currentMoveNumber ?? this.currentMoveNumber,
       moveHistory: moveHistory ?? this.moveHistory,
       specialMoveMessage: specialMoveMessage ?? this.specialMoveMessage,
@@ -340,29 +347,47 @@ class GameState extends Equatable {
     );
 
     // 初始化白方棋子
-    board[7][0] = const ChessPiece(type: PieceType.rook, color: PieceColor.white);
-    board[7][1] = const ChessPiece(type: PieceType.knight, color: PieceColor.white);
-    board[7][2] = const ChessPiece(type: PieceType.bishop, color: PieceColor.white);
-    board[7][3] = const ChessPiece(type: PieceType.queen, color: PieceColor.white);
-    board[7][4] = const ChessPiece(type: PieceType.king, color: PieceColor.white);
-    board[7][5] = const ChessPiece(type: PieceType.bishop, color: PieceColor.white);
-    board[7][6] = const ChessPiece(type: PieceType.knight, color: PieceColor.white);
-    board[7][7] = const ChessPiece(type: PieceType.rook, color: PieceColor.white);
+    board[7][0] =
+        const ChessPiece(type: PieceType.rook, color: PieceColor.white);
+    board[7][1] =
+        const ChessPiece(type: PieceType.knight, color: PieceColor.white);
+    board[7][2] =
+        const ChessPiece(type: PieceType.bishop, color: PieceColor.white);
+    board[7][3] =
+        const ChessPiece(type: PieceType.queen, color: PieceColor.white);
+    board[7][4] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.white);
+    board[7][5] =
+        const ChessPiece(type: PieceType.bishop, color: PieceColor.white);
+    board[7][6] =
+        const ChessPiece(type: PieceType.knight, color: PieceColor.white);
+    board[7][7] =
+        const ChessPiece(type: PieceType.rook, color: PieceColor.white);
     for (int i = 0; i < 8; i++) {
-      board[6][i] = const ChessPiece(type: PieceType.pawn, color: PieceColor.white);
+      board[6][i] =
+          const ChessPiece(type: PieceType.pawn, color: PieceColor.white);
     }
 
     // 初始化黑方棋子
-    board[0][0] = const ChessPiece(type: PieceType.rook, color: PieceColor.black);
-    board[0][1] = const ChessPiece(type: PieceType.knight, color: PieceColor.black);
-    board[0][2] = const ChessPiece(type: PieceType.bishop, color: PieceColor.black);
-    board[0][3] = const ChessPiece(type: PieceType.queen, color: PieceColor.black);
-    board[0][4] = const ChessPiece(type: PieceType.king, color: PieceColor.black);
-    board[0][5] = const ChessPiece(type: PieceType.bishop, color: PieceColor.black);
-    board[0][6] = const ChessPiece(type: PieceType.knight, color: PieceColor.black);
-    board[0][7] = const ChessPiece(type: PieceType.rook, color: PieceColor.black);
+    board[0][0] =
+        const ChessPiece(type: PieceType.rook, color: PieceColor.black);
+    board[0][1] =
+        const ChessPiece(type: PieceType.knight, color: PieceColor.black);
+    board[0][2] =
+        const ChessPiece(type: PieceType.bishop, color: PieceColor.black);
+    board[0][3] =
+        const ChessPiece(type: PieceType.queen, color: PieceColor.black);
+    board[0][4] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.black);
+    board[0][5] =
+        const ChessPiece(type: PieceType.bishop, color: PieceColor.black);
+    board[0][6] =
+        const ChessPiece(type: PieceType.knight, color: PieceColor.black);
+    board[0][7] =
+        const ChessPiece(type: PieceType.rook, color: PieceColor.black);
     for (int i = 0; i < 8; i++) {
-      board[1][i] = const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
+      board[1][i] =
+          const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
     }
 
     return GameState(
@@ -390,30 +415,30 @@ class GameState extends Equatable {
 
   @override
   List<Object?> get props => [
-    board,
-    currentPlayer,
-    selectedPosition,
-    validMoves,
-    hasKingMoved,
-    hasRookMoved,
-    lastPawnDoubleMoved,
-    lastPawnDoubleMovedNumber,
-    currentMoveNumber,
-    moveHistory,
-    specialMoveMessage,
-    lastMove,
-    isCheck,
-    isCheckmate,
-    isStalemate,
-    undoStates,
-    redoStates,
-    hintMode,
-    isInteractive,
-    allowedPlayer,
-    gameMode,
-    aiDifficulty,
-    aiColor,
-    isAIThinking,
-    isAIInitializing,
-  ];
+        board,
+        currentPlayer,
+        selectedPosition,
+        validMoves,
+        hasKingMoved,
+        hasRookMoved,
+        lastPawnDoubleMoved,
+        lastPawnDoubleMovedNumber,
+        currentMoveNumber,
+        moveHistory,
+        specialMoveMessage,
+        lastMove,
+        isCheck,
+        isCheckmate,
+        isStalemate,
+        undoStates,
+        redoStates,
+        hintMode,
+        isInteractive,
+        allowedPlayer,
+        gameMode,
+        aiDifficulty,
+        aiColor,
+        isAIThinking,
+        isAIInitializing,
+      ];
 }

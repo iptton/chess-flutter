@@ -1034,7 +1034,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     }
 
     print('AI开始思考...');
-    
+
     // 设置AI初始化状态
     if (!emit.isDone) {
       emit(state.copyWith(isAIInitializing: true));

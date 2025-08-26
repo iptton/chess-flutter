@@ -87,7 +87,8 @@ class ReplayState extends GameState {
       hasKingMoved: hasKingMoved ?? this.hasKingMoved,
       hasRookMoved: hasRookMoved ?? this.hasRookMoved,
       lastPawnDoubleMoved: lastPawnDoubleMoved ?? this.lastPawnDoubleMoved,
-      lastPawnDoubleMovedNumber: lastPawnDoubleMovedNumber ?? this.lastPawnDoubleMovedNumber,
+      lastPawnDoubleMovedNumber:
+          lastPawnDoubleMovedNumber ?? this.lastPawnDoubleMovedNumber,
       currentMoveNumber: currentMoveNumber ?? this.currentMoveNumber,
       moveHistory: moveHistory ?? this.moveHistory,
       specialMoveMessage: specialMoveMessage ?? this.specialMoveMessage,
@@ -106,36 +107,37 @@ class ReplayState extends GameState {
 }
 
 class ReplayBloc extends Bloc<ReplayEvent, ReplayState> {
-  ReplayBloc() : super(ReplayState(
-    board: List.generate(8, (i) => List.generate(8, (j) => null)),
-    currentPlayer: PieceColor.white,
-    currentMoveIndex: -1,
-    gameHistory: GameHistory(
-      id: '',
-      startTime: DateTime.now(),
-      endTime: DateTime.now(),
-      moves: [],
-      gameMode: GameMode.offline,
-      isCompleted: false,
-    ),
-    hasKingMoved: const {
-      PieceColor.white: false,
-      PieceColor.black: false,
-    },
-    hasRookMoved: const {
-      PieceColor.white: {'kingside': false, 'queenside': false},
-      PieceColor.black: {'kingside': false, 'queenside': false},
-    },
-    lastPawnDoubleMoved: const {
-      PieceColor.white: null,
-      PieceColor.black: null,
-    },
-    lastPawnDoubleMovedNumber: const {
-      PieceColor.white: -1,
-      PieceColor.black: -1,
-    },
-    gameMode: GameMode.offline,
-  )) {
+  ReplayBloc()
+      : super(ReplayState(
+          board: List.generate(8, (i) => List.generate(8, (j) => null)),
+          currentPlayer: PieceColor.white,
+          currentMoveIndex: -1,
+          gameHistory: GameHistory(
+            id: '',
+            startTime: DateTime.now(),
+            endTime: DateTime.now(),
+            moves: [],
+            gameMode: GameMode.offline,
+            isCompleted: false,
+          ),
+          hasKingMoved: const {
+            PieceColor.white: false,
+            PieceColor.black: false,
+          },
+          hasRookMoved: const {
+            PieceColor.white: {'kingside': false, 'queenside': false},
+            PieceColor.black: {'kingside': false, 'queenside': false},
+          },
+          lastPawnDoubleMoved: const {
+            PieceColor.white: null,
+            PieceColor.black: null,
+          },
+          lastPawnDoubleMovedNumber: const {
+            PieceColor.white: -1,
+            PieceColor.black: -1,
+          },
+          gameMode: GameMode.offline,
+        )) {
     on<InitializeReplay>(_onInitializeReplay);
     on<NextMove>(_onNextMove);
     on<PreviousMove>(_onPreviousMove);
@@ -145,9 +147,11 @@ class ReplayBloc extends Bloc<ReplayEvent, ReplayState> {
     final initialBoard = List<List<ChessPiece?>>.generate(8, (row) {
       return List<ChessPiece?>.generate(8, (col) {
         if (row == 1) {
-          return const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
+          return const ChessPiece(
+              type: PieceType.pawn, color: PieceColor.black);
         } else if (row == 6) {
-          return const ChessPiece(type: PieceType.pawn, color: PieceColor.white);
+          return const ChessPiece(
+              type: PieceType.pawn, color: PieceColor.white);
         } else if (row == 0 || row == 7) {
           final color = row == 0 ? PieceColor.black : PieceColor.white;
           if (col == 0 || col == 7) {
@@ -187,8 +191,7 @@ class ReplayBloc extends Bloc<ReplayEvent, ReplayState> {
     final nextMoveIndex = state.currentMoveIndex + 1;
     final move = state.gameHistory.moves[nextMoveIndex];
     final newBoard = List<List<ChessPiece?>>.from(
-      state.board.map((row) => List<ChessPiece?>.from(row))
-    );
+        state.board.map((row) => List<ChessPiece?>.from(row)));
 
     // 执行移动
     newBoard[move.to.row][move.to.col] = move.piece;
@@ -219,7 +222,9 @@ class ReplayBloc extends Bloc<ReplayEvent, ReplayState> {
 
     emit(state.copyWith(
       board: newBoard,
-      currentPlayer: state.currentPlayer == PieceColor.white ? PieceColor.black : PieceColor.white,
+      currentPlayer: state.currentPlayer == PieceColor.white
+          ? PieceColor.black
+          : PieceColor.white,
       currentMoveIndex: nextMoveIndex,
       moveHistory: state.gameHistory.moves.sublist(0, nextMoveIndex + 1),
       lastMove: move,
@@ -233,9 +238,11 @@ class ReplayBloc extends Bloc<ReplayEvent, ReplayState> {
     final initialBoard = List<List<ChessPiece?>>.generate(8, (row) {
       return List<ChessPiece?>.generate(8, (col) {
         if (row == 1) {
-          return const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
+          return const ChessPiece(
+              type: PieceType.pawn, color: PieceColor.black);
         } else if (row == 6) {
-          return const ChessPiece(type: PieceType.pawn, color: PieceColor.white);
+          return const ChessPiece(
+              type: PieceType.pawn, color: PieceColor.white);
         } else if (row == 0 || row == 7) {
           final color = row == 0 ? PieceColor.black : PieceColor.white;
           if (col == 0 || col == 7) {
@@ -259,8 +266,7 @@ class ReplayBloc extends Bloc<ReplayEvent, ReplayState> {
     for (var i = 0; i <= previousMoveIndex; i++) {
       final move = state.gameHistory.moves[i];
       currentBoard = List<List<ChessPiece?>>.from(
-        currentBoard.map((row) => List<ChessPiece?>.from(row))
-      );
+          currentBoard.map((row) => List<ChessPiece?>.from(row)));
 
       currentBoard[move.to.row][move.to.col] = move.piece;
       currentBoard[move.from.row][move.from.col] = null;
@@ -281,17 +287,21 @@ class ReplayBloc extends Bloc<ReplayEvent, ReplayState> {
         final isKingside = move.to.col > move.from.col;
         final rookFromCol = isKingside ? 7 : 0;
         final rookToCol = isKingside ? 5 : 3;
-        currentBoard[move.from.row][rookToCol] = currentBoard[move.from.row][rookFromCol];
+        currentBoard[move.from.row][rookToCol] =
+            currentBoard[move.from.row][rookFromCol];
         currentBoard[move.from.row][rookFromCol] = null;
       }
     }
 
     emit(state.copyWith(
       board: currentBoard,
-      currentPlayer: previousMoveIndex % 2 == 0 ? PieceColor.black : PieceColor.white,
+      currentPlayer:
+          previousMoveIndex % 2 == 0 ? PieceColor.black : PieceColor.white,
       currentMoveIndex: previousMoveIndex,
       moveHistory: state.gameHistory.moves.sublist(0, previousMoveIndex + 1),
-      lastMove: previousMoveIndex >= 0 ? state.gameHistory.moves[previousMoveIndex] : null,
+      lastMove: previousMoveIndex >= 0
+          ? state.gameHistory.moves[previousMoveIndex]
+          : null,
     ));
   }
 }
