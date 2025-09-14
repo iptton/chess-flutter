@@ -396,3 +396,119 @@ class InterventionEffectiveness extends Equatable {
         interventionCounts,
       ];
 }
+
+/// 谜题难度
+enum PuzzleDifficulty {
+  beginner, // 初学者
+  intermediate, // 中级
+  advanced, // 高级
+}
+
+/// 残局类型
+enum EndgameType {
+  kingPawn, // 王兵残局
+  rookEndgame, // 车残局
+  queenEndgame, // 后残局
+  minorPiece, // 轻子残局
+  pawnEndgame, // 兵残局
+  mateIn, // 将死题
+}
+
+/// 残局谜题
+class EndgamePuzzle extends Equatable {
+  final String id;
+  final String title;
+  final String description;
+  final PuzzleDifficulty difficulty;
+  final EndgameType endgameType;
+  final List<List<ChessPiece?>>? boardState;
+  final List<ChessMove>? solution;
+  final List<String>? hints;
+  final String? evaluation;
+  final String source;
+  final int rating;
+
+  const EndgamePuzzle({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.difficulty,
+    required this.endgameType,
+    this.boardState,
+    this.solution,
+    this.hints,
+    this.evaluation,
+    required this.source,
+    required this.rating,
+  });
+
+  @override
+  List<Object?> get props => [
+        id,
+        title,
+        description,
+        difficulty,
+        endgameType,
+        boardState,
+        solution,
+        hints,
+        evaluation,
+        source,
+        rating,
+      ];
+}
+
+/// 用户谜题进度
+class UserPuzzleProgress extends Equatable {
+  final List<String> completedPuzzles;
+  final int totalAttempts;
+  final int successfulSolutions;
+  final double averageAttempts;
+  final Map<PuzzleDifficulty, int> difficultyProgress;
+
+  const UserPuzzleProgress({
+    required this.completedPuzzles,
+    required this.totalAttempts,
+    required this.successfulSolutions,
+    required this.averageAttempts,
+    required this.difficultyProgress,
+  });
+
+  @override
+  List<Object?> get props => [
+        completedPuzzles,
+        totalAttempts,
+        successfulSolutions,
+        averageAttempts,
+        difficultyProgress,
+      ];
+}
+
+/// 谜题统计
+class PuzzleStatistics extends Equatable {
+  final int totalPuzzlesAttempted;
+  final int totalPuzzlesSolved;
+  final double successRate;
+  final double averageAttemptsPerPuzzle;
+  final Map<PuzzleDifficulty, int> difficultyBreakdown;
+  final Map<EndgameType, int> endgameTypeBreakdown;
+
+  const PuzzleStatistics({
+    required this.totalPuzzlesAttempted,
+    required this.totalPuzzlesSolved,
+    required this.successRate,
+    required this.averageAttemptsPerPuzzle,
+    required this.difficultyBreakdown,
+    required this.endgameTypeBreakdown,
+  });
+
+  @override
+  List<Object?> get props => [
+        totalPuzzlesAttempted,
+        totalPuzzlesSolved,
+        successRate,
+        averageAttemptsPerPuzzle,
+        difficultyBreakdown,
+        endgameTypeBreakdown,
+      ];
+}

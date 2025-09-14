@@ -316,8 +316,18 @@ class LearningLessons {
             instructions: ['王兵残局是最基础的残局类型', '需要学会如何推进兵升变', '王的位置至关重要'],
             boardState: _createKingPawnEndgameBoard(),
           ),
+          // 谜题步骤会通过 EndgamePuzzleService 动态添加
+          ...(_puzzleSteps ?? []),
         ],
       );
+
+  // 静态变量用于存储谜题步骤
+  static List<LearningStep>? _puzzleSteps;
+
+  /// 添加谜题步骤到残局课程
+  static void addPuzzleSteps(List<LearningStep> steps) {
+    _puzzleSteps = steps;
+  }
 
   /// 开局训练课程
   LearningLesson get openingsLesson => LearningLesson(
