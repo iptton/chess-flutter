@@ -21,8 +21,8 @@ class LearningScreen extends StatelessWidget {
     return BlocProvider(
       create: (context) => LearningBloc()
         ..add(const LoadAvailableLessons())
-        ..add(initialMode != null 
-            ? StartLearningMode(initialMode!) 
+        ..add(initialMode != null
+            ? StartLearningMode(initialMode!)
             : const LoadAvailableLessons()),
       child: const LearningView(),
     );
@@ -89,8 +89,8 @@ class LearningView extends StatelessWidget {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => context.read<LearningBloc>().add(
-                      const LoadAvailableLessons(),
-                    ),
+                          const LoadAvailableLessons(),
+                        ),
                     child: const Text('重试'),
                   ),
                 ],
@@ -188,8 +188,8 @@ class LearningView extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () => context.read<LearningBloc>().add(
-          StartLesson(lesson.id),
-        ),
+              StartLesson(lesson.id),
+            ),
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.all(16),
@@ -199,8 +199,10 @@ class LearningView extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                colorMap[lesson.mode]?.withOpacity(0.1) ?? Colors.blue.withOpacity(0.1),
-                colorMap[lesson.mode]?.withOpacity(0.05) ?? Colors.blue.withOpacity(0.05),
+                colorMap[lesson.mode]?.withOpacity(0.1) ??
+                    Colors.blue.withOpacity(0.1),
+                colorMap[lesson.mode]?.withOpacity(0.05) ??
+                    Colors.blue.withOpacity(0.05),
               ],
             ),
           ),
@@ -278,7 +280,7 @@ class LearningView extends StatelessWidget {
           totalSteps: lesson.steps.length,
           progress: lesson.progress,
         ),
-        
+
         // 主要内容区域
         Expanded(
           child: Row(
@@ -292,13 +294,13 @@ class LearningView extends StatelessWidget {
                     boardState: state.currentBoard,
                     highlightedPositions: state.highlightedPositions,
                     onMove: (from, to) => context.read<LearningBloc>().add(
-                      ExecuteLearningMove(from, to),
-                    ),
+                          ExecuteLearningMove(from, to),
+                        ),
                     isInteractive: state.isWaitingForMove,
                   ),
                 ),
               ),
-              
+
               // 右侧：指令和控制面板
               Expanded(
                 flex: 2,
@@ -313,28 +315,32 @@ class LearningView extends StatelessWidget {
                         isDemonstrating: state.isDemonstrating,
                       ),
                     ),
-                    
+
                     // 控制按钮
                     LearningStepControls(
                       canGoBack: lesson.currentStepIndex > 0,
-                      canGoForward: lesson.currentStepIndex < lesson.steps.length - 1,
+                      canGoForward: lesson.currentStepIndex <
+                              lesson.steps.length - 1 ||
+                          (lesson.currentStepIndex == lesson.steps.length - 1 &&
+                              !lesson.isCompleted),
                       canSkip: currentStep?.type == StepType.practice,
-                      isLastStep: lesson.currentStepIndex == lesson.steps.length - 1,
+                      isLastStep:
+                          lesson.currentStepIndex == lesson.steps.length - 1,
                       onPrevious: () => context.read<LearningBloc>().add(
-                        const PreviousStep(),
-                      ),
+                            const PreviousStep(),
+                          ),
                       onNext: () => context.read<LearningBloc>().add(
-                        const NextStep(),
-                      ),
+                            const NextStep(),
+                          ),
                       onSkip: () => context.read<LearningBloc>().add(
-                        const SkipCurrentStep(),
-                      ),
+                            const SkipCurrentStep(),
+                          ),
                       onRestart: () => context.read<LearningBloc>().add(
-                        const RestartCurrentStep(),
-                      ),
+                            const RestartCurrentStep(),
+                          ),
                       onHint: () => context.read<LearningBloc>().add(
-                        const ShowHint(),
-                      ),
+                            const ShowHint(),
+                          ),
                     ),
                   ],
                 ),

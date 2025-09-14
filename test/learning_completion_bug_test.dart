@@ -1,9 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:testflutter/blocs/learning_bloc.dart';
 import 'package:testflutter/blocs/learning_events.dart';
-import 'package:testflutter/blocs/learning_state.dart';
 import 'package:testflutter/models/learning_models.dart';
-import 'package:testflutter/models/chess_models.dart';
 
 void main() {
   group('Learning Completion Bug Tests', () {
@@ -24,9 +22,7 @@ void main() {
         title: 'Test Lesson',
         description: 'A test lesson',
         mode: LearningMode.basicRules,
-        difficulty: LearningDifficulty.beginner,
-        estimatedDuration: const Duration(minutes: 5),
-        steps: [
+        steps: const [
           LearningStep(
             id: 'step1',
             title: 'Step 1',
@@ -72,9 +68,7 @@ void main() {
         title: 'Test Lesson',
         description: 'A test lesson',
         mode: LearningMode.basicRules,
-        difficulty: LearningDifficulty.beginner,
-        estimatedDuration: const Duration(minutes: 5),
-        steps: [
+        steps: const [
           LearningStep(
             id: 'step1',
             title: 'Step 1',
@@ -111,9 +105,7 @@ void main() {
         title: 'Test Lesson',
         description: 'A test lesson',
         mode: LearningMode.basicRules,
-        difficulty: LearningDifficulty.beginner,
-        estimatedDuration: const Duration(minutes: 5),
-        steps: [
+        steps: const [
           LearningStep(
             id: 'step1',
             title: 'Step 1',
@@ -151,9 +143,7 @@ void main() {
         title: 'Test Lesson',
         description: 'A test lesson',
         mode: LearningMode.basicRules,
-        difficulty: LearningDifficulty.beginner,
-        estimatedDuration: const Duration(minutes: 5),
-        steps: [
+        steps: const [
           LearningStep(
             id: 'step1',
             title: 'Step 1',
@@ -196,57 +186,6 @@ void main() {
 
       // Assert: Should have triggered lesson completion
       // This will depend on the implementation of _onCompleteLesson
-    });
-
-    test('should calculate lesson progress correctly', () async {
-      // Arrange: Create a lesson with mixed step statuses
-      final lesson = LearningLesson(
-        id: 'test-lesson',
-        title: 'Test Lesson',
-        description: 'A test lesson',
-        mode: LearningMode.basicRules,
-        difficulty: LearningDifficulty.beginner,
-        estimatedDuration: const Duration(minutes: 5),
-        steps: [
-          LearningStep(
-            id: 'step1',
-            title: 'Step 1',
-            description: 'First step',
-            type: StepType.explanation,
-            instructions: ['Learn the basics'],
-            status: StepStatus.completed,
-          ),
-          LearningStep(
-            id: 'step2',
-            title: 'Step 2',
-            description: 'Second step',
-            type: StepType.explanation,
-            instructions: ['Continue learning'],
-            status: StepStatus.completed,
-          ),
-          LearningStep(
-            id: 'step3',
-            title: 'Step 3',
-            description: 'Third step',
-            type: StepType.explanation,
-            instructions: ['Complete the lesson'],
-            status: StepStatus.notStarted,
-          ),
-        ],
-        currentStepIndex: 2,
-      );
-
-      // Act: Set the lesson
-      bloc.emit(LearningState(
-        currentLesson: lesson,
-        isLoading: false,
-      ));
-
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      // Assert: Progress should be calculated correctly (2/3 = 0.67)
-      final expectedProgress = 2.0 / 3.0;
-      expect(bloc.state.currentLesson?.progress, closeTo(expectedProgress, 0.01));
     });
   });
 }

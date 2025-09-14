@@ -184,5 +184,10 @@ class SaveProgress extends LearningEvent {
 
 /// 加载学习进度
 class LoadProgress extends LearningEvent {
-  const LoadProgress();
+  final String lessonId;
+
+  const LoadProgress(this.lessonId);
+
+  @override
+  List<Object?> get props => [lessonId];
 }

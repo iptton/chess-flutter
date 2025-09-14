@@ -12,7 +12,6 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
   LearningBloc({LearningService? learningService})
       : _learningService = learningService ?? LearningService(),
         super(const LearningState()) {
-    
     on<LoadAvailableLessons>(_onLoadAvailableLessons);
     on<StartLesson>(_onStartLesson);
     on<StartLearningMode>(_onStartLearningMode);
@@ -52,7 +51,7 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
     Emitter<LearningState> emit,
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
-    
+
     try {
       final lessons = await _learningService.getAvailableLessons();
       emit(state.copyWith(
@@ -72,7 +71,7 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
     Emitter<LearningState> emit,
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
-    
+
     try {
       final lesson = await _learningService.getLessonById(event.lessonId);
       if (lesson != null) {
@@ -81,7 +80,7 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
           startTime: DateTime.now(),
           isLoading: false,
         ));
-        
+
         // 初始化第一步
         _initializeCurrentStep(emit);
       } else {
@@ -103,7 +102,7 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
     Emitter<LearningState> emit,
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
-    
+
     try {
       final lesson = await _learningService.getLessonByMode(event.mode);
       if (lesson != null) {
@@ -112,7 +111,7 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
           startTime: DateTime.now(),
           isLoading: false,
         ));
-        
+
         // 初始化第一步
         _initializeCurrentStep(emit);
       } else {
@@ -189,25 +188,25 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
   ) {
     final lesson = state.currentLesson;
     final currentStep = lesson?.currentStep;
-    
+
     if (lesson == null || currentStep == null) return;
     if (currentStep.type != StepType.practice) return;
 
     final move = ChessMove(
       from: event.from,
       to: event.to,
-      piece: state.currentBoard?[event.from.row][event.from.col] ?? 
-             const ChessPiece(type: PieceType.pawn, color: PieceColor.white),
+      piece: state.currentBoard?[event.from.row][event.from.col] ??
+          const ChessPiece(type: PieceType.pawn, color: PieceColor.white),
     );
 
     // 检查移动是否正确
     final isCorrectMove = _isCorrectMove(move, currentStep);
-    
+
     if (isCorrectMove) {
       // 执行移动
       final newBoard = _executeMove(state.currentBoard!, move);
       final newMoveHistory = [...state.moveHistory, move];
-      
+
       emit(state.copyWith(
         currentBoard: newBoard,
         moveHistory: newMoveHistory,
@@ -228,18 +227,18 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
   void _initializeCurrentStep(Emitter<LearningState> emit) {
     final lesson = state.currentLesson;
     final currentStep = lesson?.currentStep;
-    
+
     if (lesson == null || currentStep == null) return;
 
     // 设置棋盘状态
     final board = currentStep.boardState ?? _createInitialBoard();
-    
+
     // 设置高亮位置
     final highlights = currentStep.highlightPositions ?? [];
-    
+
     // 设置指令
-    final instruction = currentStep.instructions.isNotEmpty 
-        ? currentStep.instructions.first 
+    final instruction = currentStep.instructions.isNotEmpty
+        ? currentStep.instructions.first
         : currentStep.description;
 
     emit(state.copyWith(
@@ -276,21 +275,21 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
     }
 
     // 检查是否完成了所有必需的移动
-    return step.requiredMoves!.every((requiredMove) =>
-        moveHistory.any((move) =>
-            move.from.row == requiredMove.from.row &&
-            move.from.col == requiredMove.from.col &&
-            move.to.row == requiredMove.to.row &&
-            move.to.col == requiredMove.to.col));
+    return step.requiredMoves!.every((requiredMove) => moveHistory.any((move) =>
+        move.from.row == requiredMove.from.row &&
+        move.from.col == requiredMove.from.col &&
+        move.to.row == requiredMove.to.row &&
+        move.to.col == requiredMove.to.col));
   }
 
-  List<List<ChessPiece?>> _executeMove(List<List<ChessPiece?>> board, ChessMove move) {
+  List<List<ChessPiece?>> _executeMove(
+      List<List<ChessPiece?>> board, ChessMove move) {
     final newBoard = board.map((row) => List<ChessPiece?>.from(row)).toList();
-    
+
     // 执行移动
     newBoard[move.to.row][move.to.col] = newBoard[move.from.row][move.from.col];
     newBoard[move.from.row][move.from.col] = null;
-    
+
     return newBoard;
   }
 
@@ -314,19 +313,23 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
   }
 
   // 其他事件处理方法的占位符
-  void _onStartDemonstration(StartDemonstration event, Emitter<LearningState> emit) {
+  void _onStartDemonstration(
+      StartDemonstration event, Emitter<LearningState> emit) {
     // TODO: 实现演示逻辑
   }
 
-  void _onStopDemonstration(StopDemonstration event, Emitter<LearningState> emit) {
+  void _onStopDemonstration(
+      StopDemonstration event, Emitter<LearningState> emit) {
     // TODO: 实现停止演示逻辑
   }
 
-  void _onDemonstrateNextMove(DemonstrateNextMove event, Emitter<LearningState> emit) {
+  void _onDemonstrateNextMove(
+      DemonstrateNextMove event, Emitter<LearningState> emit) {
     // TODO: 实现演示下一步移动逻辑
   }
 
-  void _onResetDemonstration(ResetDemonstration event, Emitter<LearningState> emit) {
+  void _onResetDemonstration(
+      ResetDemonstration event, Emitter<LearningState> emit) {
     // TODO: 实现重置演示逻辑
   }
 
@@ -343,14 +346,32 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
   }
 
   void _onCompleteLesson(CompleteLesson event, Emitter<LearningState> emit) {
-    // TODO: 实现完成课程逻辑
+    final lesson = state.currentLesson;
+    if (lesson == null) return;
+
+    // 标记课程为已完成
+    final completedLesson = lesson.copyWith(
+      isCompleted: true,
+      timeSpent: state.startTime != null
+          ? DateTime.now().difference(state.startTime!)
+          : null,
+    );
+
+    emit(state.copyWith(
+      currentLesson: completedLesson,
+      currentInstruction: '恭喜！您已完成本课程！',
+    ));
+
+    // 自动保存进度
+    add(const SaveProgress());
   }
 
   void _onExitLearning(ExitLearning event, Emitter<LearningState> emit) {
     // TODO: 实现退出学习逻辑
   }
 
-  void _onUpdateStepStatus(UpdateStepStatus event, Emitter<LearningState> emit) {
+  void _onUpdateStepStatus(
+      UpdateStepStatus event, Emitter<LearningState> emit) {
     // TODO: 实现更新步骤状态逻辑
   }
 
@@ -358,7 +379,8 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
     emit(state.copyWith(currentBoard: event.board));
   }
 
-  void _onHighlightPositions(HighlightPositions event, Emitter<LearningState> emit) {
+  void _onHighlightPositions(
+      HighlightPositions event, Emitter<LearningState> emit) {
     emit(state.copyWith(highlightedPositions: event.positions));
   }
 
@@ -370,20 +392,69 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
     emit(state.copyWith(currentInstruction: event.instruction));
   }
 
-  void _onClearInstruction(ClearInstruction event, Emitter<LearningState> emit) {
+  void _onClearInstruction(
+      ClearInstruction event, Emitter<LearningState> emit) {
     emit(state.copyWith(currentInstruction: null));
   }
 
-  void _onResetLearningState(ResetLearningState event, Emitter<LearningState> emit) {
+  void _onResetLearningState(
+      ResetLearningState event, Emitter<LearningState> emit) {
     emit(const LearningState());
   }
 
-  void _onSaveProgress(SaveProgress event, Emitter<LearningState> emit) {
-    // TODO: 实现保存进度逻辑
+  void _onSaveProgress(SaveProgress event, Emitter<LearningState> emit) async {
+    final lesson = state.currentLesson;
+    if (lesson == null) return;
+
+    try {
+      // 保存学习进度到服务
+      await _learningService.saveProgress(lesson);
+
+      emit(state.copyWith(
+        currentInstruction: '进度已保存',
+      ));
+
+      // 清除保存提示
+      Timer(const Duration(seconds: 2), () {
+        if (!isClosed) {
+          add(const ClearInstruction());
+        }
+      });
+    } catch (e) {
+      emit(state.copyWith(
+        error: '保存进度失败: $e',
+      ));
+    }
   }
 
-  void _onLoadProgress(LoadProgress event, Emitter<LearningState> emit) {
-    // TODO: 实现加载进度逻辑
+  void _onLoadProgress(LoadProgress event, Emitter<LearningState> emit) async {
+    try {
+      emit(state.copyWith(isLoading: true, error: null));
+
+      // 从服务加载学习进度
+      final savedLesson = await _learningService.loadProgress(event.lessonId);
+
+      if (savedLesson != null) {
+        emit(state.copyWith(
+          currentLesson: savedLesson,
+          isLoading: false,
+          currentInstruction: '已加载保存的进度',
+        ));
+
+        // 初始化当前步骤
+        _initializeCurrentStep(emit);
+      } else {
+        emit(state.copyWith(
+          isLoading: false,
+          error: '未找到保存的进度',
+        ));
+      }
+    } catch (e) {
+      emit(state.copyWith(
+        isLoading: false,
+        error: '加载进度失败: $e',
+      ));
+    }
   }
 
   /// 创建初始棋盘状态
