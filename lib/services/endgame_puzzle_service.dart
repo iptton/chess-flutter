@@ -1,6 +1,7 @@
 import '../models/learning_models.dart';
 import '../models/chess_models.dart';
 import '../data/learning_lessons.dart';
+import '../data/classic_endgame_puzzles.dart';
 
 class EndgamePuzzleService {
   static final EndgamePuzzleService _instance =
@@ -173,28 +174,23 @@ class EndgamePuzzleService {
   // Private helper methods
 
   List<EndgamePuzzle> _generateEndgamePuzzles() {
-    final puzzles = <EndgamePuzzle>[];
+    // 使用经典残局谜题数据，完全离线可用
+    final classicPuzzles = ClassicEndgamePuzzles.getAllPuzzles();
 
-    // 生成20个不同难度的残局谜题
-    // 初级谜题 (8个)
-    for (int i = 1; i <= 8; i++) {
-      puzzles.add(_createBeginnerPuzzle(i));
-    }
+    // 如果经典谜题不足20个，补充生成的谜题
+    final puzzles = <EndgamePuzzle>[...classicPuzzles];
 
-    // 中级谜题 (8个)
-    for (int i = 1; i <= 8; i++) {
-      puzzles.add(_createIntermediatePuzzle(i));
-    }
-
-    // 高级谜题 (4个)
-    for (int i = 1; i <= 4; i++) {
-      puzzles.add(_createAdvancedPuzzle(i));
+    // 补充到20个谜题 - 避免无限循环
+    int generatedCount = 0;
+    while (puzzles.length < 20 && generatedCount < 20) {
+      puzzles.add(_createBeginnerPuzzle(puzzles.length + 1));
+      generatedCount++;
     }
 
     // 按难度排序
     puzzles.sort((a, b) => a.difficulty.index.compareTo(b.difficulty.index));
 
-    return puzzles;
+    return puzzles.take(20).toList();
   }
 
   EndgamePuzzle _createBeginnerPuzzle(int index) {
