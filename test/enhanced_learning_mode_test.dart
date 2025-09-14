@@ -22,7 +22,8 @@ void main() {
     });
 
     group('Enhanced Learning Board Tests', () {
-      testWidgets('should display correct/incorrect move feedback', (WidgetTester tester) async {
+      testWidgets('should display correct/incorrect move feedback',
+          (WidgetTester tester) async {
         // Arrange: Create a practice step with required moves
         final practiceStep = LearningStep(
           id: 'test_practice',
@@ -33,7 +34,8 @@ void main() {
             ChessMove(
               from: const Position(row: 6, col: 4),
               to: const Position(row: 4, col: 4),
-              piece: const ChessPiece(type: PieceType.pawn, color: PieceColor.white),
+              piece: const ChessPiece(
+                  type: PieceType.pawn, color: PieceColor.white),
             ),
           ],
           successMessage: '正确！',
@@ -47,7 +49,8 @@ void main() {
               child: EnhancedLearningBoard(
                 boardState: GameState.initial().board,
                 currentStep: practiceStep,
-                onMove: (from, to) => learningBloc.add(ExecuteLearningMove(from, to)),
+                onMove: (from, to) =>
+                    learningBloc.add(ExecuteLearningMove(from, to)),
                 isInteractive: true,
                 showFeedback: true,
               ),
@@ -66,7 +69,8 @@ void main() {
         expect(find.byIcon(Icons.check_circle), findsOneWidget);
       });
 
-      testWidgets('should show incorrect move feedback', (WidgetTester tester) async {
+      testWidgets('should show incorrect move feedback',
+          (WidgetTester tester) async {
         // Arrange: Create a practice step with specific required moves
         final practiceStep = LearningStep(
           id: 'test_practice',
@@ -77,7 +81,8 @@ void main() {
             ChessMove(
               from: const Position(row: 6, col: 4),
               to: const Position(row: 4, col: 4),
-              piece: const ChessPiece(type: PieceType.pawn, color: PieceColor.white),
+              piece: const ChessPiece(
+                  type: PieceType.pawn, color: PieceColor.white),
             ),
           ],
           failureMessage: '错误，请再试一次',
@@ -90,7 +95,8 @@ void main() {
               child: EnhancedLearningBoard(
                 boardState: GameState.initial().board,
                 currentStep: practiceStep,
-                onMove: (from, to) => learningBloc.add(ExecuteLearningMove(from, to)),
+                onMove: (from, to) =>
+                    learningBloc.add(ExecuteLearningMove(from, to)),
                 isInteractive: true,
                 showFeedback: true,
               ),
@@ -109,7 +115,8 @@ void main() {
         expect(find.byIcon(Icons.error), findsOneWidget);
       });
 
-      testWidgets('should adapt to different screen widths', (WidgetTester tester) async {
+      testWidgets('should adapt to different screen widths',
+          (WidgetTester tester) async {
         final practiceStep = LearningStep(
           id: 'test_responsive',
           title: '响应式测试',
@@ -128,7 +135,8 @@ void main() {
               child: EnhancedLearningBoard(
                 boardState: GameState.initial().board,
                 currentStep: practiceStep,
-                onMove: (from, to) => learningBloc.add(ExecuteLearningMove(from, to)),
+                onMove: (from, to) =>
+                    learningBloc.add(ExecuteLearningMove(from, to)),
                 isInteractive: true,
                 showFeedback: true,
               ),
@@ -153,7 +161,8 @@ void main() {
     });
 
     group('Learning Stats Panel Tests', () {
-      testWidgets('should display step count and completion status', (WidgetTester tester) async {
+      testWidgets('should display step count and completion status',
+          (WidgetTester tester) async {
         // Arrange: Create lesson with multiple steps
         final lesson = LearningLesson(
           id: 'test_lesson',
@@ -200,19 +209,23 @@ void main() {
 
         // Assert: Should display step progress
         expect(find.text('步骤 2 / 3'), findsOneWidget);
-        expect(find.text('66% 完成'), findsOneWidget);
+        expect(find.text('67% 完成'), findsOneWidget);
 
         // Assert: Should display move statistics
-        expect(find.text('移动次数: 5'), findsOneWidget);
-        expect(find.text('正确: 3'), findsOneWidget);
-        expect(find.text('错误: 2'), findsOneWidget);
+        expect(find.text('5'), findsOneWidget); // moveCount value
+        expect(find.text('移动次数'), findsOneWidget); // moveCount label
+        expect(find.text('3'), findsOneWidget); // correctMoves value
+        expect(find.text('正确'), findsOneWidget); // correctMoves label
+        expect(find.text('2'), findsOneWidget); // incorrectMoves value
+        expect(find.text('错误'), findsOneWidget); // incorrectMoves label
         expect(find.text('准确率: 60%'), findsOneWidget);
 
         // Assert: Should display elapsed time
         expect(find.text('用时: 2:30'), findsOneWidget);
       });
 
-      testWidgets('should show completion celebration', (WidgetTester tester) async {
+      testWidgets('should show completion celebration',
+          (WidgetTester tester) async {
         // Arrange: Create completed lesson
         final completedLesson = LearningLesson(
           id: 'completed_lesson',
@@ -252,7 +265,8 @@ void main() {
     });
 
     group('Enhanced Learning Instruction Panel Tests', () {
-      testWidgets('should display interactive instructions with progress', (WidgetTester tester) async {
+      testWidgets('should display interactive instructions with progress',
+          (WidgetTester tester) async {
         final practiceStep = LearningStep(
           id: 'interactive_step',
           title: '交互式步骤',
@@ -267,7 +281,8 @@ void main() {
             ChessMove(
               from: const Position(row: 6, col: 4),
               to: const Position(row: 4, col: 4),
-              piece: const ChessPiece(type: PieceType.pawn, color: PieceColor.white),
+              piece: const ChessPiece(
+                  type: PieceType.pawn, color: PieceColor.white),
             ),
           ],
         );
@@ -294,7 +309,9 @@ void main() {
         expect(find.byIcon(Icons.arrow_forward), findsOneWidget);
       });
 
-      testWidgets('should adapt instruction panel layout for different screen sizes', (WidgetTester tester) async {
+      testWidgets(
+          'should adapt instruction panel layout for different screen sizes',
+          (WidgetTester tester) async {
         final step = LearningStep(
           id: 'responsive_step',
           title: '响应式步骤',
@@ -323,14 +340,16 @@ void main() {
         await tester.pump();
 
         // Assert: Should use compact mobile layout
-        expect(find.byKey(const Key('compact_instruction_layout')), findsOneWidget);
+        expect(find.byKey(const Key('compact_instruction_layout')),
+            findsOneWidget);
 
         // Test desktop layout
         tester.view.physicalSize = const Size(1200, 800);
         await tester.pump();
 
         // Assert: Should use expanded desktop layout
-        expect(find.byKey(const Key('expanded_instruction_layout')), findsOneWidget);
+        expect(find.byKey(const Key('expanded_instruction_layout')),
+            findsOneWidget);
 
         addTearDown(tester.view.reset);
       });

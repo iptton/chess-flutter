@@ -5,13 +5,26 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "storePassword": "00000019CB3BC78E162D0CF646EF14C331357F1CD85D20D74DCEBEECB3F260D0E90C92A37AB5F87A5A",
-          "certpath": "/Users/zxnap/keys/app-publish.cer",
+          "storeFile": "/Users/zxnap/keys/app.p12",
+          "storePassword": "00000019334770EA6A74D6DBB8783F793E6A99F237664D1AB9CE46298DDC57B8BE39A80C4AB5DB1E6E",
           "keyAlias": "app",
-          "keyPassword": "0000001982AB47C9FC95D7247539FAEAA76EA3C9988C34074F99C75F4B332938BA6DC4D561DCDFCB82",
-          "profile": "/Users/zxnap/keys/appRelease.p7b",
+          "keyPassword": "00000019C9D4714235143C12E7FAA422FD818BFAC51A35FB17916F0384D8D1C7A4E2BF1728A9AB2021",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "/Users/zxnap/keys/app.p12"
+          "profile": "/Users/zxnap/keys/appRelease.p7b",
+          "certpath": "/Users/zxnap/keys/app-publish.cer"
+        }
+      },
+      {
+        "name": "debug",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "/Users/zxnap/.ohos/config/debug_ohos_bZOkeL2bVkNn7fO6r0_a0-1IKNfI4xShfW7cdYcP_lM=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001B6BCC6DD284B93CB3D32177C3BB978D0CAE24E432E2BDC25326C509D0F00D4C4B6A8413B7BD7187",
+          "profile": "/Users/zxnap/.ohos/config/debug_ohos_bZOkeL2bVkNn7fO6r0_a0-1IKNfI4xShfW7cdYcP_lM=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "/Users/zxnap/.ohos/config/debug_ohos_bZOkeL2bVkNn7fO6r0_a0-1IKNfI4xShfW7cdYcP_lM=.p12",
+          "storePassword": "0000001B1C78B33A3EE0E0421F47D1DBDA2A8A72C7DEB5ACB129C08274D67227828BAAED07DD891C2A45B5"
         }
       }
     ],
@@ -19,6 +32,19 @@
       {
         "name": "default",
         "signingConfig": "default",
+        "compatibleSdkVersion": "5.0.1(13)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          },
+          "nativeCompiler": "BiSheng"
+        }
+      },
+      {
+        "name": "debug",
+        "signingConfig": "debug",
         "compatibleSdkVersion": "5.0.1(13)",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
@@ -39,7 +65,8 @@
         {
           "name": "default",
           "applyToProducts": [
-            "default"
+            "default",
+            "debug"
           ]
         }
       ]

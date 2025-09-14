@@ -18,14 +18,14 @@ class MyApp extends StatelessWidget {
   }
 
   ThemeData _buildCustomTheme() {
-    // 基于 foreground.png 和 background.png 的精确配色方案
-    // 采用分层图标设计原理：前景深色、背景浅色的专业配色
-    const Color primaryColor = Color(0xFF2D3748); // 深灰蓝 - 对应前景图层的深色调
-    const Color backgroundColor = Color(0xFFF7FAFC); // 极浅蓝灰 - 对应背景图层的浅色调
-    const Color accentColor = Color(0xFF4299E1); // 明亮蓝 - 主要交互色
-    const Color secondaryColor = Color(0xFF48BB78); // 绿色 - 成功状态色
+    // 基于新设计的配色方案
+    const Color primaryColor = Color(0xFF1F2937); // 深灰 - 主要按钮色
+    const Color backgroundColor = Color(0xFFF1F5F9); // 浅灰蓝 - 背景色
+    const Color accentColor = Color(0xFF8B5CF6); // 紫色 - 悬停和强调色
+    const Color secondaryColor = Color(0xFF6B7280); // 中灰 - 次要文字色
     const Color surfaceColor = Color(0xFFFFFFFF); // 纯白 - 卡片表面
-    const Color onSurfaceColor = Color(0xFF1A202C); // 深色文字
+    const Color onSurfaceColor = Color(0xFF1F2937); // 深色文字
+    const Color borderColor = Color(0xFFD1D5DB); // 边框色
 
     return ThemeData(
       useMaterial3: true,
@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
         onTertiary: surfaceColor,
         onSurface: onSurfaceColor,
         onBackground: onSurfaceColor,
-        outline: primaryColor.withOpacity(0.2),
+        outline: borderColor,
       ),
       scaffoldBackgroundColor: backgroundColor,
       appBarTheme: AppBarTheme(
@@ -60,12 +60,12 @@ class MyApp extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
           foregroundColor: surfaceColor,
-          elevation: 2,
-          shadowColor: primaryColor.withOpacity(0.3),
+          elevation: 0,
+          shadowColor: accentColor.withOpacity(0.3),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         ),
       ),
       cardTheme: CardTheme(
@@ -81,11 +81,11 @@ class MyApp extends StatelessWidget {
         filled: true,
         fillColor: backgroundColor,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: primaryColor.withOpacity(0.3)),
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: borderColor),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: accentColor, width: 2),
         ),
       ),
