@@ -62,18 +62,12 @@ class LearningView extends StatelessWidget {
                     )
                   : null, // Use default back button when in learning home
               actions: [
-                BlocBuilder<LearningBloc, LearningState>(
-                  builder: (context, state) {
-                    if (state.currentLesson != null) {
-                      return IconButton(
-                        icon: const Icon(Icons.exit_to_app),
-                        onPressed: () => _showExitDialog(context),
-                        tooltip: '退出学习',
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
+                if (state.currentLesson != null)
+                  IconButton(
+                    icon: const Icon(Icons.exit_to_app),
+                    onPressed: () => _showExitDialog(context),
+                    tooltip: '退出学习',
+                  ),
               ],
             ),
             body: BlocBuilder<LearningBloc, LearningState>(

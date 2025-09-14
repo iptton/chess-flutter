@@ -225,17 +225,27 @@ class LearningState extends Equatable {
     String? currentInstruction,
     bool? isWaitingForMove,
     bool? isDemonstrating,
+    // 添加显式的null标志
+    bool clearCurrentLesson = false,
+    bool clearError = false,
+    bool clearStartTime = false,
+    bool clearCurrentBoard = false,
+    bool clearCurrentInstruction = false,
   }) {
     return LearningState(
-      currentLesson: currentLesson ?? this.currentLesson,
+      currentLesson:
+          clearCurrentLesson ? null : (currentLesson ?? this.currentLesson),
       availableLessons: availableLessons ?? this.availableLessons,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
-      startTime: startTime ?? this.startTime,
-      currentBoard: currentBoard ?? this.currentBoard,
+      error: clearError ? null : (error ?? this.error),
+      startTime: clearStartTime ? null : (startTime ?? this.startTime),
+      currentBoard:
+          clearCurrentBoard ? null : (currentBoard ?? this.currentBoard),
       highlightedPositions: highlightedPositions ?? this.highlightedPositions,
       moveHistory: moveHistory ?? this.moveHistory,
-      currentInstruction: currentInstruction ?? this.currentInstruction,
+      currentInstruction: clearCurrentInstruction
+          ? null
+          : (currentInstruction ?? this.currentInstruction),
       isWaitingForMove: isWaitingForMove ?? this.isWaitingForMove,
       isDemonstrating: isDemonstrating ?? this.isDemonstrating,
     );

@@ -369,13 +369,13 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
   void _onExitLearning(ExitLearning event, Emitter<LearningState> emit) {
     // 清除当前课程，返回到学习模式首页
     emit(state.copyWith(
-      currentLesson: null,
-      currentBoard: null,
-      currentInstruction: null,
+      clearCurrentLesson: true,
+      clearCurrentBoard: true,
+      clearCurrentInstruction: true,
+      clearStartTime: true,
       highlightedPositions: const [],
       isWaitingForMove: false,
       isDemonstrating: false,
-      startTime: null,
     ));
 
     // 重新加载可用课程列表
