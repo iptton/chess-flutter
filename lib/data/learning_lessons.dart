@@ -223,6 +223,59 @@ class LearningLessons {
               const Position(row: 7, col: 7), // 白车
             ],
           ),
+          LearningStep(
+            id: 'en_passant',
+            title: '吃过路兵',
+            description: '学习吃过路兵的特殊规则',
+            type: StepType.practice,
+            instructions: [
+              '吃过路兵是兵的特殊吃子方式',
+              '只能在对方兵刚走两格后立即进行',
+              '己方兵必须在第5行（白方）或第4行（黑方）',
+              '吃掉的是对方刚移动的兵'
+            ],
+            boardState: _createEnPassantBoard(),
+            requiredMoves: [
+              ChessMove(
+                from: const Position(row: 3, col: 4),
+                to: const Position(row: 2, col: 5),
+                piece: const ChessPiece(
+                    type: PieceType.pawn, color: PieceColor.white),
+              ),
+            ],
+            highlightPositions: [
+              const Position(row: 3, col: 4), // 白兵位置
+              const Position(row: 3, col: 5), // 黑兵位置（将被吃掉）
+            ],
+            successMessage: '很好！吃过路兵是一个重要的战术技巧。',
+            failureMessage: '吃过路兵只能在特定条件下进行，请仔细阅读规则。',
+          ),
+          LearningStep(
+            id: 'pawn_promotion',
+            title: '兵升变',
+            description: '学习兵升变的规则和选择',
+            type: StepType.practice,
+            instructions: [
+              '兵到达对方底线时必须升变',
+              '可以升变为后、车、象或马',
+              '通常升变为后最有利',
+              '升变是强制性的，不能保持兵'
+            ],
+            boardState: _createPawnPromotionBoard(),
+            requiredMoves: [
+              ChessMove(
+                from: const Position(row: 1, col: 6),
+                to: const Position(row: 0, col: 6),
+                piece: const ChessPiece(
+                    type: PieceType.pawn, color: PieceColor.white),
+              ),
+            ],
+            highlightPositions: [
+              const Position(row: 1, col: 6), // 白兵位置
+            ],
+            successMessage: '完美！兵升变可以改变游戏的局面。',
+            failureMessage: '兵必须移动到底线才能升变，请选择正确的移动。',
+          ),
         ],
       );
 
@@ -418,6 +471,44 @@ class LearningLessons {
         const ChessPiece(type: PieceType.pawn, color: PieceColor.white);
     board[6][5] =
         const ChessPiece(type: PieceType.pawn, color: PieceColor.white);
+    return board;
+  }
+
+  List<List<ChessPiece?>> _createEnPassantBoard() {
+    final board = _createEmptyBoard();
+    // White king and black king
+    board[7][4] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.white);
+    board[0][4] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.black);
+
+    // White pawn on 5th rank (row 3) ready for en passant
+    board[3][4] =
+        const ChessPiece(type: PieceType.pawn, color: PieceColor.white);
+
+    // Black pawn adjacent to white pawn (just moved two squares)
+    board[3][5] =
+        const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
+
+    return board;
+  }
+
+  List<List<ChessPiece?>> _createPawnPromotionBoard() {
+    final board = _createEmptyBoard();
+    // White king and black king
+    board[7][4] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.white);
+    board[0][4] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.black);
+
+    // White pawn on 7th rank (row 1) ready to promote
+    board[1][6] =
+        const ChessPiece(type: PieceType.pawn, color: PieceColor.white);
+
+    // Add some other pieces for context
+    board[2][5] =
+        const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
+
     return board;
   }
 
