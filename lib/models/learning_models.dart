@@ -3,28 +3,28 @@ import 'chess_models.dart';
 
 /// 学习模式类型
 enum LearningMode {
-  basicRules,      // 基础规则
-  pieceMovement,   // 棋子移动
-  specialMoves,    // 特殊移动（王车易位、吃过路兵、兵升变）
-  tactics,         // 战术训练
-  endgame,         // 残局训练
-  openings,        // 开局训练
+  basicRules, // 基础规则
+  pieceMovement, // 棋子移动
+  specialMoves, // 特殊移动（王车易位、吃过路兵、兵升变）
+  tactics, // 战术训练
+  endgame, // 残局训练
+  openings, // 开局训练
 }
 
 /// 学习步骤状态
 enum StepStatus {
-  notStarted,      // 未开始
-  inProgress,      // 进行中
-  completed,       // 已完成
-  failed,          // 失败
+  notStarted, // 未开始
+  inProgress, // 进行中
+  completed, // 已完成
+  failed, // 失败
 }
 
 /// 学习步骤类型
 enum StepType {
-  explanation,     // 解释说明
-  demonstration,   // 演示
-  practice,        // 练习
-  quiz,           // 测验
+  explanation, // 解释说明
+  demonstration, // 演示
+  practice, // 练习
+  quiz, // 测验
 }
 
 /// 学习步骤
@@ -142,7 +142,8 @@ class LearningLesson extends Equatable {
 
   double get progress {
     if (steps.isEmpty) return 0.0;
-    final completedSteps = steps.where((step) => step.status == StepStatus.completed).length;
+    final completedSteps =
+        steps.where((step) => step.status == StepStatus.completed).length;
     return completedSteps / steps.length;
   }
 
@@ -253,5 +254,145 @@ class LearningState extends Equatable {
         currentInstruction,
         isWaitingForMove,
         isDemonstrating,
+      ];
+}
+
+/// AI介入等级
+enum AIInterventionLevel {
+  none, // 无介入
+  gentle, // 轻微提示
+  moderate, // 中等帮助
+  strong, // 强力指导
+  demonstration, // 完整演示
+}
+
+/// AI提示类型
+enum AIHintType {
+  move, // 移动建议
+  explanation, // 解释说明
+  demonstration, // 演示
+  strategy, // 策略建议
+}
+
+/// AI语调
+enum AITone {
+  encouraging, // 鼓励性
+  analytical, // 分析性
+  friendly, // 友好
+  professional, // 专业
+}
+
+/// AI详细程度
+enum AIVerbosity {
+  concise, // 简洁
+  moderate, // 中等
+  detailed, // 详细
+}
+
+/// 解释难度
+enum ExplanationDifficulty {
+  beginner, // 初学者
+  intermediate, // 中级
+  advanced, // 高级
+}
+
+/// AI提示
+class AIHint extends Equatable {
+  final AIHintType type;
+  final String message;
+  final ChessMove? suggestedMove;
+  final double confidence;
+  final List<Position>? highlightPositions;
+
+  const AIHint({
+    required this.type,
+    required this.message,
+    this.suggestedMove,
+    required this.confidence,
+    this.highlightPositions,
+  });
+
+  @override
+  List<Object?> get props => [
+        type,
+        message,
+        suggestedMove,
+        confidence,
+        highlightPositions,
+      ];
+}
+
+/// AI解释
+class AIExplanation extends Equatable {
+  final String title;
+  final String content;
+  final List<String> keyPoints;
+  final ExplanationDifficulty difficulty;
+  final List<ChessMove>? demonstrationMoves;
+
+  const AIExplanation({
+    required this.title,
+    required this.content,
+    required this.keyPoints,
+    required this.difficulty,
+    this.demonstrationMoves,
+  });
+
+  @override
+  List<Object?> get props => [
+        title,
+        content,
+        keyPoints,
+        difficulty,
+        demonstrationMoves,
+      ];
+}
+
+/// AI个性设置
+class AIPersonality extends Equatable {
+  final AITone tone;
+  final AIVerbosity verbosity;
+  final bool useEncouragement;
+  final bool adaptToUserLevel;
+
+  const AIPersonality({
+    required this.tone,
+    required this.verbosity,
+    this.useEncouragement = true,
+    this.adaptToUserLevel = true,
+  });
+
+  @override
+  List<Object?> get props => [
+        tone,
+        verbosity,
+        useEncouragement,
+        adaptToUserLevel,
+      ];
+}
+
+/// AI介入效果统计
+class InterventionEffectiveness extends Equatable {
+  final int totalInterventions;
+  final int successfulInterventions;
+  final double successRate;
+  final double averageInterventionLevel;
+  final Map<AIInterventionLevel, int> interventionCounts;
+
+  const InterventionEffectiveness({
+    required this.totalInterventions,
+    required this.successfulInterventions,
+    required this.successRate,
+    required this.averageInterventionLevel,
+    required this.interventionCounts,
+  });
+
+  @override
+  List<Object?> get props => [
+        totalInterventions,
+        successfulInterventions,
+        successRate,
+        averageInterventionLevel,
+        interventionCounts,
       ];
 }
