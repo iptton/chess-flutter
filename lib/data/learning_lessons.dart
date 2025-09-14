@@ -333,16 +333,178 @@ class LearningLessons {
   LearningLesson get openingsLesson => LearningLesson(
         id: 'openings',
         title: '基础开局',
-        description: '学习常见的开局原则',
+        description: '学习常见的开局原则和经典开局系统',
         mode: LearningMode.openings,
         steps: [
           LearningStep(
-            id: 'opening_principles',
-            title: '开局原则',
-            description: '学习开局的基本原则',
+            id: 'opening_principles_intro',
+            title: '开局原则概述',
+            description: '学习开局的四大基本原则',
             type: StepType.explanation,
-            instructions: ['控制中心', '快速出子', '保护王的安全', '不要重复移动同一个棋子'],
+            instructions: [
+              '开局阶段是国际象棋游戏的开始，通常指前10-15步',
+              '好的开局能为中局和残局奠定坚实基础',
+              '开局有四大基本原则需要遵循',
+              '掌握这些原则比记住具体变化更重要'
+            ],
             boardState: _createInitialBoard(),
+            highlightPositions: [
+              const Position(row: 3, col: 3), // d5
+              const Position(row: 3, col: 4), // e5
+              const Position(row: 4, col: 3), // d4
+              const Position(row: 4, col: 4), // e4 - 中心格子
+            ],
+          ),
+          LearningStep(
+            id: 'center_control',
+            title: '控制中心',
+            description: '学习如何控制棋盘中心',
+            type: StepType.demonstration,
+            instructions: [
+              '棋盘中心的四个格子（d4, d5, e4, e5）最重要',
+              '控制中心的棋子活动范围更大',
+              '用兵和棋子共同控制中心',
+              '不要急于占领中心，先控制再占领'
+            ],
+            boardState: _createCenterControlBoard(),
+            demonstrationMoves: const [
+              ChessMove(
+                from: Position(row: 6, col: 4), // e2
+                to: Position(row: 4, col: 4), // e4
+                piece:
+                    ChessPiece(type: PieceType.pawn, color: PieceColor.white),
+              ),
+              ChessMove(
+                from: Position(row: 1, col: 4), // e7
+                to: Position(row: 3, col: 4), // e5
+                piece:
+                    ChessPiece(type: PieceType.pawn, color: PieceColor.black),
+              ),
+            ],
+            highlightPositions: const [
+              Position(row: 3, col: 3), // d5
+              Position(row: 3, col: 4), // e5
+              Position(row: 4, col: 3), // d4
+              Position(row: 4, col: 4), // e4
+            ],
+          ),
+          LearningStep(
+            id: 'piece_development',
+            title: '快速出子',
+            description: '学习如何快速发展棋子',
+            type: StepType.demonstration,
+            instructions: [
+              '先出马，再出象，最后出后',
+              '不要过早出后，容易被攻击',
+              '每步棋都要发展新的棋子',
+              '避免重复移动同一个棋子'
+            ],
+            boardState: _createDevelopmentBoard(),
+            demonstrationMoves: [
+              ChessMove(
+                from: const Position(row: 7, col: 1), // b1
+                to: const Position(row: 5, col: 2), // c3
+                piece: const ChessPiece(
+                    type: PieceType.knight, color: PieceColor.white),
+              ),
+              ChessMove(
+                from: const Position(row: 7, col: 2), // c1
+                to: const Position(row: 4, col: 5), // f4
+                piece: const ChessPiece(
+                    type: PieceType.bishop, color: PieceColor.white),
+              ),
+            ],
+            highlightPositions: const [
+              Position(row: 7, col: 1), // b1 马
+              Position(row: 7, col: 2), // c1 象
+              Position(row: 7, col: 5), // f1 象
+              Position(row: 7, col: 6), // g1 马
+            ],
+          ),
+          LearningStep(
+            id: 'king_safety',
+            title: '保护王的安全',
+            description: '学习如何保护王的安全',
+            type: StepType.explanation,
+            instructions: const [
+              '王车易位是保护王的最佳方式',
+              '尽早进行王车易位',
+              '避免过早移动王前的兵',
+              '不要让王暴露在中央'
+            ],
+            boardState: _createKingSafetyBoard(),
+            highlightPositions: const [
+              Position(row: 7, col: 4), // 白王
+              Position(row: 7, col: 6), // 王车易位后的位置
+              Position(row: 6, col: 5), // f2兵
+              Position(row: 6, col: 6), // g2兵
+              Position(row: 6, col: 7), // h2兵
+            ],
+          ),
+          LearningStep(
+            id: 'opening_practice',
+            title: '开局练习',
+            description: '练习正确的开局移动',
+            type: StepType.practice,
+            instructions: const [
+              '请按照开局原则进行移动',
+              '先控制中心，然后发展棋子',
+              '记住：控制中心 → 发展棋子 → 保护王'
+            ],
+            boardState: _createInitialBoard(),
+            requiredMoves: const [
+              ChessMove(
+                from: Position(row: 6, col: 4), // e2
+                to: Position(row: 4, col: 4), // e4
+                piece:
+                    ChessPiece(type: PieceType.pawn, color: PieceColor.white),
+              ),
+            ],
+            successMessage: '很好！e4是一个经典的开局移动，控制了中心。',
+            failureMessage: '试试移动e2兵到e4，这是控制中心的好方法。',
+            highlightPositions: const [
+              Position(row: 6, col: 4), // e2兵
+              Position(row: 4, col: 4), // e4目标位置
+            ],
+          ),
+          LearningStep(
+            id: 'italian_game_intro',
+            title: '意大利开局简介',
+            description: '学习经典的意大利开局',
+            type: StepType.demonstration,
+            instructions: const [
+              '意大利开局是最古老的开局之一',
+              '白方快速发展象到c4攻击f7弱点',
+              '这是学习开局原则的好例子',
+              '遵循了控制中心和快速发展的原则'
+            ],
+            boardState: _createItalianGameBoard(),
+            demonstrationMoves: const [
+              ChessMove(
+                from: Position(row: 6, col: 4), // e2
+                to: Position(row: 4, col: 4), // e4
+                piece:
+                    ChessPiece(type: PieceType.pawn, color: PieceColor.white),
+              ),
+              ChessMove(
+                from: Position(row: 7, col: 6), // g1
+                to: Position(row: 5, col: 5), // f3
+                piece:
+                    ChessPiece(type: PieceType.knight, color: PieceColor.white),
+              ),
+              ChessMove(
+                from: Position(row: 7, col: 5), // f1
+                to: Position(row: 4, col: 2), // c4
+                piece:
+                    ChessPiece(type: PieceType.bishop, color: PieceColor.white),
+              ),
+            ],
+            highlightPositions: const [
+              Position(row: 4, col: 4), // e4
+              Position(row: 5, col: 5), // f3
+              Position(row: 4, col: 2), // c4
+              Position(row: 1, col: 5), // f7 - 攻击目标
+            ],
           ),
         ],
       );
@@ -547,5 +709,62 @@ class LearningLessons {
       }
     }
     return null;
+  }
+
+  /// 创建中心控制演示棋盘
+  List<List<ChessPiece?>> _createCenterControlBoard() {
+    final board = _createInitialBoard();
+    return board;
+  }
+
+  /// 创建棋子发展演示棋盘
+  List<List<ChessPiece?>> _createDevelopmentBoard() {
+    final board = _createInitialBoard();
+    // 移动一些兵为棋子发展做准备
+    board[6][4] = null; // 移除e2兵
+    board[4][4] =
+        const ChessPiece(type: PieceType.pawn, color: PieceColor.white); // e4
+    board[1][4] = null; // 移除e7兵
+    board[3][4] =
+        const ChessPiece(type: PieceType.pawn, color: PieceColor.black); // e5
+    return board;
+  }
+
+  /// 创建王安全演示棋盘
+  List<List<ChessPiece?>> _createKingSafetyBoard() {
+    final board = _createInitialBoard();
+    // 模拟王车易位后的位置
+    board[7][4] = null; // 移除原王位置
+    board[7][6] = const ChessPiece(
+        type: PieceType.king, color: PieceColor.white); // 王车易位后
+    board[7][7] = null; // 移除原车位置
+    board[7][5] =
+        const ChessPiece(type: PieceType.rook, color: PieceColor.white); // 车易位后
+    return board;
+  }
+
+  /// 创建意大利开局演示棋盘
+  List<List<ChessPiece?>> _createItalianGameBoard() {
+    final board = _createInitialBoard();
+    // 意大利开局的前几步
+    board[6][4] = null; // 移除e2兵
+    board[4][4] =
+        const ChessPiece(type: PieceType.pawn, color: PieceColor.white); // e4
+    board[7][6] = null; // 移除g1马
+    board[5][5] = const ChessPiece(
+        type: PieceType.knight, color: PieceColor.white); // Nf3
+    board[7][5] = null; // 移除f1象
+    board[4][2] = const ChessPiece(
+        type: PieceType.bishop, color: PieceColor.white); // Bc4
+
+    // 黑方回应
+    board[1][4] = null; // 移除e7兵
+    board[3][4] =
+        const ChessPiece(type: PieceType.pawn, color: PieceColor.black); // e5
+    board[0][1] = null; // 移除b8马
+    board[2][2] = const ChessPiece(
+        type: PieceType.knight, color: PieceColor.black); // Nc6
+
+    return board;
   }
 }
