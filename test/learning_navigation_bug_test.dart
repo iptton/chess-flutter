@@ -5,12 +5,13 @@ import 'package:testflutter/screens/learning_screen.dart';
 import 'package:testflutter/screens/home_screen.dart';
 import 'package:testflutter/blocs/learning_bloc.dart';
 import 'package:testflutter/blocs/learning_events.dart';
-import 'package:testflutter/blocs/learning_state.dart';
 import 'package:testflutter/models/learning_models.dart';
 
 void main() {
   group('Learning Navigation Bug Tests', () {
-    testWidgets('should return to learning home when back is pressed from lesson', (WidgetTester tester) async {
+    testWidgets(
+        'should return to learning home when back is pressed from lesson',
+        (WidgetTester tester) async {
       // Arrange: Create a navigation stack: Home -> Learning -> Lesson
       await tester.pumpWidget(
         MaterialApp(
@@ -49,13 +50,15 @@ void main() {
       // Assert: Should return to learning mode home, NOT to main home
       expect(find.text('学习模式'), findsOneWidget);
       expect(find.text('基础规则'), findsWidgets); // Should see lesson list again
-      expect(find.text('♔ 国际象棋 ♛'), findsNothing); // Should NOT be back to main home
+      expect(find.text('♔ 国际象棋 ♛'),
+          findsNothing); // Should NOT be back to main home
     });
 
-    testWidgets('should handle navigation stack correctly in learning mode', (WidgetTester tester) async {
+    testWidgets('should handle navigation stack correctly in learning mode',
+        (WidgetTester tester) async {
       // Arrange: Test the navigation behavior with BLoC
       final learningBloc = LearningBloc();
-      
+
       await tester.pumpWidget(
         MaterialApp(
           home: BlocProvider.value(
@@ -69,14 +72,14 @@ void main() {
 
       // Assert: Should start with lesson list (learning home)
       expect(find.text('学习模式'), findsOneWidget);
-      
+
       // Act: Start a lesson
       learningBloc.add(const StartLearningMode(LearningMode.basicRules));
       await tester.pump();
 
       // Assert: Should be in lesson view
       // The UI should change to show lesson content instead of lesson list
-      
+
       // Act: Exit lesson (simulate back navigation)
       learningBloc.add(const ExitLearning());
       await tester.pump();
@@ -85,10 +88,12 @@ void main() {
       expect(find.text('学习模式'), findsOneWidget);
     });
 
-    testWidgets('should maintain proper navigation when switching between lessons', (WidgetTester tester) async {
+    testWidgets(
+        'should maintain proper navigation when switching between lessons',
+        (WidgetTester tester) async {
       // Arrange: Test navigation between different lessons
       final learningBloc = LearningBloc();
-      
+
       await tester.pumpWidget(
         MaterialApp(
           home: BlocProvider.value(
@@ -120,10 +125,11 @@ void main() {
       expect(find.text('学习模式'), findsOneWidget);
     });
 
-    testWidgets('should show exit dialog when trying to leave active lesson', (WidgetTester tester) async {
+    testWidgets('should show exit dialog when trying to leave active lesson',
+        (WidgetTester tester) async {
       // Arrange: Start a lesson
       final learningBloc = LearningBloc();
-      
+
       await tester.pumpWidget(
         MaterialApp(
           home: BlocProvider.value(
@@ -150,7 +156,8 @@ void main() {
       }
     });
 
-    testWidgets('should handle system back button correctly in lesson', (WidgetTester tester) async {
+    testWidgets('should handle system back button correctly in lesson',
+        (WidgetTester tester) async {
       // Arrange: This test verifies that the system back button behavior is correct
       await tester.pumpWidget(
         MaterialApp(
@@ -162,7 +169,7 @@ void main() {
 
       // Act: Simulate system back button press
       final NavigatorState navigator = tester.state(find.byType(Navigator));
-      
+
       // Assert: Should handle back button appropriately
       // If in lesson view, should return to learning home
       // If in learning home, should return to main home

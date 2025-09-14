@@ -1,6 +1,6 @@
 {
   "name": "flutter-chess-web",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Flutter Chess Game with Stockfish WebAssembly",
   "dependencies": {
     "stockfish.wasm": "^0.10.0"

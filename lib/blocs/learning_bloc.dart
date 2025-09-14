@@ -367,7 +367,19 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
   }
 
   void _onExitLearning(ExitLearning event, Emitter<LearningState> emit) {
-    // TODO: 实现退出学习逻辑
+    // 清除当前课程，返回到学习模式首页
+    emit(state.copyWith(
+      currentLesson: null,
+      currentBoard: null,
+      currentInstruction: null,
+      highlightedPositions: const [],
+      isWaitingForMove: false,
+      isDemonstrating: false,
+      startTime: null,
+    ));
+
+    // 重新加载可用课程列表
+    add(const LoadAvailableLessons());
   }
 
   void _onUpdateStepStatus(

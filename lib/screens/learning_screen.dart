@@ -34,77 +34,101 @@ class LearningView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('学习模式'),
-        backgroundColor: const Color(0xFF667EEA),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          BlocBuilder<LearningBloc, LearningState>(
-            builder: (context, state) {
-              if (state.currentLesson != null) {
-                return IconButton(
-                  icon: const Icon(Icons.exit_to_app),
-                  onPressed: () => _showExitDialog(context),
-                  tooltip: '退出学习',
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-        ],
-      ),
-      body: BlocBuilder<LearningBloc, LearningState>(
-        builder: (context, state) {
-          if (state.isLoading) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('加载学习内容...'),
-                ],
-              ),
-            );
-          }
+    return BlocBuilder<LearningBloc, LearningState>(
+      builder: (context, state) {
+        return WillPopScope(
+          onWillPop: () async {
+            // Handle back button behavior
+            if (state.currentLesson != null) {
+              // If in a lesson, return to learning home instead of main home
+              context.read<LearningBloc>().add(const ExitLearning());
+              return false; // Prevent default back behavior
+            }
+            return true; // Allow normal back behavior to main home
+          },
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text('学习模式'),
+              backgroundColor: const Color(0xFF667EEA),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              leading: state.currentLesson != null
+                  ? IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () {
+                        // Return to learning home when in a lesson
+                        context.read<LearningBloc>().add(const ExitLearning());
+                      },
+                    )
+                  : null, // Use default back button when in learning home
+              actions: [
+                BlocBuilder<LearningBloc, LearningState>(
+                  builder: (context, state) {
+                    if (state.currentLesson != null) {
+                      return IconButton(
+                        icon: const Icon(Icons.exit_to_app),
+                        onPressed: () => _showExitDialog(context),
+                        tooltip: '退出学习',
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ],
+            ),
+            body: BlocBuilder<LearningBloc, LearningState>(
+              builder: (context, state) {
+                if (state.isLoading) {
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text('加载学习内容...'),
+                      ],
+                    ),
+                  );
+                }
 
-          if (state.error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Colors.red[300],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    state.error!,
-                    style: const TextStyle(fontSize: 16),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => context.read<LearningBloc>().add(
-                          const LoadAvailableLessons(),
+                if (state.error != null) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.red[300],
                         ),
-                    child: const Text('重试'),
-                  ),
-                ],
-              ),
-            );
-          }
+                        const SizedBox(height: 16),
+                        Text(
+                          state.error!,
+                          style: const TextStyle(fontSize: 16),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => context.read<LearningBloc>().add(
+                                const LoadAvailableLessons(),
+                              ),
+                          child: const Text('重试'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
 
-          if (state.currentLesson == null) {
-            return _buildLessonSelector(context, state);
-          }
+                if (state.currentLesson == null) {
+                  return _buildLessonSelector(context, state);
+                }
 
-          return _buildLearningInterface(context, state);
-        },
-      ),
+                return _buildLearningInterface(context, state);
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 
