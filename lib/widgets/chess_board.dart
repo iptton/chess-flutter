@@ -494,10 +494,12 @@ class ChessBoardLayout extends StatelessWidget {
         return LayoutBuilder(
           builder: (context, constraints) {
             final boardSize = _calculateBoardSize(constraints);
-            final isWideScreen = constraints.maxWidth > 1200;
+            // 使用宽高比判断横屏：宽高比大于1.5时采用左右布局
+            final aspectRatio = constraints.maxWidth / constraints.maxHeight;
+            final isLandscape = aspectRatio > 1.5;
 
-            if (isWideScreen) {
-              // 宽屏布局：左侧工具栏占满剩余空间，右侧棋盘保持适当边距
+            if (isLandscape) {
+              // 横屏布局：左侧工具栏占满剩余空间，右侧棋盘保持适当边距
               // 计算棋盘区域的宽度：棋盘大小加上左右边距
               final boardAreaWidth = boardSize + 80; // 棋盘 + 左右边距(40px each)
               final leftSidebarWidth = constraints.maxWidth - boardAreaWidth;
