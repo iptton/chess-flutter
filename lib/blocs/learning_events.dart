@@ -196,3 +196,8 @@ class LoadProgress extends LearningEvent {
 class ConfirmStepCompletion extends LearningEvent {
   const ConfirmStepCompletion();
 }
+
+/// 确认课程完成庆祝
+class ConfirmLessonCompletion extends LearningEvent {
+  const ConfirmLessonCompletion();
+}

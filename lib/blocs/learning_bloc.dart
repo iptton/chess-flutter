@@ -39,6 +39,7 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
     on<SaveProgress>(_onSaveProgress);
     on<LoadProgress>(_onLoadProgress);
     on<ConfirmStepCompletion>(_onConfirmStepCompletion);
+    on<ConfirmLessonCompletion>(_onConfirmLessonCompletion);
   }
 
   @override
@@ -482,20 +483,15 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
           : null,
     );
 
+    // 显示庆祝界面而不是自动退出
     emit(state.copyWith(
       currentLesson: completedLesson,
       currentInstruction: '恭喜！您已完成本课程！',
+      isLessonCompleted: true, // 设置庆祝状态
     ));
 
     // 自动保存进度
     add(const SaveProgress());
-
-    // 延迟3秒后自动返回学习模式首页
-    Timer(const Duration(seconds: 3), () {
-      if (!isClosed) {
-        add(const ExitLearning());
-      }
-    });
   }
 
   void _onExitLearning(ExitLearning event, Emitter<LearningState> emit) {
@@ -651,5 +647,12 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
     // 重置步骤完成状态并进入下一步
     emit(state.copyWith(isStepCompleted: false));
     add(const NextStep());
+  }
+
+  void _onConfirmLessonCompletion(
+      ConfirmLessonCompletion event, Emitter<LearningState> emit) {
+    // 重置课程完成状态并退出学习模式
+    emit(state.copyWith(isLessonCompleted: false));
+    add(const ExitLearning());
   }
 }

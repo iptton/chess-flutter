@@ -41,6 +41,10 @@ class LearningView extends StatelessWidget {
         if (state.isStepCompleted) {
           _showStepCompletionDialog(context, state);
         }
+        // 监听课程完成状态，显示庆祝对话框
+        if (state.isLessonCompleted) {
+          _showLessonCompletionDialog(context, state);
+        }
       },
       builder: (context, state) {
         return WillPopScope(
@@ -509,5 +513,164 @@ class LearningView extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _showLessonCompletionDialog(BuildContext context, LearningState state) {
+    final currentLesson = state.currentLesson;
+    if (currentLesson == null) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // 防止用户点击外部关闭
+      builder: (dialogContext) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.celebration,
+              color: Colors.amber,
+              size: 32,
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                '🎉 课程完成！',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '恭喜您成功完成了《${currentLesson.title}》课程！',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.amber.withOpacity(0.1),
+                    Colors.orange.withOpacity(0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.amber.withOpacity(0.3)),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.emoji_events,
+                        color: Colors.amber[700],
+                        size: 24,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '您已经掌握了这个主题的核心知识！',
+                          style: TextStyle(
+                            color: Colors.amber[800],
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.trending_up,
+                        color: Colors.green[700],
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '继续学习其他课程，提升您的国际象棋技能！',
+                          style: TextStyle(
+                            color: Colors.green[700],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (currentLesson.timeSpent != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.access_time,
+                      color: Colors.blue[700],
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '学习时长：${_formatDuration(currentLesson.timeSpent!)}',
+                      style: TextStyle(
+                        color: Colors.blue[700],
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context.read<LearningBloc>().add(const ConfirmLessonCompletion());
+            },
+            icon: const Icon(Icons.arrow_back),
+            label: const Text('返回学习首页'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds % 60;
+    if (minutes > 0) {
+      return '${minutes}分${seconds}秒';
+    } else {
+      return '${seconds}秒';
+    }
   }
 }
