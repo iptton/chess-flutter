@@ -32,9 +32,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
-    // 背景渐变动画控制器
+    // 背景渐变动画控制器 - 使用更平滑的循环
     _backgroundController = AnimationController(
-      duration: const Duration(seconds: 8),
+      duration: const Duration(seconds: 10),
       vsync: this,
     )..repeat();
 
@@ -55,7 +55,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     // 启动入场动画
     _slideController.forward();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => _ensurePrivacyAccepted());
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _ensurePrivacyAccepted());
   }
 
   @override
@@ -148,11 +149,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  void _startAdvancedAIGame(AIDifficultyLevel difficulty, PieceColor playerColor) async {
+  void _startAdvancedAIGame(
+      AIDifficultyLevel difficulty, PieceColor playerColor) async {
     try {
       print('HomeScreen: === 开始执行 _startAdvancedAIGame ===');
 
-      final aiColor = playerColor == PieceColor.white ? PieceColor.black : PieceColor.white;
+      final aiColor =
+          playerColor == PieceColor.white ? PieceColor.black : PieceColor.white;
 
       print('HomeScreen: 创建高级AI实例...');
       final ai = ChessAI.advanced(advancedDifficulty: difficulty);
@@ -194,7 +197,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _startAIGame(AIDifficulty difficulty, PieceColor playerColor) {
-    final aiColor = playerColor == PieceColor.white ? PieceColor.black : PieceColor.white;
+    final aiColor =
+        playerColor == PieceColor.white ? PieceColor.black : PieceColor.white;
 
     Navigator.push(
       context,
@@ -208,8 +212,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -226,17 +228,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   Color.lerp(
                     const Color(0xFF667EEA),
                     const Color(0xFF764BA2),
-                    _backgroundController.value,
+                    (math.sin(_backgroundController.value * 2 * math.pi) + 1) /
+                        2,
                   )!,
                   Color.lerp(
                     const Color(0xFF764BA2),
                     const Color(0xFF667EEA),
-                    _backgroundController.value,
+                    (math.sin(_backgroundController.value * 2 * math.pi) + 1) /
+                        2,
                   )!,
                 ],
                 stops: [
-                  0.0 + _backgroundController.value * 0.5,
-                  1.0 - _backgroundController.value * 0.5,
+                  0.3 +
+                      (math.sin(_backgroundController.value * 2 * math.pi) *
+                          0.2),
+                  0.7 -
+                      (math.sin(_backgroundController.value * 2 * math.pi) *
+                          0.2),
                 ],
               ),
             ),
@@ -268,7 +276,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
-
 }
 
 class FloatingPieces extends StatefulWidget {
@@ -299,14 +306,14 @@ class _FloatingPiecesState extends State<FloatingPieces>
     _controllers = List.generate(
       pieces.length,
       (index) => AnimationController(
-        duration: Duration(seconds: 6 + index),
+        duration: Duration(seconds: 8 + index * 2),
         vsync: this,
-      )..repeat(reverse: true),
+      )..repeat(),
     );
 
     _animations = _controllers.map((controller) {
-      return Tween<double>(begin: 0.0, end: 20.0).animate(
-        CurvedAnimation(parent: controller, curve: Curves.easeInOut),
+      return Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(parent: controller, curve: Curves.linear),
       );
     }).toList();
   }
@@ -329,14 +336,18 @@ class _FloatingPiecesState extends State<FloatingPieces>
         return AnimatedBuilder(
           animation: _animations[index],
           builder: (context, child) {
+            final animValue = _animations[index].value;
+            final floatOffset = math.sin(animValue * 2 * math.pi) * 15;
+            final rotateAngle = math.sin(animValue * 2 * math.pi + index) * 0.1;
+
             return Positioned(
               left: (screenSize.width * 0.5) +
-                    (positions[index].x * screenSize.width * 0.4),
+                  (positions[index].x * screenSize.width * 0.4),
               top: (screenSize.height * 0.5) +
-                   (positions[index].y * screenSize.height * 0.4) -
-                   _animations[index].value,
+                  (positions[index].y * screenSize.height * 0.4) +
+                  floatOffset,
               child: Transform.rotate(
-                angle: _animations[index].value * 0.01,
+                angle: rotateAngle,
                 child: Text(
                   pieces[index],
                   style: TextStyle(
@@ -356,8 +367,7 @@ class _FloatingPiecesState extends State<FloatingPieces>
 class ChessBoardPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF1F2937).withOpacity(0.1);
+    final paint = Paint()..color = const Color(0xFF1F2937).withOpacity(0.1);
 
     const squareSize = 10.0;
     for (int i = 0; i < 10; i++) {
@@ -557,147 +567,147 @@ class _ChessMenuCardState extends State<ChessMenuCard>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                      // 标题
-                      AnimatedBuilder(
-                        animation: _titleGradientAnimation,
-                        builder: (context, child) {
-                          return ShaderMask(
-                            shaderCallback: (bounds) {
-                              return LinearGradient(
-                                colors: const [
-                                  Color(0xFFFF6B6B),
-                                  Color(0xFF4ECDC4),
-                                  Color(0xFF45B7D1),
-                                ],
-                                stops: [
-                                  _titleGradientAnimation.value * 0.5,
-                                  0.5 + _titleGradientAnimation.value * 0.25,
-                                  1.0,
-                                ],
-                              ).createShader(bounds);
-                            },
-                            child: Text(
-                              '♔ 国际象棋 ♛',
-                              style: TextStyle(
-                                fontSize: titleSize,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                letterSpacing: -0.025,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      SizedBox(height: titleSize * 0.2),
-                      // 副标题
-                      AnimatedBuilder(
-                        animation: _subtitleFadeAnimation,
-                        builder: (context, child) {
-                          return Opacity(
-                            opacity: _subtitleFadeAnimation.value,
-                            child: Transform.translate(
-                              offset: Offset(
-                                0,
-                                10 * (1 - _subtitleFadeAnimation.value),
-                              ),
+                        // 标题
+                        AnimatedBuilder(
+                          animation: _titleGradientAnimation,
+                          builder: (context, child) {
+                            return ShaderMask(
+                              shaderCallback: (bounds) {
+                                return LinearGradient(
+                                  colors: const [
+                                    Color(0xFFFF6B6B),
+                                    Color(0xFF4ECDC4),
+                                    Color(0xFF45B7D1),
+                                  ],
+                                  stops: [
+                                    _titleGradientAnimation.value * 0.5,
+                                    0.5 + _titleGradientAnimation.value * 0.25,
+                                    1.0,
+                                  ],
+                                ).createShader(bounds);
+                              },
                               child: Text(
-                                '选择游戏模式开始对弈',
+                                '♔ 国际象棋 ♛',
                                 style: TextStyle(
-                                  fontSize: subtitleSize,
+                                  fontSize: titleSize,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: -0.025,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        SizedBox(height: titleSize * 0.2),
+                        // 副标题
+                        AnimatedBuilder(
+                          animation: _subtitleFadeAnimation,
+                          builder: (context, child) {
+                            return Opacity(
+                              opacity: _subtitleFadeAnimation.value,
+                              child: Transform.translate(
+                                offset: Offset(
+                                  0,
+                                  10 * (1 - _subtitleFadeAnimation.value),
+                                ),
+                                child: Text(
+                                  '选择游戏模式开始对弈',
+                                  style: TextStyle(
+                                    fontSize: subtitleSize,
+                                    color: const Color(0xFF4A5568),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        SizedBox(height: cardPadding * 0.8),
+                        // 菜单按钮
+                        Column(
+                          children: [
+                            MenuButton(
+                              icon: '👥',
+                              text: '面对面对战',
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFFF6B6B), Color(0xFFFF8E8E)],
+                              ),
+                              onPressed: () => widget.onStartGame('pvp'),
+                              delay: const Duration(milliseconds: 400),
+                              buttonPadding: buttonPadding,
+                              iconSize: iconSize,
+                            ),
+                            SizedBox(height: cardPadding * 0.3),
+                            MenuButton(
+                              icon: '🤖',
+                              text: 'AI 对战',
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF4ECDC4), Color(0xFF44A08D)],
+                              ),
+                              onPressed: () => widget.onStartGame('ai'),
+                              delay: const Duration(milliseconds: 500),
+                              buttonPadding: buttonPadding,
+                              iconSize: iconSize,
+                            ),
+                            SizedBox(height: cardPadding * 0.3),
+                            MenuButton(
+                              icon: '📋',
+                              text: '复盘',
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF45B7D1), Color(0xFF96C93D)],
+                              ),
+                              onPressed: () => widget.onStartGame('review'),
+                              delay: const Duration(milliseconds: 600),
+                              buttonPadding: buttonPadding,
+                              iconSize: iconSize,
+                            ),
+                            SizedBox(height: cardPadding * 0.3),
+                            MenuButton(
+                              icon: '📚',
+                              text: '学习模式',
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF96CEB4), Color(0xFFFECA57)],
+                              ),
+                              onPressed: () => widget.onStartGame('learn'),
+                              delay: const Duration(milliseconds: 700),
+                              buttonPadding: buttonPadding,
+                              iconSize: iconSize,
+                            ),
+                            SizedBox(height: cardPadding * 0.3),
+                            MenuButton(
+                              icon: '⚙️',
+                              text: '设置',
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                              ),
+                              onPressed: () => widget.onStartGame('settings'),
+                              delay: const Duration(milliseconds: 800),
+                              buttonPadding: buttonPadding,
+                              iconSize: iconSize,
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: cardPadding * 0.8),
+                        // 底部文字
+                        AnimatedBuilder(
+                          animation: _pulseAnimation,
+                          builder: (context, child) {
+                            return Opacity(
+                              opacity: _pulseAnimation.value,
+                              child: Text(
+                                '🎮 享受策略与智慧的较量 🎮',
+                                style: TextStyle(
+                                  fontSize: subtitleSize * 0.8,
                                   color: const Color(0xFF4A5568),
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                      SizedBox(height: cardPadding * 0.8),
-                      // 菜单按钮
-                      Column(
-                        children: [
-                          MenuButton(
-                            icon: '👥',
-                            text: '面对面对战',
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFF6B6B), Color(0xFFFF8E8E)],
-                            ),
-                            onPressed: () => widget.onStartGame('pvp'),
-                            delay: const Duration(milliseconds: 400),
-                            buttonPadding: buttonPadding,
-                            iconSize: iconSize,
-                          ),
-                          SizedBox(height: cardPadding * 0.3),
-                          MenuButton(
-                            icon: '🤖',
-                            text: 'AI 对战',
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF4ECDC4), Color(0xFF44A08D)],
-                            ),
-                            onPressed: () => widget.onStartGame('ai'),
-                            delay: const Duration(milliseconds: 500),
-                            buttonPadding: buttonPadding,
-                            iconSize: iconSize,
-                          ),
-                          SizedBox(height: cardPadding * 0.3),
-                          MenuButton(
-                            icon: '📋',
-                            text: '复盘',
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF45B7D1), Color(0xFF96C93D)],
-                            ),
-                            onPressed: () => widget.onStartGame('review'),
-                            delay: const Duration(milliseconds: 600),
-                            buttonPadding: buttonPadding,
-                            iconSize: iconSize,
-                          ),
-                          SizedBox(height: cardPadding * 0.3),
-                          MenuButton(
-                            icon: '📚',
-                            text: '学习模式',
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF96CEB4), Color(0xFFFECA57)],
-                            ),
-                            onPressed: () => widget.onStartGame('learn'),
-                            delay: const Duration(milliseconds: 700),
-                            buttonPadding: buttonPadding,
-                            iconSize: iconSize,
-                          ),
-                          SizedBox(height: cardPadding * 0.3),
-                          MenuButton(
-                            icon: '⚙️',
-                            text: '设置',
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                            ),
-                            onPressed: () => widget.onStartGame('settings'),
-                            delay: const Duration(milliseconds: 800),
-                            buttonPadding: buttonPadding,
-                            iconSize: iconSize,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: cardPadding * 0.8),
-                      // 底部文字
-                      AnimatedBuilder(
-                        animation: _pulseAnimation,
-                        builder: (context, child) {
-                          return Opacity(
-                            opacity: _pulseAnimation.value,
-                            child: Text(
-                              '🎮 享受策略与智慧的较量 🎮',
-                              style: TextStyle(
-                                fontSize: subtitleSize * 0.8,
-                                color: const Color(0xFF4A5568),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
                 ),
               ],
             ),
@@ -732,8 +742,7 @@ class MenuButton extends StatefulWidget {
   State<MenuButton> createState() => _MenuButtonState();
 }
 
-class _MenuButtonState extends State<MenuButton>
-    with TickerProviderStateMixin {
+class _MenuButtonState extends State<MenuButton> with TickerProviderStateMixin {
   late AnimationController _hoverController;
   late AnimationController _pressController;
   late AnimationController _appearController;
@@ -804,11 +813,11 @@ class _MenuButtonState extends State<MenuButton>
     ));
 
     _shimmerAnimation = Tween<double>(
-      begin: -1.0,
+      begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _shimmerController,
-      curve: Curves.easeInOut,
+      curve: Curves.linear,
     ));
 
     // 延迟出现动画
@@ -831,12 +840,14 @@ class _MenuButtonState extends State<MenuButton>
   void _onHoverStart() {
     setState(() => _isHovered = true);
     _hoverController.forward();
-    _shimmerController.forward();
+    _shimmerController.repeat();
   }
 
   void _onHoverEnd() {
     setState(() => _isHovered = false);
     _hoverController.reverse();
+    _shimmerController.stop();
+    _shimmerController.reset();
   }
 
   void _onTapDown() {
@@ -866,7 +877,8 @@ class _MenuButtonState extends State<MenuButton>
           child: Opacity(
             opacity: _appearAnimation.value,
             child: Transform.scale(
-              scale: _scaleAnimation.value * (1.0 - _pressController.value * 0.02),
+              scale:
+                  _scaleAnimation.value * (1.0 - _pressController.value * 0.02),
               child: Container(
                 width: double.infinity,
                 height: 56 + widget.buttonPadding * 0.5,
@@ -874,7 +886,8 @@ class _MenuButtonState extends State<MenuButton>
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1 + _elevationAnimation.value * 0.01),
+                      color: Colors.black
+                          .withOpacity(0.1 + _elevationAnimation.value * 0.01),
                       blurRadius: 4 + _elevationAnimation.value,
                       offset: Offset(0, 4 + _elevationAnimation.value * 0.5),
                     ),
@@ -909,9 +922,17 @@ class _MenuButtonState extends State<MenuButton>
                                 child: AnimatedBuilder(
                                   animation: _shimmerAnimation,
                                   builder: (context, child) {
+                                    final shimmerOffset = (math.sin(
+                                                    _shimmerAnimation.value *
+                                                        2 *
+                                                        math.pi) +
+                                                1) /
+                                            2 *
+                                            200 -
+                                        100;
                                     return Transform.translate(
                                       offset: Offset(
-                                        _shimmerAnimation.value * 200,
+                                        shimmerOffset,
                                         0,
                                       ),
                                       child: Container(
@@ -948,7 +969,9 @@ class _MenuButtonState extends State<MenuButton>
                                       return Transform.scale(
                                         scale: _iconScaleAnimation.value,
                                         child: Transform.rotate(
-                                          angle: _isHovered ? 0.087 : 0, // 5 degrees
+                                          angle: _isHovered
+                                              ? 0.087
+                                              : 0, // 5 degrees
                                           child: Text(
                                             widget.icon,
                                             style: TextStyle(
