@@ -7,6 +7,7 @@ import 'game_screen.dart';
 import 'replay_screen.dart';
 import 'settings_screen.dart';
 import 'learning_screen.dart';
+import '../utils/page_transitions.dart';
 import 'package:testflutter/widgets/privacy_dialog.dart' as privacy;
 import '../services/privacy_service.dart';
 import '../widgets/chess_board.dart';
@@ -116,10 +117,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         );
         break;
       case 'learn':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const LearningScreen()),
-        );
+        Navigator.of(context).pushWithThemeTransition(const LearningScreen());
         break;
       case 'settings':
         Navigator.push(

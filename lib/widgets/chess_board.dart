@@ -234,7 +234,8 @@ class _ChessBoardView extends StatelessWidget {
               topContent: [
                 _buildTurnIndicator(context),
                 _buildSpecialMoveIndicator(context),
-                _buildControls(context, state),
+                _buildControlButtons(context, state),
+                _buildStepInfo(context, state),
               ],
             ),
           ),
@@ -338,11 +339,7 @@ class _ChessBoardView extends StatelessWidget {
     );
   }
 
-  Widget _buildControls(BuildContext context, GameState state) {
-    // 计算当前步数和总步数
-    final totalSteps = state.moveHistory.length;
-    final currentStep = totalSteps - state.redoStates.length;
-
+  Widget _buildControlButtons(BuildContext context, GameState state) {
     return SizedBox(
       height: ChessConstants.controlButtonsHeight,
       child: Row(
@@ -362,12 +359,6 @@ class _ChessBoardView extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 20),
-          if (isReplayMode)
-            Text(
-              '$currentStep/$totalSteps',
-              style: const TextStyle(fontSize: 16),
-            ),
-          if (isReplayMode) const SizedBox(width: 20),
           ElevatedButton.icon(
             onPressed: state.redoStates.isEmpty
                 ? null
@@ -379,6 +370,39 @@ class _ChessBoardView extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue[100],
               foregroundColor: Colors.black,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepInfo(BuildContext context, GameState state) {
+    if (!isReplayMode) return const SizedBox.shrink();
+
+    // 计算当前步数和总步数
+    final totalSteps = state.moveHistory.length;
+    final currentStep = totalSteps - state.redoStates.length;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.info_outline, size: 16, color: Colors.grey),
+          const SizedBox(width: 8),
+          Text(
+            '第 $currentStep 步 / 共 $totalSteps 步',
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -479,15 +503,24 @@ class ChessBoardLayout extends StatelessWidget {
                         width: 300,
                         padding: const EdgeInsets.all(16),
                         child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const SizedBox(height: ChessConstants.topBarHeight),
-                            ...topContent
-                                .expand((widget) => [
-                                      widget,
-                                      const SizedBox(
-                                          height: ChessConstants.spacing),
-                                    ])
-                                .toList(),
+                            // 使用Flexible让内容在可用空间内居中
+                            Flexible(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                mainAxisSize: MainAxisSize.min,
+                                children: topContent
+                                    .expand((widget) => [
+                                          widget,
+                                          const SizedBox(
+                                              height: ChessConstants.spacing),
+                                        ])
+                                    .toList(),
+                              ),
+                            ),
                           ],
                         ),
                       ),

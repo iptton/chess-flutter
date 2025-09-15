@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/ai_difficulty_strategy.dart';
 import '../models/chess_models.dart';
+import '../widgets/themed_background.dart';
 
 /// AI难度选择对话框
 class AIDifficultySelector extends StatefulWidget {
@@ -89,6 +90,9 @@ class _AIDifficultySelectorState extends State<AIDifficultySelector> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
+          style: TextButton.styleFrom(
+            foregroundColor: AppTheme.primaryColor,
+          ),
           child: const Text('取消'),
         ),
         ElevatedButton(
@@ -100,6 +104,13 @@ class _AIDifficultySelectorState extends State<AIDifficultySelector> {
               Navigator.of(context).pop();
             }
           },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primaryColor,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
           child: Text(widget.showColorSelection ? '开始游戏' : '确定'),
         ),
       ],
@@ -202,8 +213,7 @@ class _AIDifficultySelectorState extends State<AIDifficultySelector> {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 0),
       elevation: isSelected ? 4 : 1,
-      color:
-          isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
+      color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : null,
       child: InkWell(
         onTap: () {
           setState(() {
@@ -228,6 +238,7 @@ class _AIDifficultySelectorState extends State<AIDifficultySelector> {
                 },
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,
+                activeColor: AppTheme.primaryColor,
               ),
               const SizedBox(width: 8),
 
