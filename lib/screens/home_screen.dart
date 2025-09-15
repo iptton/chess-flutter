@@ -597,7 +597,7 @@ class _ChessMenuCardState extends State<ChessMenuCard>
                                 ).createShader(bounds);
                               },
                               child: Text(
-                                '♔ 国际象棋 ♛',
+                                '一起下棋',
                                 style: TextStyle(
                                   fontSize: titleSize,
                                   fontWeight: FontWeight.w700,

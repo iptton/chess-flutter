@@ -4,7 +4,8 @@ import 'package:testflutter/screens/home_screen.dart';
 
 void main() {
   group('HomeScreen Tests', () {
-    testWidgets('should display animated chess menu with all buttons', (WidgetTester tester) async {
+    testWidgets('should display animated chess menu with all buttons',
+        (WidgetTester tester) async {
       // Build the HomeScreen widget
       await tester.pumpWidget(
         MaterialApp(
@@ -19,7 +20,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
 
       // Verify the title is displayed
-      expect(find.text('♔ 国际象棋 ♛'), findsOneWidget);
+      expect(find.text('一起下棋'), findsOneWidget);
 
       // Verify the subtitle is displayed
       expect(find.text('选择游戏模式开始对弈'), findsOneWidget);
@@ -43,7 +44,8 @@ void main() {
       expect(find.text('♛'), findsWidgets);
     });
 
-    testWidgets('should show snackbar when learning mode is tapped', (WidgetTester tester) async {
+    testWidgets('should show snackbar when learning mode is tapped',
+        (WidgetTester tester) async {
       // Build the HomeScreen widget with larger screen size
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -69,7 +71,8 @@ void main() {
       addTearDown(tester.view.reset);
     });
 
-    testWidgets('should navigate to chess board when PvP is tapped', (WidgetTester tester) async {
+    testWidgets('should navigate to chess board when PvP is tapped',
+        (WidgetTester tester) async {
       // Build the HomeScreen widget with larger screen size
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -98,7 +101,8 @@ void main() {
       addTearDown(tester.view.reset);
     });
 
-    testWidgets('should show AI difficulty dialog when AI is tapped', (WidgetTester tester) async {
+    testWidgets('should show AI difficulty dialog when AI is tapped',
+        (WidgetTester tester) async {
       // Build the HomeScreen widget with larger screen size
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
