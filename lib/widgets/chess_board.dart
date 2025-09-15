@@ -494,13 +494,17 @@ class ChessBoardLayout extends StatelessWidget {
 
             if (isWideScreen) {
               // 宽屏布局：左侧工具栏，右侧棋盘
+              // 计算左侧工具栏的宽度：总宽度减去棋盘大小再减去边距，然后居中
+              final sidebarWidth = (constraints.maxWidth - boardSize - 60) / 2;
+              final effectiveSidebarWidth = sidebarWidth.clamp(250.0, 400.0);
+
               return Stack(
                 children: [
                   Row(
                     children: [
                       // 左侧工具栏
                       Container(
-                        width: 300,
+                        width: effectiveSidebarWidth,
                         padding: const EdgeInsets.all(16),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
