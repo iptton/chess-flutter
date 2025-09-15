@@ -158,19 +158,12 @@ class GameScreen extends StatelessWidget {
 
       // 如果高级AI失败，回退到传统AI
       print('GameScreen: 尝试回退到传统方式...');
-      _startAIGame(context, difficulty._toOldDifficulty(), playerColor);
+      final oldDifficulty = difficulty.level <= 3
+          ? AIDifficulty.easy
+          : (difficulty.level <= 6 ? AIDifficulty.medium : AIDifficulty.hard);
+      _startAIGame(context, oldDifficulty, playerColor);
     }
   }
 }
 
-/// 扩展方法：将新难度等级转换为旧的枚举（用于兼容性）
-extension AIDifficultyLevelExtension on AIDifficultyLevel {
-  AIDifficulty _toOldDifficulty() {
-    final result = level <= 3
-        ? AIDifficulty.easy
-        : (level <= 6 ? AIDifficulty.medium : AIDifficulty.hard);
-    print(
-        'AIDifficultyLevelExtension: ${displayName}(级别$level) -> ${result.name}');
-    return result;
-  }
-}
+// 扩展方法已移动到 home_screen.dart 以避免重复定义

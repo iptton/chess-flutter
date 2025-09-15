@@ -13,7 +13,7 @@ import '../widgets/chess_board.dart';
 import '../widgets/ai_difficulty_selector.dart';
 import '../services/chess_ai.dart';
 import '../models/chess_models.dart';
-import '../models/learning_models.dart';
+
 import '../utils/ai_difficulty_strategy.dart';
 
 class HomeScreen extends StatefulWidget {
