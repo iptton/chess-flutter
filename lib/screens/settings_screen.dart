@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/settings_service.dart';
 import '../widgets/privacy_page.dart';
+import '../widgets/themed_background.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -28,35 +29,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('设置'),
+      appBar: const ThemedAppBar(
+        title: '设置',
       ),
-      body: ListView(
-        children: [
-          SwitchListTile(
-            title: const Text('默认开启提示模式'),
-            subtitle: const Text('新对局开始时自动开启提示模式'),
-            value: _defaultHintMode,
-            onChanged: (bool value) async {
-              await SettingsService.setDefaultHintMode(value);
-              setState(() {
-                _defaultHintMode = value;
-              });
-            },
-          ),
-          // 隐私政策设置项
-          ListTile(
-            leading: const Icon(Icons.security),
-            title: const Text('隐私政策'),
-            onTap: () async {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const PrivacyPage()),
-              );
-            },
-          ),
-          // 其他设置项...
-        ],
+      body: ThemedBackground(
+        child: ListView(
+          padding: const EdgeInsets.all(8),
+          children: [
+            ThemedCard(
+              child: Column(
+                children: [
+                  SwitchListTile(
+                    title: const Text(
+                      '默认开启提示模式',
+                      style: TextStyle(color: AppTheme.primaryTextColor),
+                    ),
+                    subtitle: const Text(
+                      '新对局开始时自动开启提示模式',
+                      style: TextStyle(color: AppTheme.secondaryTextColor),
+                    ),
+                    value: _defaultHintMode,
+                    activeColor: AppTheme.primaryColor,
+                    onChanged: (bool value) async {
+                      await SettingsService.setDefaultHintMode(value);
+                      setState(() {
+                        _defaultHintMode = value;
+                      });
+                    },
+                  ),
+                  const Divider(),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.security,
+                      color: AppTheme.primaryColor,
+                    ),
+                    title: const Text(
+                      '隐私政策',
+                      style: TextStyle(color: AppTheme.primaryTextColor),
+                    ),
+                    trailing: const Icon(
+                      Icons.arrow_forward_ios,
+                      color: AppTheme.secondaryTextColor,
+                      size: 16,
+                    ),
+                    onTap: () async {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const PrivacyPage()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

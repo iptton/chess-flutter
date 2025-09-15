@@ -4,6 +4,7 @@ import '../models/game_history.dart';
 import '../services/game_history_service.dart';
 import '../models/chess_models.dart';
 import '../widgets/chess_board.dart';
+import '../widgets/themed_background.dart';
 import 'game_screen.dart';
 
 class ReplayScreen extends StatefulWidget {
@@ -39,8 +40,8 @@ class _ReplayScreenState extends State<ReplayScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('对局复盘'),
+      appBar: ThemedAppBar(
+        title: '对局复盘',
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -48,20 +49,33 @@ class _ReplayScreenState extends State<ReplayScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _gameHistory.isEmpty
-              ? const Center(child: Text('暂无历史对局'))
-              : RefreshIndicator(
-                  onRefresh: _loadGameHistory,
-                  child: ListView.builder(
-                    itemCount: _gameHistory.length,
-                    itemBuilder: (context, index) {
-                      final game = _gameHistory[index];
-                      return _buildGameHistoryItem(game);
-                    },
+      body: ThemedBackground(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _gameHistory.isEmpty
+                ? const Center(
+                    child: ThemedCard(
+                      child: Text(
+                        '暂无历史对局',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppTheme.secondaryTextColor,
+                        ),
+                      ),
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadGameHistory,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(8),
+                      itemCount: _gameHistory.length,
+                      itemBuilder: (context, index) {
+                        final game = _gameHistory[index];
+                        return _buildGameHistoryItem(game);
+                      },
+                    ),
                   ),
-                ),
+      ),
     );
   }
 
@@ -74,27 +88,45 @@ class _ReplayScreenState extends State<ReplayScreen> {
       return '${game.winner == PieceColor.white ? "白方" : "黑方"}胜';
     }
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    return ThemedCard(
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
       child: ListTile(
         title: Row(
           children: [
-            Text(dateFormat.format(game.startTime)),
-            const Spacer(),
             Text(
-              getGameResult(),
-              style: TextStyle(
+              dateFormat.format(game.startTime),
+              style: const TextStyle(
+                color: AppTheme.primaryTextColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
                 color: game.winner == null
-                    ? Colors.blue
+                    ? AppTheme.primaryColor
                     : game.isCompleted
                         ? Colors.green
                         : Colors.orange,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                getGameResult(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
         ),
         subtitle: Text(
           '回合数: ${game.moves.length} • ${game.gameMode == GameMode.faceToFace ? "面对面对战" : "单机对战"}',
+          style: const TextStyle(
+            color: AppTheme.secondaryTextColor,
+          ),
         ),
         onTap: () {
           Navigator.of(context).push(
