@@ -26,12 +26,20 @@ class SoundService {
   Future<void> initialize() async {
     try {
       _audioPlayer = AudioPlayer();
+
+      // 尝试设置音量来测试插件是否正常工作
       await _audioPlayer.setVolume(_volume);
       _isInitialized = true;
       print('SoundService: 音效服务已初始化');
     } catch (e) {
       print('SoundService: 初始化失败 - $e');
       _isInitialized = false;
+
+      // 如果是插件未找到的错误，我们不再尝试创建AudioPlayer
+      // 直接标记为未初始化，这样其他方法可以安全地处理
+      if (e.toString().contains('MissingPluginException')) {
+        print('SoundService: 插件未找到，音效功能将被禁用');
+      }
     }
   }
 
@@ -102,31 +110,44 @@ class SoundService {
 
   /// 释放资源
   Future<void> dispose() async {
-    if (_isInitialized) {
-      await _audioPlayer.dispose();
-      _isInitialized = false;
-      print('SoundService: 资源已释放');
+    try {
+      if (_isInitialized) {
+        await _audioPlayer.dispose();
+        _isInitialized = false;
+        print('SoundService: 资源已释放');
+      }
+    } catch (e) {
+      print('SoundService: 释放资源失败 - $e');
+      _isInitialized = false; // 无论如何都标记为未初始化
     }
   }
 
   /// 播放指定音效文件
   Future<void> _playSound(String assetPath) async {
+    // 如果服务未初始化、已静音，或者AudioPlayer实例不存在，直接返回
     if (!_isInitialized || _isMuted) {
       return;
     }
 
-    // 检查用户设置是否启用音效
-    final soundEnabled = await SettingsService.getSoundEnabled();
-    if (!soundEnabled) {
-      return;
-    }
-
     try {
+      // 检查用户设置是否启用音效
+      final soundEnabled = await SettingsService.getSoundEnabled();
+      if (!soundEnabled) {
+        return;
+      }
+
+      // 尝试播放音效
       await _audioPlayer
           .play(AssetSource(assetPath.replaceFirst('assets/', '')));
       print('SoundService: 播放音效 - $assetPath');
     } catch (e) {
       print('SoundService: 播放音效失败 - $assetPath: $e');
+
+      // 如果是插件错误，标记服务为未初始化以避免后续尝试
+      if (e.toString().contains('MissingPluginException')) {
+        _isInitialized = false;
+        print('SoundService: 检测到插件错误，禁用音效功能');
+      }
     }
   }
 }
