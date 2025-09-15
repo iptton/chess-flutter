@@ -37,15 +37,18 @@ void main() {
       // 在宽屏模式下应该有Row布局（主要的布局Row）
       expect(find.byType(Row), findsWidgets);
 
-      // 应该有左侧工具栏容器
+      // 应该有左侧工具栏容器和右侧棋盘容器
       final containers = find.byType(Container);
       expect(containers, findsWidgets);
 
-      // 应该有Expanded用于棋盘区域
-      expect(find.byType(Expanded), findsWidgets);
-
       // 验证是否使用了LayoutBuilder
       expect(find.byType(LayoutBuilder), findsOneWidget);
+
+      // 验证左侧工具栏内容存在
+      expect(find.text('测试内容'), findsOneWidget);
+
+      // 验证棋盘存在
+      expect(find.byType(ChessBoardGrid), findsOneWidget);
 
       chessBloc.close();
     });

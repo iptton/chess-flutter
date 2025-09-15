@@ -493,18 +493,18 @@ class ChessBoardLayout extends StatelessWidget {
             final isWideScreen = constraints.maxWidth > 1200;
 
             if (isWideScreen) {
-              // 宽屏布局：左侧工具栏，右侧棋盘
-              // 计算左侧工具栏的宽度：总宽度减去棋盘大小再减去边距，然后居中
-              final sidebarWidth = (constraints.maxWidth - boardSize - 60) / 2;
-              final effectiveSidebarWidth = sidebarWidth.clamp(250.0, 400.0);
+              // 宽屏布局：左侧工具栏占满剩余空间，右侧棋盘减少边距
+              // 计算棋盘区域的宽度：棋盘大小加上最小边距
+              final boardAreaWidth = boardSize + 40; // 棋盘 + 最小边距
+              final leftSidebarWidth = constraints.maxWidth - boardAreaWidth;
 
               return Stack(
                 children: [
                   Row(
                     children: [
-                      // 左侧工具栏
+                      // 左侧工具栏 - 占满剩余空间
                       Container(
-                        width: effectiveSidebarWidth,
+                        width: leftSidebarWidth,
                         padding: const EdgeInsets.all(16),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -512,24 +512,30 @@ class ChessBoardLayout extends StatelessWidget {
                           children: [
                             // 使用Flexible让内容在可用空间内居中
                             Flexible(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                mainAxisSize: MainAxisSize.min,
-                                children: topContent
-                                    .expand((widget) => [
-                                          widget,
-                                          const SizedBox(
-                                              height: ChessConstants.spacing),
-                                        ])
-                                    .toList(),
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                    maxWidth: 400), // 限制内容最大宽度
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: topContent
+                                      .expand((widget) => [
+                                            widget,
+                                            const SizedBox(
+                                                height: ChessConstants.spacing),
+                                          ])
+                                      .toList(),
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      // 右侧棋盘区域
-                      Expanded(
+                      // 右侧棋盘区域 - 固定宽度，减少边距
+                      Container(
+                        width: boardAreaWidth,
                         child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
