@@ -218,7 +218,9 @@ void main() {
   });
 
   group('Chess Promotion 游戏逻辑测试', () {
-    test('测试升变过程的状态管理', () {
+    test('测试升变过程的状态管理', () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+
       // 这里测试升变的完整流程，确保不会产生无效坐标
       final bloc = ChessBloc();
 
@@ -229,12 +231,10 @@ void main() {
       ));
 
       // 等待初始化完成
-      expectLater(
-        bloc.stream,
-        emitsInOrder([
-          predicate<GameState>((state) => state.board.isNotEmpty),
-        ]),
-      );
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // 验证初始化状态
+      expect(bloc.state.board.isNotEmpty, isTrue);
     });
 
     test('测试升变移动创建的坐标合法性', () {
