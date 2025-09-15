@@ -502,7 +502,7 @@ class _ChessMenuCardState extends State<ChessMenuCard>
 
     // 响应式尺寸计算
     double cardMaxWidth = 420;
-    double cardPadding = 40;
+    double cardPadding = 20; // 小屏幕使用更小的padding
     double titleSize = 48;
     double subtitleSize = 18;
     double buttonPadding = 19;

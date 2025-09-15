@@ -74,5 +74,39 @@ void main() {
       expect(card.elevation, equals(25));
       expect(card.shadowColor, isNotNull);
     });
+
+    testWidgets('小屏幕时应该使用更小的padding值', (WidgetTester tester) async {
+      // Act - 构建HomeScreen with small screen size (mobile)
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(size: Size(400, 800)), // 典型手机屏幕宽度
+          child: const MaterialApp(
+            home: HomeScreen(),
+          ),
+        ),
+      );
+
+      // 等待初始渲染完成
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // 查找内容区域的Padding widget
+      final paddingWidgets = find.descendant(
+        of: find.byType(SingleChildScrollView),
+        matching: find.byType(Padding),
+      );
+
+      expect(paddingWidgets, findsAtLeastNWidgets(1));
+
+      final padding = tester.widget<Padding>(paddingWidgets.first);
+      final edgeInsets = padding.padding as EdgeInsets;
+
+      // 验证小屏幕时padding应该更小 (应该是16-24px，而不是40px)
+      expect(edgeInsets.left, lessThanOrEqualTo(24.0));
+      expect(edgeInsets.right, lessThanOrEqualTo(24.0));
+      expect(edgeInsets.top, lessThanOrEqualTo(24.0));
+      expect(edgeInsets.bottom, lessThanOrEqualTo(24.0));
+    });
   });
 }
