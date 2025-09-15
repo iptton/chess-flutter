@@ -18,7 +18,7 @@ dependencies:
       path: "packages/shared_preferences/shared_preferences"
   sqflite: ^2.2.8
   path: ^1.8.2
-  uuid: ^3.0.7
+  uuid: ^4.5.1
   flutter_bloc: ^8.1.2
   equatable: ^2.0.5
   fluttertoast:
@@ -29,7 +29,8 @@ dependencies:
   stockfish_chess_engine:
     git:
       url: "https://github.com/iptton-ai/StockfishChessEngineFlutter.git"
-  audioplayers: ^5.2.1
+# audioplayers:
+  #   path: /Users/zxnap/code/opensource/AI/audioplayers/packages/audioplayers
 
 dev_dependencies:
   flutter_test:

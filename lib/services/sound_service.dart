@@ -1,4 +1,4 @@
-import 'package:audioplayers/audioplayers.dart';
+// import 'package:audioplayers/audioplayers.dart';
 
 /// 音效播放服务
 /// 负责管理游戏中的所有音效播放
@@ -7,7 +7,7 @@ class SoundService {
   factory SoundService() => _instance;
   SoundService._internal();
 
-  late AudioPlayer _audioPlayer;
+  // late AudioPlayer _audioPlayer;
   bool _isInitialized = false;
   bool _isMuted = false;
   double _volume = 1.0;
@@ -24,9 +24,10 @@ class SoundService {
   /// 初始化音效服务
   Future<void> initialize() async {
     try {
-      _audioPlayer = AudioPlayer();
-      await _audioPlayer.setVolume(_volume);
+      // _audioPlayer = AudioPlayer();
+      // await _audioPlayer.setVolume(_volume);
       _isInitialized = true;
+      print('SoundService: 音效服务已初始化（暂时禁用音频播放）');
     } catch (e) {
       print('SoundService: 初始化失败 - $e');
       _isInitialized = false;
@@ -63,10 +64,11 @@ class SoundService {
     if (volume < 0.0 || volume > 1.0) {
       throw ArgumentError('音量必须在0.0到1.0之间');
     }
-    
+
     _volume = volume;
     if (_isInitialized) {
-      await _audioPlayer.setVolume(_isMuted ? 0.0 : _volume);
+      // await _audioPlayer.setVolume(_isMuted ? 0.0 : _volume);
+      print('SoundService: 音量设置为 ${_isMuted ? 0.0 : _volume}');
     }
   }
 
@@ -74,7 +76,8 @@ class SoundService {
   Future<void> mute() async {
     _isMuted = true;
     if (_isInitialized) {
-      await _audioPlayer.setVolume(0.0);
+      // await _audioPlayer.setVolume(0.0);
+      print('SoundService: 已静音');
     }
   }
 
@@ -82,7 +85,8 @@ class SoundService {
   Future<void> unmute() async {
     _isMuted = false;
     if (_isInitialized) {
-      await _audioPlayer.setVolume(_volume);
+      // await _audioPlayer.setVolume(_volume);
+      print('SoundService: 已取消静音，音量: $_volume');
     }
   }
 
@@ -98,8 +102,9 @@ class SoundService {
   /// 释放资源
   Future<void> dispose() async {
     if (_isInitialized) {
-      await _audioPlayer.dispose();
+      // await _audioPlayer.dispose();
       _isInitialized = false;
+      print('SoundService: 资源已释放');
     }
   }
 
@@ -110,7 +115,8 @@ class SoundService {
     }
 
     try {
-      await _audioPlayer.play(AssetSource(assetPath.replaceFirst('assets/', '')));
+      // await _audioPlayer.play(AssetSource(assetPath.replaceFirst('assets/', '')));
+      print('SoundService: 播放音效 - $assetPath（暂时禁用音频播放）');
     } catch (e) {
       print('SoundService: 播放音效失败 - $assetPath: $e');
     }

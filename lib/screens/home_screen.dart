@@ -215,39 +215,48 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 768; // 小屏幕阈值
+
     return Scaffold(
       body: AnimatedBuilder(
         animation: _backgroundController,
         builder: (context, child) {
           return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color.lerp(
-                    const Color(0xFF667EEA),
-                    const Color(0xFF764BA2),
-                    (math.sin(_backgroundController.value * 2 * math.pi) + 1) /
-                        2,
-                  )!,
-                  Color.lerp(
-                    const Color(0xFF764BA2),
-                    const Color(0xFF667EEA),
-                    (math.sin(_backgroundController.value * 2 * math.pi) + 1) /
-                        2,
-                  )!,
-                ],
-                stops: [
-                  0.3 +
-                      (math.sin(_backgroundController.value * 2 * math.pi) *
-                          0.2),
-                  0.7 -
-                      (math.sin(_backgroundController.value * 2 * math.pi) *
-                          0.2),
-                ],
-              ),
-            ),
+            decoration: isSmallScreen
+                ? null
+                : BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color.lerp(
+                          const Color(0xFF667EEA),
+                          const Color(0xFF764BA2),
+                          (math.sin(_backgroundController.value * 2 * math.pi) +
+                                  1) /
+                              2,
+                        )!,
+                        Color.lerp(
+                          const Color(0xFF764BA2),
+                          const Color(0xFF667EEA),
+                          (math.sin(_backgroundController.value * 2 * math.pi) +
+                                  1) /
+                              2,
+                        )!,
+                      ],
+                      stops: [
+                        0.3 +
+                            (math.sin(
+                                    _backgroundController.value * 2 * math.pi) *
+                                0.2),
+                        0.7 -
+                            (math.sin(
+                                    _backgroundController.value * 2 * math.pi) *
+                                0.2),
+                      ],
+                    ),
+                  ),
             child: Stack(
               children: [
                 // 浮动棋子背景
@@ -486,6 +495,7 @@ class _ChessMenuCardState extends State<ChessMenuCard>
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 768; // 小屏幕阈值
     final isTablet = screenSize.width >= 768 && screenSize.width < 1024;
     final isDesktop = screenSize.width >= 1024;
     final isLargeDesktop = screenSize.width >= 1440;
@@ -525,8 +535,8 @@ class _ChessMenuCardState extends State<ChessMenuCard>
       constraints: BoxConstraints(maxWidth: cardMaxWidth),
       margin: const EdgeInsets.all(16),
       child: Card(
-        elevation: 25,
-        shadowColor: Colors.black.withOpacity(0.25),
+        elevation: isSmallScreen ? 0 : 25,
+        shadowColor: isSmallScreen ? null : Colors.black.withOpacity(0.25),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(32),
           side: BorderSide(
