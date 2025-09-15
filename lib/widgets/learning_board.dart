@@ -34,31 +34,47 @@ class _LearningBoardState extends State<LearningBoard> {
       );
     }
 
-    return AspectRatio(
-      aspectRatio: 1.0,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.brown[800]!, width: 2),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          children: List.generate(8, (row) {
-            return Expanded(
-              child: Row(
-                children: List.generate(8, (col) {
-                  return Expanded(
-                    child: _buildSquare(row, col),
-                  );
-                }),
-              ),
-            );
-          }),
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 计算棋盘的实际大小
+        final boardSize = constraints.maxWidth < constraints.maxHeight
+            ? constraints.maxWidth
+            : constraints.maxHeight;
+
+        // 计算每个方格的大小
+        final squareSize = boardSize / 8;
+
+        // 根据方格大小计算棋子字体大小
+        // 棋子大小应该是方格大小的60-70%，但有最小和最大限制
+        final pieceFontSize = (squareSize * 0.65).clamp(12.0, 48.0);
+
+        return AspectRatio(
+          aspectRatio: 1.0,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.brown[800]!, width: 2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              children: List.generate(8, (row) {
+                return Expanded(
+                  child: Row(
+                    children: List.generate(8, (col) {
+                      return Expanded(
+                        child: _buildSquare(row, col, pieceFontSize),
+                      );
+                    }),
+                  ),
+                );
+              }),
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildSquare(int row, int col) {
+  Widget _buildSquare(int row, int col, double pieceFontSize) {
     final position = Position(row: row, col: col);
     final piece = widget.boardState![row][col];
     final isLight = (row + col) % 2 == 0;
@@ -84,14 +100,14 @@ class _LearningBoardState extends State<LearningBoard> {
             // 棋子
             if (piece != null)
               Center(
-                child: _buildPiece(piece),
+                child: _buildPiece(piece, pieceFontSize),
               ),
 
             // 移动提示点
             if (isValidMove && piece == null)
-              const Center(
+              Center(
                 child: CircleAvatar(
-                  radius: 8,
+                  radius: (pieceFontSize * 0.25).clamp(4.0, 12.0),
                   backgroundColor: Colors.green,
                 ),
               ),
@@ -100,7 +116,10 @@ class _LearningBoardState extends State<LearningBoard> {
             if (isValidMove && piece != null)
               Container(
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.red, width: 3),
+                  border: Border.all(
+                    color: Colors.red,
+                    width: (pieceFontSize * 0.1).clamp(2.0, 4.0),
+                  ),
                 ),
               ),
           ],
@@ -123,7 +142,7 @@ class _LearningBoardState extends State<LearningBoard> {
     return isLight ? Colors.grey[200]! : Colors.brown[400]!;
   }
 
-  Widget _buildPiece(ChessPiece piece) {
+  Widget _buildPiece(ChessPiece piece, double fontSize) {
     final pieceSymbols = {
       PieceType.king: piece.color == PieceColor.white ? '♔' : '♚',
       PieceType.queen: piece.color == PieceColor.white ? '♕' : '♛',
@@ -135,8 +154,8 @@ class _LearningBoardState extends State<LearningBoard> {
 
     return Text(
       pieceSymbols[piece.type] ?? '',
-      style: const TextStyle(
-        fontSize: 32,
+      style: TextStyle(
+        fontSize: fontSize,
         fontWeight: FontWeight.bold,
       ),
     );
