@@ -355,6 +355,7 @@ class LearningView extends StatelessWidget {
                           ExecuteLearningMove(from, to),
                         ),
                     isInteractive: state.isWaitingForMove,
+                    currentStep: currentStep, // 传递当前步骤
                   ),
                 ),
               ),

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../models/chess_models.dart';
+import '../models/learning_models.dart';
 
 class LearningBoard extends StatefulWidget {
   final List<List<ChessPiece?>>? boardState;
   final List<Position> highlightedPositions;
   final Function(Position from, Position to)? onMove;
   final bool isInteractive;
+  final LearningStep? currentStep; // 新增：当前学习步骤
 
   const LearningBoard({
     Key? key,
@@ -13,6 +15,7 @@ class LearningBoard extends StatefulWidget {
     this.highlightedPositions = const [],
     this.onMove,
     this.isInteractive = true,
+    this.currentStep, // 新增参数
   }) : super(key: key);
 
   @override
@@ -67,23 +70,23 @@ class _LearningBoardState extends State<LearningBoard> {
       onTap: widget.isInteractive ? () => _handleTap(row, col) : null,
       child: Container(
         decoration: BoxDecoration(
-          color: _getSquareColor(isLight, isHighlighted, isSelected, isValidMove),
-          border: isHighlighted 
-              ? Border.all(color: Colors.yellow, width: 3)
-              : null,
+          color:
+              _getSquareColor(isLight, isHighlighted, isSelected, isValidMove),
+          border:
+              isHighlighted ? Border.all(color: Colors.yellow, width: 3) : null,
         ),
         child: Stack(
           children: [
             // 棋盘坐标标记
             if (col == 0) _buildRankLabel(row),
             if (row == 7) _buildFileLabel(col),
-            
+
             // 棋子
             if (piece != null)
               Center(
                 child: _buildPiece(piece),
               ),
-            
+
             // 移动提示点
             if (isValidMove && piece == null)
               const Center(
@@ -92,7 +95,7 @@ class _LearningBoardState extends State<LearningBoard> {
                   backgroundColor: Colors.green,
                 ),
               ),
-            
+
             // 可吃子提示
             if (isValidMove && piece != null)
               Container(
@@ -106,7 +109,8 @@ class _LearningBoardState extends State<LearningBoard> {
     );
   }
 
-  Color _getSquareColor(bool isLight, bool isHighlighted, bool isSelected, bool isValidMove) {
+  Color _getSquareColor(
+      bool isLight, bool isHighlighted, bool isSelected, bool isValidMove) {
     if (isSelected) {
       return Colors.blue[300]!;
     }
@@ -207,14 +211,32 @@ class _LearningBoardState extends State<LearningBoard> {
   }
 
   List<Position> _getValidMoves(Position position) {
-    // 简化的移动计算，实际应该使用 ChessRules
     final piece = widget.boardState![position.row][position.col];
     if (piece == null) return [];
 
+    // 在学习模式中，如果有当前步骤且是练习类型，优先使用步骤中定义的移动
+    if (widget.currentStep != null &&
+        widget.currentStep!.type == StepType.practice &&
+        widget.currentStep!.requiredMoves != null) {
+      final allowedMoves = <Position>[];
+
+      // 查找从当前位置开始的所有允许移动
+      for (final requiredMove in widget.currentStep!.requiredMoves!) {
+        if (requiredMove.from.row == position.row &&
+            requiredMove.from.col == position.col) {
+          allowedMoves.add(requiredMove.to);
+        }
+      }
+
+      // 如果找到了允许的移动，返回这些移动
+      if (allowedMoves.isNotEmpty) {
+        return allowedMoves;
+      }
+    }
+
+    // 否则使用标准的移动计算
     final moves = <Position>[];
-    
-    // 这里应该实现具体的移动规则
-    // 为了简化，我们只返回一些基本的移动
+
     switch (piece.type) {
       case PieceType.pawn:
         _addPawnMoves(position, piece.color, moves);
@@ -239,27 +261,32 @@ class _LearningBoardState extends State<LearningBoard> {
     return moves;
   }
 
-  void _addPawnMoves(Position position, PieceColor color, List<Position> moves) {
+  void _addPawnMoves(
+      Position position, PieceColor color, List<Position> moves) {
     final direction = color == PieceColor.white ? -1 : 1;
     final startRow = color == PieceColor.white ? 6 : 1;
-    
+
     // 向前一格
     final oneStep = Position(row: position.row + direction, col: position.col);
-    if (_isValidPosition(oneStep) && widget.boardState![oneStep.row][oneStep.col] == null) {
+    if (_isValidPosition(oneStep) &&
+        widget.boardState![oneStep.row][oneStep.col] == null) {
       moves.add(oneStep);
-      
+
       // 向前两格（首次移动）
       if (position.row == startRow) {
-        final twoStep = Position(row: position.row + 2 * direction, col: position.col);
-        if (_isValidPosition(twoStep) && widget.boardState![twoStep.row][twoStep.col] == null) {
+        final twoStep =
+            Position(row: position.row + 2 * direction, col: position.col);
+        if (_isValidPosition(twoStep) &&
+            widget.boardState![twoStep.row][twoStep.col] == null) {
           moves.add(twoStep);
         }
       }
     }
-    
+
     // 斜向攻击
     for (final colOffset in [-1, 1]) {
-      final attackPos = Position(row: position.row + direction, col: position.col + colOffset);
+      final attackPos = Position(
+          row: position.row + direction, col: position.col + colOffset);
       if (_isValidPosition(attackPos)) {
         final targetPiece = widget.boardState![attackPos.row][attackPos.col];
         if (targetPiece != null && targetPiece.color != color) {
@@ -273,21 +300,22 @@ class _LearningBoardState extends State<LearningBoard> {
     final directions = [
       [-1, 0], [1, 0], [0, -1], [0, 1], // 上下左右
     ];
-    
+
     for (final direction in directions) {
       for (int i = 1; i < 8; i++) {
         final newPos = Position(
           row: position.row + direction[0] * i,
           col: position.col + direction[1] * i,
         );
-        
+
         if (!_isValidPosition(newPos)) break;
-        
+
         final targetPiece = widget.boardState![newPos.row][newPos.col];
         if (targetPiece == null) {
           moves.add(newPos);
         } else {
-          if (targetPiece.color != widget.boardState![position.row][position.col]!.color) {
+          if (targetPiece.color !=
+              widget.boardState![position.row][position.col]!.color) {
             moves.add(newPos);
           }
           break;
@@ -298,20 +326,27 @@ class _LearningBoardState extends State<LearningBoard> {
 
   void _addKnightMoves(Position position, List<Position> moves) {
     final knightMoves = [
-      [-2, -1], [-2, 1], [-1, -2], [-1, 2],
-      [1, -2], [1, 2], [2, -1], [2, 1],
+      [-2, -1],
+      [-2, 1],
+      [-1, -2],
+      [-1, 2],
+      [1, -2],
+      [1, 2],
+      [2, -1],
+      [2, 1],
     ];
-    
+
     for (final move in knightMoves) {
       final newPos = Position(
         row: position.row + move[0],
         col: position.col + move[1],
       );
-      
+
       if (_isValidPosition(newPos)) {
         final targetPiece = widget.boardState![newPos.row][newPos.col];
-        if (targetPiece == null || 
-            targetPiece.color != widget.boardState![position.row][position.col]!.color) {
+        if (targetPiece == null ||
+            targetPiece.color !=
+                widget.boardState![position.row][position.col]!.color) {
           moves.add(newPos);
         }
       }
@@ -322,21 +357,22 @@ class _LearningBoardState extends State<LearningBoard> {
     final directions = [
       [-1, -1], [-1, 1], [1, -1], [1, 1], // 对角线
     ];
-    
+
     for (final direction in directions) {
       for (int i = 1; i < 8; i++) {
         final newPos = Position(
           row: position.row + direction[0] * i,
           col: position.col + direction[1] * i,
         );
-        
+
         if (!_isValidPosition(newPos)) break;
-        
+
         final targetPiece = widget.boardState![newPos.row][newPos.col];
         if (targetPiece == null) {
           moves.add(newPos);
         } else {
-          if (targetPiece.color != widget.boardState![position.row][position.col]!.color) {
+          if (targetPiece.color !=
+              widget.boardState![position.row][position.col]!.color) {
             moves.add(newPos);
           }
           break;
@@ -352,21 +388,27 @@ class _LearningBoardState extends State<LearningBoard> {
 
   void _addKingMoves(Position position, List<Position> moves) {
     final kingMoves = [
-      [-1, -1], [-1, 0], [-1, 1],
-      [0, -1],           [0, 1],
-      [1, -1],  [1, 0],  [1, 1],
+      [-1, -1],
+      [-1, 0],
+      [-1, 1],
+      [0, -1],
+      [0, 1],
+      [1, -1],
+      [1, 0],
+      [1, 1],
     ];
-    
+
     for (final move in kingMoves) {
       final newPos = Position(
         row: position.row + move[0],
         col: position.col + move[1],
       );
-      
+
       if (_isValidPosition(newPos)) {
         final targetPiece = widget.boardState![newPos.row][newPos.col];
-        if (targetPiece == null || 
-            targetPiece.color != widget.boardState![position.row][position.col]!.color) {
+        if (targetPiece == null ||
+            targetPiece.color !=
+                widget.boardState![position.row][position.col]!.color) {
           moves.add(newPos);
         }
       }
@@ -374,7 +416,9 @@ class _LearningBoardState extends State<LearningBoard> {
   }
 
   bool _isValidPosition(Position position) {
-    return position.row >= 0 && position.row < 8 && 
-           position.col >= 0 && position.col < 8;
+    return position.row >= 0 &&
+        position.row < 8 &&
+        position.col >= 0 &&
+        position.col < 8;
   }
 }
