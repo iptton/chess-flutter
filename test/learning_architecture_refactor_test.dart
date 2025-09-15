@@ -22,7 +22,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
 
       // Assert - 验证首页正确显示
-      expect(find.text('国际象棋学习'), findsOneWidget);
+      expect(find.text('学习模式'), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
@@ -45,7 +45,7 @@ void main() {
 
     testWidgets('首页和详情页应该有独立的BlocProvider', (WidgetTester tester) async {
       // 这个测试验证两个页面确实有独立的状态管理
-      
+
       // 首先测试首页
       await tester.pumpWidget(
         const MaterialApp(
@@ -58,7 +58,8 @@ void main() {
 
       // 验证首页有自己的BlocProvider
       final homeContext = tester.element(find.byType(LearningHomePage));
-      final homeBlocProvider = BlocProvider.of<LearningBloc>(homeContext, listen: false);
+      final homeBlocProvider =
+          BlocProvider.of<LearningBloc>(homeContext, listen: false);
       expect(homeBlocProvider, isNotNull);
 
       // 然后测试详情页
@@ -73,7 +74,8 @@ void main() {
 
       // 验证详情页有自己的BlocProvider
       final detailContext = tester.element(find.byType(LessonDetailPage));
-      final detailBlocProvider = BlocProvider.of<LearningBloc>(detailContext, listen: false);
+      final detailBlocProvider =
+          BlocProvider.of<LearningBloc>(detailContext, listen: false);
       expect(detailBlocProvider, isNotNull);
 
       // 两个BlocProvider应该是不同的实例
@@ -82,10 +84,10 @@ void main() {
 
     testWidgets('课程完成后应该正确返回首页并刷新', (WidgetTester tester) async {
       // 这个测试模拟完整的导航流程
-      
+
       // 创建一个模拟的导航器
       final navigatorKey = GlobalKey<NavigatorState>();
-      
+
       await tester.pumpWidget(
         MaterialApp(
           navigatorKey: navigatorKey,
@@ -97,11 +99,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
 
       // 验证首页显示
-      expect(find.text('国际象棋学习'), findsOneWidget);
+      expect(find.text('学习模式'), findsOneWidget);
 
       // 模拟点击课程卡片（这里我们直接测试导航逻辑）
       // 在实际实现中，这会通过点击课程卡片触发
-      
+
       // 验证导航到课程详情页的逻辑存在
       // 这里我们验证LessonDetailPage可以正确构建
       expect(() => const LessonDetailPage(lessonId: 'test'), returnsNormally);
@@ -109,28 +111,28 @@ void main() {
 
     test('新架构解决了原有的状态同步问题', () {
       // 验证新架构的设计原则：
-      
+
       // 1. 页面分离：首页和详情页是独立的Widget
       expect(LearningHomePage, isA<Type>());
       expect(LessonDetailPage, isA<Type>());
-      
+
       // 2. 状态隔离：每个页面有独立的BlocProvider
       // 这在上面的测试中已经验证
-      
+
       // 3. 路由传递：课程ID通过构造函数传递
       const detailPage = LessonDetailPage(lessonId: 'test-id');
       expect(detailPage.lessonId, equals('test-id'));
-      
+
       // 4. 结果返回：课程完成状态通过Navigator.pop返回
       // 这在实际的导航测试中验证
-      
+
       expect(true, isTrue); // 架构设计验证通过
     });
 
     testWidgets('课程完成状态应该通过路由返回传递', (WidgetTester tester) async {
       // 创建一个简单的测试场景来验证返回值传递
       bool? lessonCompleted;
-      
+
       await tester.pumpWidget(
         MaterialApp(
           home: Builder(
@@ -139,7 +141,8 @@ void main() {
                 onPressed: () async {
                   final result = await Navigator.of(context).push<bool>(
                     MaterialPageRoute(
-                      builder: (context) => const LessonDetailPage(lessonId: 'test'),
+                      builder: (context) =>
+                          const LessonDetailPage(lessonId: 'test'),
                     ),
                   );
                   lessonCompleted = result;
@@ -168,19 +171,19 @@ void main() {
 
     test('架构重构的核心改进点', () {
       // 记录架构重构解决的核心问题：
-      
+
       // 问题1：状态共享导致的混乱
       // 解决：每个页面独立的BlocProvider，状态完全隔离
-      
+
       // 问题2：课程完成后首页状态不同步
       // 解决：通过路由返回值通知首页刷新，明确的数据流
-      
+
       // 问题3：页面逻辑耦合
       // 解决：清晰的页面边界，单一职责原则
-      
+
       // 问题4：对话框状态管理复杂
       // 解决：每个页面独立处理自己的对话框，避免状态冲突
-      
+
       expect(true, isTrue); // 架构改进验证
     });
   });
