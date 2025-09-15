@@ -35,7 +35,13 @@ class LearningView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<LearningBloc, LearningState>(
+    return BlocConsumer<LearningBloc, LearningState>(
+      listener: (context, state) {
+        // 监听步骤完成状态，显示完成对话框
+        if (state.isStepCompleted) {
+          _showStepCompletionDialog(context, state);
+        }
+      },
       builder: (context, state) {
         return WillPopScope(
           onWillPop: () async {
@@ -423,6 +429,82 @@ class LearningView extends StatelessWidget {
               Navigator.of(context).pop();
             },
             child: const Text('退出'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showStepCompletionDialog(BuildContext context, LearningState state) {
+    final currentStep = state.currentLesson?.currentStep;
+    if (currentStep == null) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // 防止用户点击外部关闭
+      builder: (dialogContext) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.check_circle,
+              color: Colors.green,
+              size: 28,
+            ),
+            const SizedBox(width: 8),
+            const Text('步骤完成！'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              currentStep.successMessage ?? '太棒了！您已经成功完成了这个步骤！',
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.lightbulb_outline,
+                    color: Colors.green[700],
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '继续保持这种学习状态，您正在稳步提升！',
+                      style: TextStyle(
+                        color: Colors.green[700],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context.read<LearningBloc>().add(const ConfirmStepCompletion());
+            },
+            icon: const Icon(Icons.arrow_forward),
+            label: const Text('继续下一步'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
           ),
         ],
       ),

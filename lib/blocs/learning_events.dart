@@ -191,3 +191,8 @@ class LoadProgress extends LearningEvent {
   @override
   List<Object?> get props => [lessonId];
 }
+
+/// 确认步骤完成
+class ConfirmStepCompletion extends LearningEvent {
+  const ConfirmStepCompletion();
+}

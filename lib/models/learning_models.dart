@@ -198,6 +198,7 @@ class LearningState extends Equatable {
   final String? currentInstruction;
   final bool isWaitingForMove;
   final bool isDemonstrating;
+  final bool isStepCompleted; // 新增：步骤完成等待确认状态
 
   const LearningState({
     this.currentLesson,
@@ -211,6 +212,7 @@ class LearningState extends Equatable {
     this.currentInstruction,
     this.isWaitingForMove = false,
     this.isDemonstrating = false,
+    this.isStepCompleted = false, // 新增：默认为false
   });
 
   LearningState copyWith({
@@ -225,6 +227,7 @@ class LearningState extends Equatable {
     String? currentInstruction,
     bool? isWaitingForMove,
     bool? isDemonstrating,
+    bool? isStepCompleted, // 新增
     // 添加显式的null标志
     bool clearCurrentLesson = false,
     bool clearError = false,
@@ -248,6 +251,7 @@ class LearningState extends Equatable {
           : (currentInstruction ?? this.currentInstruction),
       isWaitingForMove: isWaitingForMove ?? this.isWaitingForMove,
       isDemonstrating: isDemonstrating ?? this.isDemonstrating,
+      isStepCompleted: isStepCompleted ?? this.isStepCompleted, // 新增
     );
   }
 
@@ -264,6 +268,7 @@ class LearningState extends Equatable {
         currentInstruction,
         isWaitingForMove,
         isDemonstrating,
+        isStepCompleted, // 新增
       ];
 }
 

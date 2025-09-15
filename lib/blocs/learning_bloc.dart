@@ -38,6 +38,7 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
     on<ResetLearningState>(_onResetLearningState);
     on<SaveProgress>(_onSaveProgress);
     on<LoadProgress>(_onLoadProgress);
+    on<ConfirmStepCompletion>(_onConfirmStepCompletion);
   }
 
   @override
@@ -346,12 +347,22 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
     );
 
     final updatedLesson = lesson.copyWith(steps: updatedSteps);
-    emit(state.copyWith(currentLesson: updatedLesson));
+    final currentStep = updatedSteps[currentStepIndex];
 
-    // 延迟进入下一步
-    Timer(const Duration(seconds: 2), () {
-      add(const NextStep());
-    });
+    // 如果是练习类型的步骤，显示完成提示等待用户确认
+    if (currentStep.type == StepType.practice) {
+      emit(state.copyWith(
+        currentLesson: updatedLesson,
+        isStepCompleted: true,
+        currentInstruction: currentStep.successMessage ?? '太棒了！您已经完成了这个步骤！',
+      ));
+    } else {
+      // 其他类型的步骤自动进入下一步
+      emit(state.copyWith(currentLesson: updatedLesson));
+      Timer(const Duration(seconds: 2), () {
+        add(const NextStep());
+      });
+    }
   }
 
   // 其他事件处理方法的占位符
@@ -633,5 +644,12 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
     final file = files[position.col];
     final rank = (8 - position.row).toString();
     return '$file$rank';
+  }
+
+  void _onConfirmStepCompletion(
+      ConfirmStepCompletion event, Emitter<LearningState> emit) {
+    // 重置步骤完成状态并进入下一步
+    emit(state.copyWith(isStepCompleted: false));
+    add(const NextStep());
   }
 }
