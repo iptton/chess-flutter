@@ -221,6 +221,7 @@ class _ChessBoardView extends StatelessWidget {
                   ? '对局复盘'
                   : ChessFormatters.getGameModeTitle(gameMode),
               actions: [
+                _buildSoundToggle(),
                 if (isReplayMode)
                   IconButton(
                     icon: const Icon(Icons.play_arrow),
@@ -420,6 +421,31 @@ class _ChessBoardView extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSoundToggle() {
+    return FutureBuilder<bool>(
+      future: SettingsService.getSoundEnabled(),
+      builder: (context, snapshot) {
+        final soundEnabled = snapshot.data ?? false;
+        return IconButton(
+          icon: Icon(
+            soundEnabled ? Icons.volume_up : Icons.volume_off,
+            color: soundEnabled ? Colors.blue : Colors.grey,
+          ),
+          tooltip: soundEnabled ? '关闭音效' : '开启音效',
+          onPressed: () async {
+            final newValue = !soundEnabled;
+            await SettingsService.setSoundEnabled(newValue);
+            // 触发重建以更新图标
+            if (context.mounted) {
+              // 使用setState或其他方式触发重建
+              (context as Element).markNeedsBuild();
+            }
+          },
+        );
+      },
     );
   }
 }

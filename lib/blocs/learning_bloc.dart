@@ -466,6 +466,13 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
 
     // 自动保存进度
     add(const SaveProgress());
+
+    // 延迟3秒后自动返回学习模式首页
+    Timer(const Duration(seconds: 3), () {
+      if (!isClosed) {
+        add(const ExitLearning());
+      }
+    });
   }
 
   void _onExitLearning(ExitLearning event, Emitter<LearningState> emit) {

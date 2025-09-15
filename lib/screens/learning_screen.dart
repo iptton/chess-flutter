@@ -374,6 +374,8 @@ class LearningView extends StatelessWidget {
                       canSkip: currentStep?.type == StepType.practice,
                       isLastStep:
                           lesson.currentStepIndex == lesson.steps.length - 1,
+                      canGoToLast:
+                          lesson.currentStepIndex < lesson.steps.length - 1,
                       onPrevious: () => context.read<LearningBloc>().add(
                             const PreviousStep(),
                           ),
@@ -388,6 +390,9 @@ class LearningView extends StatelessWidget {
                           ),
                       onHint: () => context.read<LearningBloc>().add(
                             const ShowHint(),
+                          ),
+                      onGoToLast: () => context.read<LearningBloc>().add(
+                            GoToStep(lesson.steps.length - 1),
                           ),
                     ),
                   ],

@@ -11,9 +11,9 @@ class LearningService {
 
   /// 获取所有可用课程
   Future<List<LearningLesson>> getAvailableLessons() async {
-    // 模拟异步加载
-    await Future.delayed(const Duration(milliseconds: 500));
-    
+    // 减少不必要的延迟，提升用户体验
+    await Future.delayed(const Duration(milliseconds: 100));
+
     return [
       _lessonsData.basicRulesLesson,
       _lessonsData.pieceMovementLesson,
@@ -47,21 +47,21 @@ class LearningService {
   /// 保存学习进度
   Future<void> saveProgress(LearningLesson lesson) async {
     // TODO: 实现本地存储或云端同步
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 50));
   }
 
   /// 加载学习进度
   Future<LearningLesson?> loadProgress(String lessonId) async {
     // TODO: 从本地存储或云端加载进度
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 50));
     return null;
   }
 
   /// 获取用户学习统计
   Future<Map<String, dynamic>> getLearningStats() async {
     // TODO: 实现学习统计功能
-    await Future.delayed(const Duration(milliseconds: 300));
-    
+    await Future.delayed(const Duration(milliseconds: 100));
+
     return {
       'totalLessonsCompleted': 0,
       'totalTimeSpent': const Duration(),
@@ -73,20 +73,21 @@ class LearningService {
   /// 重置课程进度
   Future<void> resetLessonProgress(String lessonId) async {
     // TODO: 实现重置进度功能
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 50));
   }
 
   /// 获取推荐的下一个课程
-  Future<LearningLesson?> getRecommendedNextLesson(List<LearningLesson> completedLessons) async {
+  Future<LearningLesson?> getRecommendedNextLesson(
+      List<LearningLesson> completedLessons) async {
     final allLessons = await getAvailableLessons();
-    
+
     // 简单的推荐逻辑：返回第一个未完成的课程
     for (final lesson in allLessons) {
       if (!completedLessons.any((completed) => completed.id == lesson.id)) {
         return lesson;
       }
     }
-    
+
     return null;
   }
 
@@ -108,7 +109,7 @@ class LearningService {
     if (step.metadata != null && step.metadata!.containsKey('hint')) {
       return step.metadata!['hint'] as String?;
     }
-    
+
     // 根据步骤类型生成默认提示
     switch (step.type) {
       case StepType.practice:
@@ -124,7 +125,7 @@ class LearningService {
       case StepType.quiz:
         return '根据所学知识选择正确答案';
     }
-    
+
     return null;
   }
 
@@ -132,11 +133,14 @@ class LearningService {
   String _positionToString(Position position) {
     final files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
     final ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
-    
-    if (position.col >= 0 && position.col < 8 && position.row >= 0 && position.row < 8) {
+
+    if (position.col >= 0 &&
+        position.col < 8 &&
+        position.row >= 0 &&
+        position.row < 8) {
       return '${files[position.col]}${ranks[position.row]}';
     }
-    
+
     return '${position.col},${position.row}';
   }
 

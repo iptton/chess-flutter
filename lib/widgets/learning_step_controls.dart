@@ -5,11 +5,13 @@ class LearningStepControls extends StatelessWidget {
   final bool canGoForward;
   final bool canSkip;
   final bool isLastStep;
+  final bool canGoToLast;
   final VoidCallback? onPrevious;
   final VoidCallback? onNext;
   final VoidCallback? onSkip;
   final VoidCallback? onRestart;
   final VoidCallback? onHint;
+  final VoidCallback? onGoToLast;
 
   const LearningStepControls({
     Key? key,
@@ -17,11 +19,13 @@ class LearningStepControls extends StatelessWidget {
     this.canGoForward = false,
     this.canSkip = false,
     this.isLastStep = false,
+    this.canGoToLast = false,
     this.onPrevious,
     this.onNext,
     this.onSkip,
     this.onRestart,
     this.onHint,
+    this.onGoToLast,
   }) : super(key: key);
 
   @override
@@ -307,6 +311,24 @@ class LearningStepControls extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: canSkip ? Colors.purple : Colors.grey,
               side: BorderSide(color: canSkip ? Colors.purple : Colors.grey),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              minimumSize: const Size(0, 48),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+
+        // Go to last step button
+        Expanded(
+          flex: 1,
+          child: OutlinedButton.icon(
+            onPressed: canGoToLast ? onGoToLast : null,
+            icon: const Icon(Icons.last_page),
+            label: const Text('最后一步'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: canGoToLast ? Colors.indigo : Colors.grey,
+              side:
+                  BorderSide(color: canGoToLast ? Colors.indigo : Colors.grey),
               padding: const EdgeInsets.symmetric(vertical: 12),
               minimumSize: const Size(0, 48),
             ),

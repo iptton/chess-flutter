@@ -1,4 +1,5 @@
 // import 'package:audioplayers/audioplayers.dart';
+import 'settings_service.dart';
 
 /// 音效播放服务
 /// 负责管理游戏中的所有音效播放
@@ -111,6 +112,12 @@ class SoundService {
   /// 播放指定音效文件
   Future<void> _playSound(String assetPath) async {
     if (!_isInitialized || _isMuted) {
+      return;
+    }
+
+    // 检查用户设置是否启用音效
+    final soundEnabled = await SettingsService.getSoundEnabled();
+    if (!soundEnabled) {
       return;
     }
 
