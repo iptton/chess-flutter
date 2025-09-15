@@ -466,78 +466,124 @@ class ChessBoardLayout extends StatelessWidget {
         return LayoutBuilder(
           builder: (context, constraints) {
             final boardSize = _calculateBoardSize(constraints);
+            final isWideScreen = constraints.maxWidth > 1200;
 
-            return Stack(
-              children: [
-                // 主体内容
-                SingleChildScrollView(
-                  child: Center(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: ChessConstants.topBarHeight),
-                        ...topContent
-                            .expand((widget) => [
-                                  widget,
-                                  const SizedBox(
-                                      height: ChessConstants.spacing),
-                                ])
-                            .toList(),
-                        ChessBoardGrid(boardSize: boardSize),
-                        const SizedBox(height: ChessConstants.spacing),
-                      ],
-                    ),
-                  ),
-                ),
-                // AI初始化加载遮罩
-                if (state.isAIInitializing)
-                  Container(
-                    color: Colors.black.withOpacity(0.5),
-                    child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
+            if (isWideScreen) {
+              // 宽屏布局：左侧工具栏，右侧棋盘
+              return Stack(
+                children: [
+                  Row(
+                    children: [
+                      // 左侧工具栏
+                      Container(
+                        width: 300,
+                        padding: const EdgeInsets.all(16),
                         child: Column(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            const CircularProgressIndicator(),
-                            const SizedBox(height: 16),
-                            Text(
-                              'AI引擎初始化中...',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey[700],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '请稍候，正在加载国际象棋AI引擎',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[500],
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
+                            const SizedBox(height: ChessConstants.topBarHeight),
+                            ...topContent
+                                .expand((widget) => [
+                                      widget,
+                                      const SizedBox(
+                                          height: ChessConstants.spacing),
+                                    ])
+                                .toList(),
                           ],
                         ),
                       ),
+                      // 右侧棋盘区域
+                      Expanded(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ChessBoardGrid(boardSize: boardSize),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  _buildAILoadingOverlay(state),
+                ],
+              );
+            } else {
+              // 窄屏布局：传统的垂直布局
+              return Stack(
+                children: [
+                  SingleChildScrollView(
+                    child: Center(
+                      child: Column(
+                        children: [
+                          const SizedBox(height: ChessConstants.topBarHeight),
+                          ...topContent
+                              .expand((widget) => [
+                                    widget,
+                                    const SizedBox(
+                                        height: ChessConstants.spacing),
+                                  ])
+                              .toList(),
+                          ChessBoardGrid(boardSize: boardSize),
+                          const SizedBox(height: ChessConstants.spacing),
+                        ],
+                      ),
                     ),
                   ),
-              ],
-            );
+                  _buildAILoadingOverlay(state),
+                ],
+              );
+            }
           },
         );
       },
+    );
+  }
+
+  Widget _buildAILoadingOverlay(GameState state) {
+    if (!state.isAIInitializing) return const SizedBox.shrink();
+
+    return Container(
+      color: Colors.black.withOpacity(0.5),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                'AI引擎初始化中...',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[700],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '请稍候，正在加载国际象棋AI引擎',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[500],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

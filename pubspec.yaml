@@ -29,8 +29,7 @@ dependencies:
   stockfish_chess_engine:
     git:
       url: "https://github.com/iptton-ai/StockfishChessEngineFlutter.git"
-# audioplayers:
-  #   path: /Users/zxnap/code/opensource/AI/audioplayers/packages/audioplayers
+  audioplayers: ^5.0.0
 
 dev_dependencies:
   flutter_test:

@@ -7,12 +7,14 @@ class ThemedBackground extends StatefulWidget {
   final Widget child;
   final bool animated;
   final Duration animationDuration;
+  final bool useWhiteBackground;
 
   const ThemedBackground({
     super.key,
     required this.child,
     this.animated = false,
     this.animationDuration = const Duration(seconds: 10),
+    this.useWhiteBackground = false,
   });
 
   @override
@@ -44,6 +46,14 @@ class _ThemedBackgroundState extends State<ThemedBackground>
 
   @override
   Widget build(BuildContext context) {
+    // 如果使用白色背景，返回全屏白色容器
+    if (widget.useWhiteBackground) {
+      return Container(
+        color: Colors.white,
+        child: widget.child,
+      );
+    }
+
     if (widget.animated) {
       return AnimatedBuilder(
         animation: _controller,
@@ -233,10 +243,11 @@ class ThemedButton extends StatelessWidget {
           onTap: onPressed,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: padding ?? const EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 16,
-            ),
+            padding: padding ??
+                const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,

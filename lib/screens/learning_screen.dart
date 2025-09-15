@@ -166,14 +166,14 @@ class LearningView extends StatelessWidget {
                     double spacing;
 
                     if (screenWidth < 600) {
-                      // 移动端
+                      // 移动端 - 增加高度以容纳内容
                       crossAxisCount = 2;
-                      childAspectRatio = 1.2;
+                      childAspectRatio = 0.85; // 降低比例，增加高度
                       spacing = 16;
                     } else if (screenWidth < 900) {
                       // 平板
                       crossAxisCount = 3;
-                      childAspectRatio = 1.1;
+                      childAspectRatio = 0.95; // 稍微降低比例
                       spacing = 20;
                     } else if (screenWidth < 1400) {
                       // 桌面
