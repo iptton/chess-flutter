@@ -159,17 +159,49 @@ class LearningView extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Expanded(
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 1.2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                  ),
-                  itemCount: state.availableLessons.length,
-                  itemBuilder: (context, index) {
-                    final lesson = state.availableLessons[index];
-                    return _buildLessonCard(context, lesson);
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    // 响应式网格配置
+                    final screenWidth = constraints.maxWidth;
+                    int crossAxisCount;
+                    double childAspectRatio;
+                    double spacing;
+
+                    if (screenWidth < 600) {
+                      // 移动端
+                      crossAxisCount = 2;
+                      childAspectRatio = 1.2;
+                      spacing = 16;
+                    } else if (screenWidth < 900) {
+                      // 平板
+                      crossAxisCount = 3;
+                      childAspectRatio = 1.1;
+                      spacing = 20;
+                    } else if (screenWidth < 1400) {
+                      // 桌面
+                      crossAxisCount = 4;
+                      childAspectRatio = 1.0;
+                      spacing = 24;
+                    } else {
+                      // 大桌面
+                      crossAxisCount = 5;
+                      childAspectRatio = 0.9;
+                      spacing = 28;
+                    }
+
+                    return GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        childAspectRatio: childAspectRatio,
+                        crossAxisSpacing: spacing,
+                        mainAxisSpacing: spacing,
+                      ),
+                      itemCount: state.availableLessons.length,
+                      itemBuilder: (context, index) {
+                        final lesson = state.availableLessons[index];
+                        return _buildLessonCard(context, lesson);
+                      },
+                    );
                   },
                 ),
               ),
