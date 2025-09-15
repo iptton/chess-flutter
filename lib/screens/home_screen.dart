@@ -6,7 +6,7 @@ import 'dart:math' as math;
 import 'game_screen.dart';
 import 'replay_screen.dart';
 import 'settings_screen.dart';
-import 'learning_screen.dart';
+import 'learning_home_page.dart';
 import '../utils/page_transitions.dart';
 import 'package:testflutter/widgets/privacy_dialog.dart' as privacy;
 import '../services/privacy_service.dart';
@@ -117,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         );
         break;
       case 'learn':
-        Navigator.of(context).pushWithThemeTransition(const LearningScreen());
+        Navigator.of(context).pushWithThemeTransition(const LearningHomePage());
         break;
       case 'settings':
         Navigator.push(
