@@ -215,28 +215,31 @@ class _ChessBoardView extends StatelessWidget {
             }
             return true;
           },
-          child: Scaffold(
-            appBar: ThemedAppBar(
-              title: isReplayMode
-                  ? '对局复盘'
-                  : ChessFormatters.getGameModeTitle(gameMode),
-              actions: [
-                _buildSoundToggle(),
-                if (isReplayMode)
-                  IconButton(
-                    icon: const Icon(Icons.play_arrow),
-                    tooltip: '从当前局面开始新对局',
-                    onPressed: () => _showNewGameDialog(context, state),
-                  ),
-              ],
-            ),
-            body: ChessBoardLayout(
-              topContent: [
-                _buildTurnIndicator(context),
-                _buildSpecialMoveIndicator(context),
-                _buildControlButtons(context, state),
-                _buildStepInfo(context, state),
-              ],
+          child: ThemedBackground(
+            child: Scaffold(
+              backgroundColor: Colors.transparent,
+              appBar: ThemedAppBar(
+                title: isReplayMode
+                    ? '对局复盘'
+                    : ChessFormatters.getGameModeTitle(gameMode),
+                actions: [
+                  _buildSoundToggle(),
+                  if (isReplayMode)
+                    IconButton(
+                      icon: const Icon(Icons.play_arrow),
+                      tooltip: '从当前局面开始新对局',
+                      onPressed: () => _showNewGameDialog(context, state),
+                    ),
+                ],
+              ),
+              body: ChessBoardLayout(
+                topContent: [
+                  _buildTurnIndicator(context),
+                  _buildSpecialMoveIndicator(context),
+                  _buildControlButtons(context, state),
+                  _buildStepInfo(context, state),
+                ],
+              ),
             ),
           ),
         );
@@ -449,24 +452,25 @@ class _ChessBoardView extends StatelessWidget {
   }
 
   Widget _buildSoundToggle() {
-    return FutureBuilder<bool>(
-      future: SettingsService.getSoundEnabled(),
-      builder: (context, snapshot) {
-        final soundEnabled = snapshot.data ?? false;
-        return IconButton(
-          icon: Icon(
-            soundEnabled ? Icons.volume_up : Icons.volume_off,
-            color: soundEnabled ? Colors.blue : Colors.grey,
-          ),
-          tooltip: soundEnabled ? '关闭音效' : '开启音效',
-          onPressed: () async {
-            final newValue = !soundEnabled;
-            await SettingsService.setSoundEnabled(newValue);
-            // 触发重建以更新图标
-            if (context.mounted) {
-              // 使用setState或其他方式触发重建
-              (context as Element).markNeedsBuild();
-            }
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return FutureBuilder<bool>(
+          future: SettingsService.getSoundEnabled(),
+          builder: (context, snapshot) {
+            final soundEnabled = snapshot.data ?? false;
+            return IconButton(
+              icon: Icon(
+                soundEnabled ? Icons.volume_up : Icons.volume_off,
+                color: soundEnabled ? Colors.white : Colors.white70,
+              ),
+              tooltip: soundEnabled ? '关闭音效' : '开启音效',
+              onPressed: () async {
+                final newValue = !soundEnabled;
+                await SettingsService.setSoundEnabled(newValue);
+                // 触发重建以更新图标
+                setState(() {});
+              },
+            );
           },
         );
       },
@@ -493,9 +497,9 @@ class ChessBoardLayout extends StatelessWidget {
             final isWideScreen = constraints.maxWidth > 1200;
 
             if (isWideScreen) {
-              // 宽屏布局：左侧工具栏占满剩余空间，右侧棋盘减少边距
-              // 计算棋盘区域的宽度：棋盘大小加上最小边距
-              final boardAreaWidth = boardSize + 40; // 棋盘 + 最小边距
+              // 宽屏布局：左侧工具栏占满剩余空间，右侧棋盘保持适当边距
+              // 计算棋盘区域的宽度：棋盘大小加上左右边距
+              final boardAreaWidth = boardSize + 80; // 棋盘 + 左右边距(40px each)
               final leftSidebarWidth = constraints.maxWidth - boardAreaWidth;
 
               return Stack(
@@ -533,9 +537,10 @@ class ChessBoardLayout extends StatelessWidget {
                           ],
                         ),
                       ),
-                      // 右侧棋盘区域 - 固定宽度，减少边距
+                      // 右侧棋盘区域 - 固定宽度，保持适当边距
                       Container(
                         width: boardAreaWidth,
+                        padding: const EdgeInsets.symmetric(horizontal: 40),
                         child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,

@@ -3,6 +3,7 @@ import '../models/chess_models.dart';
 import '../models/game_history.dart';
 import '../screens/game_screen.dart';
 import '../services/chess_ai.dart';
+import '../services/sound_service.dart';
 
 // Events
 abstract class ReplayEvent {}
@@ -229,6 +230,9 @@ class ReplayBloc extends Bloc<ReplayEvent, ReplayState> {
       moveHistory: state.gameHistory.moves.sublist(0, nextMoveIndex + 1),
       lastMove: move,
     ));
+
+    // 播放移动音效
+    SoundService().playMoveSound();
   }
 
   void _onPreviousMove(PreviousMove event, Emitter<ReplayState> emit) {
@@ -303,5 +307,10 @@ class ReplayBloc extends Bloc<ReplayEvent, ReplayState> {
           ? state.gameHistory.moves[previousMoveIndex]
           : null,
     ));
+
+    // 播放移动音效（如果有有效的移动）
+    if (previousMoveIndex >= 0) {
+      SoundService().playMoveSound();
+    }
   }
 }
