@@ -665,7 +665,7 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
       isDemonstrating: false,
     ));
 
-    // 重新加载可用课程列表
-    add(const LoadAvailableLessons());
+    // 注意：不再自动重新加载课程列表，避免不必要的异步操作
+    // 学习首页会在需要时自动加载课程列表
   }
 }

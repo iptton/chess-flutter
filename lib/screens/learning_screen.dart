@@ -30,19 +30,27 @@ class LearningScreen extends StatelessWidget {
   }
 }
 
-class LearningView extends StatelessWidget {
+class LearningView extends StatefulWidget {
   const LearningView({Key? key}) : super(key: key);
+
+  @override
+  State<LearningView> createState() => _LearningViewState();
+}
+
+class _LearningViewState extends State<LearningView> {
+  bool _isStepDialogShowing = false;
+  bool _isLessonDialogShowing = false;
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<LearningBloc, LearningState>(
       listener: (context, state) {
         // 监听步骤完成状态，显示完成对话框
-        if (state.isStepCompleted) {
+        if (state.isStepCompleted && !_isStepDialogShowing) {
           _showStepCompletionDialog(context, state);
         }
         // 监听课程完成状态，显示庆祝对话框
-        if (state.isLessonCompleted) {
+        if (state.isLessonCompleted && !_isLessonDialogShowing) {
           _showLessonCompletionDialog(context, state);
         }
       },
@@ -444,6 +452,7 @@ class LearningView extends StatelessWidget {
     final currentStep = state.currentLesson?.currentStep;
     if (currentStep == null) return;
 
+    _isStepDialogShowing = true;
     showDialog(
       context: context,
       barrierDismissible: false, // 防止用户点击外部关闭
@@ -501,6 +510,7 @@ class LearningView extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: () {
               Navigator.of(dialogContext).pop();
+              _isStepDialogShowing = false;
               context.read<LearningBloc>().add(const ConfirmStepCompletion());
             },
             icon: const Icon(Icons.arrow_forward),
@@ -520,6 +530,7 @@ class LearningView extends StatelessWidget {
     final currentLesson = state.currentLesson;
     if (currentLesson == null) return;
 
+    _isLessonDialogShowing = true;
     showDialog(
       context: context,
       barrierDismissible: false, // 防止用户点击外部关闭
@@ -647,6 +658,7 @@ class LearningView extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: () {
               Navigator.of(dialogContext).pop();
+              _isLessonDialogShowing = false;
               context.read<LearningBloc>().add(const ConfirmLessonCompletion());
             },
             icon: const Icon(Icons.arrow_back),

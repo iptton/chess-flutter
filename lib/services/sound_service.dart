@@ -1,6 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:io' show Platform;
 import 'settings_service.dart';
 
 /// 音效播放服务
@@ -24,55 +23,11 @@ class SoundService {
   /// 当前音量 (0.0 - 1.0)
   double get volume => _volume;
 
-  /// 检查当前平台是否支持音效
-  bool _isPlatformSupported() {
-    // if (kIsWeb) return true;
-    return true;
-
-    // try {
-    //   final platform = Platform.operatingSystem;
-    //   // ohos平台目前不支持audioplayers插件
-    //   if (platform == 'ohos') {
-    //     if (kDebugMode) {
-    //       print('SoundService: 检测到ohos平台，audioplayers插件暂不支持');
-    //     }
-    //     return false;
-    //   }
-    //   return true;
-    // } catch (e) {
-    //   if (kDebugMode) {
-    //     print('SoundService: 平台检测失败: $e');
-    //   }
-    //   return false;
-    // }
-  }
-
   /// 初始化音效服务
   Future<void> initialize() async {
     try {
-      // 检测平台信息
-      String platformInfo = 'Unknown';
-      if (!kIsWeb) {
-        try {
-          platformInfo = Platform.operatingSystem;
-        } catch (e) {
-          platformInfo = 'Platform detection failed: $e';
-        }
-      } else {
-        platformInfo = 'Web';
-      }
-
       if (kDebugMode) {
-        print('SoundService: 开始初始化音效服务，平台: $platformInfo');
-      }
-
-      // 检查平台支持
-      if (!_isPlatformSupported()) {
-        _isInitialized = false;
-        if (kDebugMode) {
-          print('SoundService: 当前平台($platformInfo)不支持音效功能');
-        }
-        return;
+        print('SoundService: 开始初始化音效服务');
       }
 
       _audioPlayer = AudioPlayer();
@@ -82,7 +37,7 @@ class SoundService {
       _isInitialized = true;
 
       if (kDebugMode) {
-        print('SoundService: 音效服务已初始化成功，平台: $platformInfo');
+        print('SoundService: 音效服务已初始化成功');
       }
     } catch (e) {
       if (kDebugMode) {
