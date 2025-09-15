@@ -29,6 +29,7 @@ dependencies:
   stockfish_chess_engine:
     git:
       url: "https://github.com/iptton-ai/StockfishChessEngineFlutter.git"
+  audioplayers: ^5.2.1
 
 dev_dependencies:
   flutter_test:
@@ -60,3 +61,4 @@ flutter:
     - assets/images/black_pawn.png
     - assets/images/black_rook.png
     - assets/privacy/privacy.txt
+    - assets/sounds/

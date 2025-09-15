@@ -3,10 +3,12 @@ import '../models/chess_models.dart';
 import '../screens/game_screen.dart';
 import '../utils/chess_rules.dart';
 import '../services/chess_ai.dart';
+import '../services/sound_service.dart';
 import 'chess_event.dart';
 
 class ChessBloc extends Bloc<ChessEvent, GameState> {
   ChessAI? _chessAI;
+  final SoundService _soundService = SoundService();
 
   ChessBloc() : super(GameState.initial()) {
     on<InitializeGame>(_onInitializeGame);
@@ -123,6 +125,9 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
         print('ChessBloc: 使用传统AI: ${event.aiDifficulty}');
       }
     }
+
+    // 初始化音效服务
+    await _soundService.initialize();
 
     emit(initialState);
 
@@ -422,6 +427,9 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       redoStates: [], // 清空重做列表
       isAIThinking: false, // 清除AI思考状态
     ));
+
+    // 播放音效
+    _playMoveSound(isCheck, isCheckmate, isStalemate);
 
     // 检查是否需要AI移动
     _checkForAIMove(emit);
@@ -738,6 +746,9 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isAIThinking: false, // 清除AI思考状态
     ));
 
+    // 播放音效
+    _playMoveSound(isCheck, isCheckmate, isStalemate);
+
     // 检查是否需要AI移动
     _checkForAIMove(emit);
   }
@@ -903,6 +914,12 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       // 修复：不更新撤销状态，保持现有的撤销列表
       redoStates: [], // 清空重做列表
     ));
+
+    // 播放兵升变音效
+    _soundService.playPromotionSound();
+
+    // 播放游戏状态音效
+    _playMoveSound(isCheck, isCheckmate, isStalemate);
 
     // 检查是否需要AI移动
     _checkForAIMove(emit);
@@ -1151,6 +1168,28 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
           add(MakeAIMove());
         }
       });
+    }
+  }
+
+  /// 播放移动音效
+  void _playMoveSound(bool isCheck, bool isCheckmate, bool isStalemate) {
+    if (isCheckmate) {
+      // 游戏结束，播放胜利或失败音效
+      final currentPlayerWins = state.currentPlayer != state.aiColor;
+      if (currentPlayerWins) {
+        _soundService.playWinSound();
+      } else {
+        _soundService.playLoseSound();
+      }
+    } else if (isStalemate) {
+      // 和棋，播放失败音效（表示没有获胜）
+      _soundService.playLoseSound();
+    } else if (isCheck) {
+      // 将军，播放将军音效
+      _soundService.playCheckSound();
+    } else {
+      // 普通移动，播放移动音效
+      _soundService.playMoveSound();
     }
   }
 }
