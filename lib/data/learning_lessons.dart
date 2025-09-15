@@ -283,20 +283,172 @@ class LearningLessons {
   LearningLesson get tacticsLesson => LearningLesson(
         id: 'tactics',
         title: '基础战术',
-        description: '学习常见的战术技巧',
+        description: '学习常见的战术技巧和组合',
         mode: LearningMode.tactics,
         steps: [
+          LearningStep(
+            id: 'tactics_intro',
+            title: '战术概述',
+            description: '了解国际象棋中的基本战术概念',
+            type: StepType.explanation,
+            instructions: const [
+              '战术是国际象棋中的短期计划和技巧',
+              '好的战术能够获得物质优势或位置优势',
+              '基本战术包括：牵制、叉攻、串攻、发现攻击',
+              '掌握战术是提高棋力的关键'
+            ],
+            boardState: _createInitialBoard(),
+            highlightPositions: const [
+              Position(row: 3, col: 3), // d5
+              Position(row: 3, col: 4), // e5
+              Position(row: 4, col: 3), // d4
+              Position(row: 4, col: 4), // e4 - 战术常发生的中心区域
+            ],
+          ),
           LearningStep(
             id: 'pin_tactic',
             title: '牵制战术',
             description: '学习如何使用牵制战术',
             type: StepType.explanation,
-            instructions: [
+            instructions: const [
               '牵制是限制对方棋子移动的战术',
               '被牵制的棋子不能移动，否则会暴露更重要的棋子',
-              '牵制可以创造战术机会'
+              '牵制分为绝对牵制和相对牵制',
+              '绝对牵制：被牵制棋子后面是王，不能移动'
             ],
             boardState: _createPinTacticBoard(),
+            highlightPositions: const [
+              Position(row: 4, col: 4), // 被牵制的棋子
+              Position(row: 4, col: 0), // 牵制的车
+              Position(row: 4, col: 7), // 被保护的王
+            ],
+          ),
+          LearningStep(
+            id: 'pin_practice',
+            title: '牵制练习',
+            description: '练习识别和执行牵制战术',
+            type: StepType.practice,
+            instructions: const [
+              '观察棋盘上的局面',
+              '找到可以牵制对方棋子的机会',
+              '执行牵制移动',
+              '牵制能限制对方的选择'
+            ],
+            boardState: _createPinPracticeBoard(),
+            requiredMoves: const [
+              ChessMove(
+                from: Position(row: 7, col: 0), // a1车
+                to: Position(row: 4, col: 0), // a4
+                piece:
+                    ChessPiece(type: PieceType.rook, color: PieceColor.white),
+              ),
+            ],
+            successMessage: '很好！你成功牵制了对方的马，它现在不能移动了。',
+            failureMessage: '试试用车牵制对方的马，让它无法移动。',
+            highlightPositions: const [
+              Position(row: 7, col: 0), // 白车
+              Position(row: 4, col: 0), // 目标位置
+              Position(row: 4, col: 1), // 被牵制的马
+            ],
+          ),
+          LearningStep(
+            id: 'fork_tactic',
+            title: '叉攻战术',
+            description: '学习如何使用叉攻战术',
+            type: StepType.demonstration,
+            instructions: const [
+              '叉攻是同时攻击两个或多个目标',
+              '马是执行叉攻的最佳棋子',
+              '叉攻通常能获得物质优势',
+              '王叉是最强力的叉攻形式'
+            ],
+            boardState: _createForkTacticBoard(),
+            demonstrationMoves: const [
+              ChessMove(
+                from: Position(row: 5, col: 2), // c3马
+                to: Position(row: 3, col: 3), // d5
+                piece:
+                    ChessPiece(type: PieceType.knight, color: PieceColor.white),
+              ),
+            ],
+            highlightPositions: const [
+              Position(row: 3, col: 3), // 叉攻位置
+              Position(row: 2, col: 4), // 被攻击的王
+              Position(row: 4, col: 5), // 被攻击的车
+            ],
+          ),
+          LearningStep(
+            id: 'skewer_tactic',
+            title: '串攻战术',
+            description: '学习如何使用串攻战术',
+            type: StepType.explanation,
+            instructions: const [
+              '串攻是攻击一个棋子，迫使它移动后攻击后面的棋子',
+              '串攻与牵制相反：先攻击前面的棋子',
+              '通常用来攻击价值较低的棋子，获得后面价值更高的棋子',
+              '长距离棋子（车、象、后）最适合执行串攻'
+            ],
+            boardState: _createSkewerTacticBoard(),
+            highlightPositions: const [
+              Position(row: 4, col: 0), // 攻击的车
+              Position(row: 4, col: 3), // 前面的象
+              Position(row: 4, col: 6), // 后面的王
+            ],
+          ),
+          LearningStep(
+            id: 'discovery_attack',
+            title: '发现攻击',
+            description: '学习发现攻击的战术',
+            type: StepType.demonstration,
+            instructions: const [
+              '发现攻击是移动一个棋子，暴露后面棋子的攻击',
+              '移动的棋子和后面的棋子都能造成威胁',
+              '发现将军是最强力的发现攻击',
+              '可以同时攻击多个目标'
+            ],
+            boardState: _createDiscoveryAttackBoard(),
+            demonstrationMoves: const [
+              ChessMove(
+                from: Position(row: 4, col: 3), // d4马
+                to: Position(row: 2, col: 2), // c6
+                piece:
+                    ChessPiece(type: PieceType.knight, color: PieceColor.white),
+              ),
+            ],
+            highlightPositions: const [
+              Position(row: 4, col: 3), // 移动的马
+              Position(row: 4, col: 0), // 后面的车
+              Position(row: 4, col: 7), // 被攻击的王
+            ],
+          ),
+          LearningStep(
+            id: 'tactical_combination',
+            title: '战术组合',
+            description: '学习如何组合多种战术',
+            type: StepType.practice,
+            instructions: const [
+              '战术组合是连续使用多种战术技巧',
+              '先用一个战术创造机会，再用另一个战术获得优势',
+              '观察局面，寻找组合的可能性',
+              '执行第一步战术移动'
+            ],
+            boardState: _createTacticalCombinationBoard(),
+            requiredMoves: const [
+              ChessMove(
+                from: Position(row: 5, col: 5), // f3马
+                to: Position(row: 3, col: 4), // e5
+                piece:
+                    ChessPiece(type: PieceType.knight, color: PieceColor.white),
+              ),
+            ],
+            successMessage: '很好！这个马叉同时攻击了王和车，这是一个强力的战术组合。',
+            failureMessage: '试试用马叉攻击王和车，这是一个经典的战术组合。',
+            highlightPositions: const [
+              Position(row: 5, col: 5), // 白马
+              Position(row: 3, col: 4), // 叉攻位置
+              Position(row: 2, col: 3), // 黑王
+              Position(row: 4, col: 6), // 黑车
+            ],
           ),
         ],
       );
@@ -764,6 +916,106 @@ class LearningLessons {
     board[0][1] = null; // 移除b8马
     board[2][2] = const ChessPiece(
         type: PieceType.knight, color: PieceColor.black); // Nc6
+
+    return board;
+  }
+
+  /// 创建牵制练习棋盘
+  List<List<ChessPiece?>> _createPinPracticeBoard() {
+    final board = _createEmptyBoard();
+    // 白王和黑王
+    board[7][4] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.white);
+    board[0][4] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.black);
+
+    // 白车在a1，可以牵制黑马
+    board[7][0] =
+        const ChessPiece(type: PieceType.rook, color: PieceColor.white);
+
+    // 黑马在a4，黑王在a8（可以被牵制）
+    board[4][1] =
+        const ChessPiece(type: PieceType.knight, color: PieceColor.black);
+    board[4][0] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.black); // 改为a4
+
+    return board;
+  }
+
+  /// 创建叉攻战术棋盘
+  List<List<ChessPiece?>> _createForkTacticBoard() {
+    final board = _createEmptyBoard();
+    // 白王和黑王
+    board[7][4] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.white);
+    board[2][4] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.black);
+
+    // 白马在c3，可以叉攻黑王和黑车
+    board[5][2] =
+        const ChessPiece(type: PieceType.knight, color: PieceColor.white);
+
+    // 黑车在f4
+    board[4][5] =
+        const ChessPiece(type: PieceType.rook, color: PieceColor.black);
+
+    return board;
+  }
+
+  /// 创建串攻战术棋盘
+  List<List<ChessPiece?>> _createSkewerTacticBoard() {
+    final board = _createEmptyBoard();
+    // 白王和黑王
+    board[7][4] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.white);
+    board[4][6] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.black);
+
+    // 白车在a4，可以串攻黑象和黑王
+    board[4][0] =
+        const ChessPiece(type: PieceType.rook, color: PieceColor.white);
+
+    // 黑象在d4（前面），黑王在g4（后面）
+    board[4][3] =
+        const ChessPiece(type: PieceType.bishop, color: PieceColor.black);
+
+    return board;
+  }
+
+  /// 创建发现攻击棋盘
+  List<List<ChessPiece?>> _createDiscoveryAttackBoard() {
+    final board = _createEmptyBoard();
+    // 白王和黑王
+    board[7][4] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.white);
+    board[4][7] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.black);
+
+    // 白车在a4，白马在d4（挡住攻击线）
+    board[4][0] =
+        const ChessPiece(type: PieceType.rook, color: PieceColor.white);
+    board[4][3] =
+        const ChessPiece(type: PieceType.knight, color: PieceColor.white);
+
+    return board;
+  }
+
+  /// 创建战术组合棋盘
+  List<List<ChessPiece?>> _createTacticalCombinationBoard() {
+    final board = _createEmptyBoard();
+    // 白王和黑王
+    board[7][4] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.white);
+    board[2][3] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.black);
+
+    // 白马在f3，可以叉攻黑王和黑车
+    board[5][5] =
+        const ChessPiece(type: PieceType.knight, color: PieceColor.white);
+
+    // 黑车在f4
+    board[4][6] =
+        const ChessPiece(type: PieceType.rook, color: PieceColor.black);
 
     return board;
   }
