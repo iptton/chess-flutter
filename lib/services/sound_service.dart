@@ -26,24 +26,25 @@ class SoundService {
 
   /// 检查当前平台是否支持音效
   bool _isPlatformSupported() {
-    if (kIsWeb) return true;
+    // if (kIsWeb) return true;
+    return true;
 
-    try {
-      final platform = Platform.operatingSystem;
-      // ohos平台目前不支持audioplayers插件
-      if (platform == 'ohos') {
-        if (kDebugMode) {
-          print('SoundService: 检测到ohos平台，audioplayers插件暂不支持');
-        }
-        return false;
-      }
-      return true;
-    } catch (e) {
-      if (kDebugMode) {
-        print('SoundService: 平台检测失败: $e');
-      }
-      return false;
-    }
+    // try {
+    //   final platform = Platform.operatingSystem;
+    //   // ohos平台目前不支持audioplayers插件
+    //   if (platform == 'ohos') {
+    //     if (kDebugMode) {
+    //       print('SoundService: 检测到ohos平台，audioplayers插件暂不支持');
+    //     }
+    //     return false;
+    //   }
+    //   return true;
+    // } catch (e) {
+    //   if (kDebugMode) {
+    //     print('SoundService: 平台检测失败: $e');
+    //   }
+    //   return false;
+    // }
   }
 
   /// 初始化音效服务

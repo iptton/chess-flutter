@@ -644,15 +644,28 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
 
   void _onConfirmStepCompletion(
       ConfirmStepCompletion event, Emitter<LearningState> emit) {
-    // 重置步骤完成状态并进入下一步
+    // 重置步骤完成状态
     emit(state.copyWith(isStepCompleted: false));
-    add(const NextStep());
+
+    // 立即进入下一步（避免分离操作导致的状态不一致）
+    _onNextStep(const NextStep(), emit);
   }
 
   void _onConfirmLessonCompletion(
       ConfirmLessonCompletion event, Emitter<LearningState> emit) {
-    // 重置课程完成状态并退出学习模式
-    emit(state.copyWith(isLessonCompleted: false));
-    add(const ExitLearning());
+    // 重置课程完成状态并退出学习模式（原子操作）
+    emit(state.copyWith(
+      isLessonCompleted: false,
+      clearCurrentLesson: true,
+      clearCurrentBoard: true,
+      clearCurrentInstruction: true,
+      clearStartTime: true,
+      highlightedPositions: const [],
+      isWaitingForMove: false,
+      isDemonstrating: false,
+    ));
+
+    // 重新加载可用课程列表
+    add(const LoadAvailableLessons());
   }
 }
