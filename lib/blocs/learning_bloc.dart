@@ -54,8 +54,20 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
 
     try {
       final lessons = await _learningService.getAvailableLessons();
+
+      // 为每个课程加载保存的进度
+      final lessonsWithProgress = <LearningLesson>[];
+      for (final lesson in lessons) {
+        final savedProgress = await _learningService.loadProgress(lesson.id);
+        if (savedProgress != null) {
+          lessonsWithProgress.add(savedProgress);
+        } else {
+          lessonsWithProgress.add(lesson);
+        }
+      }
+
       emit(state.copyWith(
-        availableLessons: lessons,
+        availableLessons: lessonsWithProgress,
         isLoading: false,
       ));
     } catch (e) {

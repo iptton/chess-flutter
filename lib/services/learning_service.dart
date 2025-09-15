@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/learning_models.dart';
 import '../models/chess_models.dart';
 import '../data/learning_lessons.dart';
@@ -46,15 +48,86 @@ class LearningService {
 
   /// 保存学习进度
   Future<void> saveProgress(LearningLesson lesson) async {
-    // TODO: 实现本地存储或云端同步
-    await Future.delayed(const Duration(milliseconds: 50));
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final progressKey = 'learning_progress_${lesson.id}';
+
+      // 保存课程进度数据
+      final progressData = {
+        'lessonId': lesson.id,
+        'currentStepIndex': lesson.currentStepIndex,
+        'isCompleted': lesson.isCompleted,
+        'score': lesson.score,
+        'timeSpent': lesson.timeSpent?.inMilliseconds,
+        'stepStatuses': lesson.steps
+            .map((step) => {
+                  'id': step.id,
+                  'status': step.status.toString(),
+                })
+            .toList(),
+      };
+
+      await prefs.setString(progressKey, jsonEncode(progressData));
+      print('LearningService: 已保存课程进度 - ${lesson.id}');
+    } catch (e) {
+      print('LearningService: 保存进度失败 - $e');
+    }
   }
 
   /// 加载学习进度
   Future<LearningLesson?> loadProgress(String lessonId) async {
-    // TODO: 从本地存储或云端加载进度
-    await Future.delayed(const Duration(milliseconds: 50));
-    return null;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final progressKey = 'learning_progress_$lessonId';
+      final progressJson = prefs.getString(progressKey);
+
+      if (progressJson == null) {
+        return null;
+      }
+
+      final progressData = jsonDecode(progressJson) as Map<String, dynamic>;
+
+      // 获取原始课程
+      final originalLesson = await getLessonById(lessonId);
+      if (originalLesson == null) {
+        return null;
+      }
+
+      // 恢复步骤状态
+      final stepStatuses = progressData['stepStatuses'] as List<dynamic>;
+      final statusMap = <String, StepStatus>{};
+
+      for (final statusData in stepStatuses) {
+        final stepId = statusData['id'] as String;
+        final statusString = statusData['status'] as String;
+        statusMap[stepId] = _parseStepStatus(statusString);
+      }
+
+      // 更新步骤状态
+      final updatedSteps = originalLesson.steps.map((step) {
+        final savedStatus = statusMap[step.id];
+        if (savedStatus != null) {
+          return step.copyWith(status: savedStatus);
+        }
+        return step;
+      }).toList();
+
+      // 恢复课程状态
+      final timeSpentMs = progressData['timeSpent'] as int?;
+      final timeSpent =
+          timeSpentMs != null ? Duration(milliseconds: timeSpentMs) : null;
+
+      return originalLesson.copyWith(
+        currentStepIndex: progressData['currentStepIndex'] as int,
+        isCompleted: progressData['isCompleted'] as bool,
+        score: progressData['score'] as int,
+        timeSpent: timeSpent,
+        steps: updatedSteps,
+      );
+    } catch (e) {
+      print('LearningService: 加载进度失败 - $e');
+      return null;
+    }
   }
 
   /// 获取用户学习统计
@@ -188,5 +261,21 @@ class LearningService {
       failureMessage: failureMessage,
       metadata: metadata,
     );
+  }
+
+  /// 解析步骤状态字符串
+  StepStatus _parseStepStatus(String statusString) {
+    switch (statusString) {
+      case 'StepStatus.notStarted':
+        return StepStatus.notStarted;
+      case 'StepStatus.inProgress':
+        return StepStatus.inProgress;
+      case 'StepStatus.completed':
+        return StepStatus.completed;
+      case 'StepStatus.failed':
+        return StepStatus.failed;
+      default:
+        return StepStatus.notStarted;
+    }
   }
 }
