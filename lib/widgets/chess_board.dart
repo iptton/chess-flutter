@@ -499,19 +499,23 @@ class ChessBoardLayout extends StatelessWidget {
             final isLandscape = aspectRatio > 1.5;
 
             if (isLandscape) {
-              // 横屏布局：左侧工具栏占满剩余空间，右侧棋盘保持适当边距
-              // 计算棋盘区域的宽度：棋盘大小加上左右边距
-              final boardAreaWidth = boardSize + 80; // 棋盘 + 左右边距(40px each)
+              // 横屏布局：棋盘为主体，占据更大空间，工具栏紧凑
+              // 计算更大的棋盘尺寸（横屏模式下优先考虑棋盘大小）
+              final landscapeBoardSize =
+                  min(constraints.maxHeight * 0.85, constraints.maxWidth * 0.6);
+              final boardAreaWidth =
+                  landscapeBoardSize + 60; // 棋盘 + 左右边距(30px each)
               final leftSidebarWidth = constraints.maxWidth - boardAreaWidth;
 
               return Stack(
                 children: [
                   Row(
                     children: [
-                      // 左侧工具栏 - 占满剩余空间
+                      // 左侧工具栏 - 紧凑布局，为棋盘让出更多空间
                       Container(
                         width: leftSidebarWidth,
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 12),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -520,34 +524,36 @@ class ChessBoardLayout extends StatelessWidget {
                             Flexible(
                               child: Container(
                                 constraints: const BoxConstraints(
-                                    maxWidth: 400), // 限制内容最大宽度
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: topContent
-                                      .expand((widget) => [
-                                            widget,
-                                            const SizedBox(
-                                                height: ChessConstants.spacing),
-                                          ])
-                                      .toList(),
+                                    maxWidth: 300), // 减小内容最大宽度
+                                child: Transform.scale(
+                                  scale: 0.8, // 缩小工具栏内容到80%
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: topContent
+                                        .expand((widget) => [
+                                              widget,
+                                              const SizedBox(height: 8), // 减小间距
+                                            ])
+                                        .toList(),
+                                  ),
                                 ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      // 右侧棋盘区域 - 固定宽度，保持适当边距
+                      // 右侧棋盘区域 - 更大的棋盘作为主体
                       Container(
                         width: boardAreaWidth,
-                        padding: const EdgeInsets.symmetric(horizontal: 40),
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
                         child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              ChessBoardGrid(boardSize: boardSize),
+                              ChessBoardGrid(boardSize: landscapeBoardSize),
                             ],
                           ),
                         ),
