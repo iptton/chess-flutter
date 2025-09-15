@@ -14,6 +14,7 @@ import '../services/chess_ai.dart';
 import '../utils/chess_constants.dart';
 import '../utils/chess_formatters.dart';
 import '../services/game_history_service.dart';
+import 'themed_background.dart';
 
 // 主入口组件
 class ChessBoard extends StatelessWidget {
@@ -215,10 +216,10 @@ class _ChessBoardView extends StatelessWidget {
             return true;
           },
           child: Scaffold(
-            appBar: AppBar(
-              title: Text(isReplayMode
+            appBar: ThemedAppBar(
+              title: isReplayMode
                   ? '对局复盘'
-                  : ChessFormatters.getGameModeTitle(gameMode)),
+                  : ChessFormatters.getGameModeTitle(gameMode),
               actions: [
                 if (isReplayMode)
                   IconButton(

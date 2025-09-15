@@ -7,6 +7,7 @@ import '../widgets/learning_board.dart';
 import '../widgets/learning_instruction_panel.dart';
 import '../widgets/learning_progress_bar.dart';
 import '../widgets/learning_step_controls.dart';
+import '../widgets/themed_background.dart';
 
 class LearningScreen extends StatelessWidget {
   final LearningMode? initialMode;
@@ -47,11 +48,8 @@ class LearningView extends StatelessWidget {
             return true; // Allow normal back behavior to main home
           },
           child: Scaffold(
-            appBar: AppBar(
-              title: const Text('学习模式'),
-              backgroundColor: const Color(0xFF667EEA),
-              foregroundColor: Colors.white,
-              elevation: 0,
+            appBar: ThemedAppBar(
+              title: '学习模式',
               leading: state.currentLesson != null
                   ? IconButton(
                       icon: const Icon(Icons.arrow_back),
