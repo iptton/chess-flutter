@@ -77,7 +77,7 @@ class LearningStatsPanel extends StatelessWidget {
   Widget _buildProgressSection() {
     final currentStep = lesson.currentStepIndex + 1;
     final totalSteps = lesson.steps.length;
-    final progressPercentage = ((currentStep / totalSteps) * 100).round();
+    final progressPercentage = (lesson.progress * 100).round();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,7 +105,7 @@ class LearningStatsPanel extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         LinearProgressIndicator(
-          value: isCompleted ? 1.0 : (currentStep / totalSteps),
+          value: isCompleted ? 1.0 : lesson.progress,
           backgroundColor: Colors.grey[300],
           valueColor: AlwaysStoppedAnimation<Color>(
             isCompleted ? Colors.green : Colors.blue,
