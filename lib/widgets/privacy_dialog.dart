@@ -2,12 +2,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:testflutter/widgets/privacy_content.dart';
+import 'package:testflutter/widgets/themed_background.dart';
 
 class PrivacyDialog extends StatefulWidget {
   final FutureOr<void> Function() onAccept;
   final FutureOr<void> Function() onReject;
 
-  const PrivacyDialog({super.key, required this.onAccept, required this.onReject});
+  const PrivacyDialog(
+      {super.key, required this.onAccept, required this.onReject});
 
   @override
   State<PrivacyDialog> createState() => _PrivacyDialogState();
@@ -71,12 +73,16 @@ class _PrivacyDialogState extends State<PrivacyDialog> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Row(
                   children: const [
-                    Icon(Icons.privacy_tip, color: Colors.blue),
+                    Icon(Icons.privacy_tip, color: AppTheme.primaryColor),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         '隐私政策与用户协议',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryTextColor,
+                        ),
                       ),
                     ),
                   ],
@@ -85,12 +91,17 @@ class _PrivacyDialogState extends State<PrivacyDialog> {
               const Divider(height: 1),
               Expanded(
                 child: _loading
-                    ? const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
+                    ? const Center(
+                        child: Padding(
+                            padding: EdgeInsets.all(24),
+                            child: CircularProgressIndicator(
+                                color: AppTheme.primaryColor)))
                     : _error != null
                         ? _ErrorView(message: _error!, onRetry: _loadContent)
                         : Scrollbar(
                             child: SingleChildScrollView(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: _content,
@@ -103,18 +114,21 @@ class _PrivacyDialogState extends State<PrivacyDialog> {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                 child: Row(
                   children: [
-                    TextButton(
+                    ThemedButton(
+                      text: '不同意并退出',
                       onPressed: () async {
                         await widget.onReject();
                       },
-                      child: const Text('不同意并退出'),
+                      isSecondary: true,
                     ),
                     const Spacer(),
-                    ElevatedButton(
-                      onPressed: _loading || _error != null ? null : () async {
-                        await widget.onAccept();
-                      },
-                      child: const Text('同意并继续'),
+                    ThemedButton(
+                      text: '同意并继续',
+                      onPressed: _loading || _error != null
+                          ? null
+                          : () async {
+                              await widget.onAccept();
+                            },
                     ),
                   ],
                 ),
@@ -140,19 +154,27 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.wifi_off, size: 48, color: Colors.grey),
-            const SizedBox(height: 12),
+            const Icon(
+              Icons.wifi_off,
+              size: 48,
+              color: AppTheme.secondaryTextColor,
+            ),
+            const SizedBox(height: 16),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.grey),
+              style: const TextStyle(
+                color: AppTheme.secondaryTextColor,
+                fontSize: 16,
+              ),
             ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
+            const SizedBox(height: 24),
+            ThemedButton(
+              text: '重试',
+              icon: Icons.refresh,
               onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('重试'),
-            )
+              isSecondary: true,
+            ),
           ],
         ),
       ),
