@@ -135,13 +135,27 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
     final lesson = state.currentLesson;
     if (lesson == null) return;
 
+    // 首先标记当前步骤为已完成
+    final currentStepIndex = lesson.currentStepIndex;
+    final updatedSteps = List<LearningStep>.from(lesson.steps);
+    if (currentStepIndex < updatedSteps.length) {
+      updatedSteps[currentStepIndex] = updatedSteps[currentStepIndex].copyWith(
+        status: StepStatus.completed,
+      );
+    }
+
     final nextIndex = lesson.currentStepIndex + 1;
     if (nextIndex < lesson.steps.length) {
-      final updatedLesson = lesson.copyWith(currentStepIndex: nextIndex);
+      final updatedLesson = lesson.copyWith(
+        steps: updatedSteps,
+        currentStepIndex: nextIndex,
+      );
       emit(state.copyWith(currentLesson: updatedLesson));
       _initializeCurrentStep(emit);
     } else {
-      // 课程完成
+      // 课程完成 - 确保最后一步也被标记为完成
+      final completedLesson = lesson.copyWith(steps: updatedSteps);
+      emit(state.copyWith(currentLesson: completedLesson));
       add(const CompleteLesson());
     }
   }
