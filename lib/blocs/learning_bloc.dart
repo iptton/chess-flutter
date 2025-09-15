@@ -193,6 +193,22 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
     RestartCurrentStep event,
     Emitter<LearningState> emit,
   ) {
+    final lesson = state.currentLesson;
+    if (lesson == null) return;
+
+    // 重置当前步骤状态为未开始
+    final currentStepIndex = lesson.currentStepIndex;
+    final updatedSteps = List<LearningStep>.from(lesson.steps);
+    if (currentStepIndex < updatedSteps.length) {
+      updatedSteps[currentStepIndex] = updatedSteps[currentStepIndex].copyWith(
+        status: StepStatus.notStarted,
+      );
+    }
+
+    final updatedLesson = lesson.copyWith(steps: updatedSteps);
+    emit(state.copyWith(currentLesson: updatedLesson));
+
+    // 重新初始化当前步骤
     _initializeCurrentStep(emit);
   }
 
@@ -352,11 +368,83 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
   }
 
   void _onShowHint(ShowHint event, Emitter<LearningState> emit) {
-    // TODO: 实现显示提示逻辑
+    final lesson = state.currentLesson;
+    final currentStep = lesson?.currentStep;
+
+    if (lesson == null || currentStep == null) return;
+
+    String hintMessage;
+
+    // 根据步骤类型提供不同的提示
+    switch (currentStep.type) {
+      case StepType.explanation:
+        hintMessage = '这是一个解释步骤，请仔细阅读内容后点击"下一步"继续。';
+        break;
+      case StepType.practice:
+        if (currentStep.requiredMoves != null &&
+            currentStep.requiredMoves!.isNotEmpty) {
+          final firstMove = currentStep.requiredMoves!.first;
+          final fromPos = _positionToChessNotation(firstMove.from);
+          final toPos = _positionToChessNotation(firstMove.to);
+          hintMessage = '提示：尝试将棋子从 $fromPos 移动到 $toPos';
+
+          // 高亮提示位置
+          emit(state.copyWith(
+            highlightedPositions: [firstMove.from, firstMove.to],
+            currentInstruction: hintMessage,
+          ));
+          return;
+        } else {
+          hintMessage = '这是一个练习步骤，请根据指令进行操作。';
+        }
+        break;
+      case StepType.demonstration:
+        hintMessage = '这是一个演示步骤，观看演示后继续下一步。';
+        break;
+      case StepType.quiz:
+        hintMessage = '这是一个测验步骤，请仔细思考后选择答案。';
+        break;
+    }
+
+    emit(state.copyWith(currentInstruction: hintMessage));
+
+    // 3秒后清除提示
+    Timer(const Duration(seconds: 3), () {
+      if (!isClosed) {
+        add(const ClearInstruction());
+      }
+    });
   }
 
   void _onSkipCurrentStep(SkipCurrentStep event, Emitter<LearningState> emit) {
-    // TODO: 实现跳过当前步骤逻辑
+    final lesson = state.currentLesson;
+    if (lesson == null) return;
+
+    // 只有练习步骤可以跳过
+    final currentStep = lesson.currentStep;
+    if (currentStep?.type != StepType.practice) return;
+
+    // 标记当前步骤为已完成（跳过也算完成）
+    final currentStepIndex = lesson.currentStepIndex;
+    final updatedSteps = List<LearningStep>.from(lesson.steps);
+    if (currentStepIndex < updatedSteps.length) {
+      updatedSteps[currentStepIndex] = updatedSteps[currentStepIndex].copyWith(
+        status: StepStatus.completed,
+      );
+    }
+
+    final updatedLesson = lesson.copyWith(steps: updatedSteps);
+    emit(state.copyWith(
+      currentLesson: updatedLesson,
+      currentInstruction: '已跳过当前练习步骤',
+    ));
+
+    // 2秒后自动进入下一步
+    Timer(const Duration(seconds: 2), () {
+      if (!isClosed) {
+        add(const NextStep());
+      }
+    });
   }
 
   void _onCompleteLesson(CompleteLesson event, Emitter<LearningState> emit) {
@@ -518,5 +606,13 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
       }
     }
     return null;
+  }
+
+  /// 将位置转换为国际象棋记号法 (例如: Position(7,0) -> "a1")
+  String _positionToChessNotation(Position position) {
+    final files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+    final file = files[position.col];
+    final rank = (8 - position.row).toString();
+    return '$file$rank';
   }
 }
