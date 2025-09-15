@@ -5,7 +5,7 @@ class ChessFormatters {
   static String getGameModeTitle(GameMode gameMode) {
     switch (gameMode) {
       case GameMode.offline:
-        return '单机对战 (人机)';
+        return 'AI 对战';
       case GameMode.online:
         return '联网对战';
       case GameMode.faceToFace:
@@ -26,7 +26,8 @@ class ChessFormatters {
         position.row < 0 ||
         position.row > 7) {
       // 如果坐标异常，返回一个错误指示，并记录详细信息用于调试
-      print('警告：getPositionName收到无效坐标: row=${position.row}, col=${position.col}');
+      print(
+          '警告：getPositionName收到无效坐标: row=${position.row}, col=${position.col}');
       return '无效位置(${position.row},${position.col})';
     }
 
@@ -36,7 +37,8 @@ class ChessFormatters {
       final row = 8 - position.row;
       return '$col$row';
     } catch (e) {
-      print('错误：getPositionName计算失败: row=${position.row}, col=${position.col}, 错误: $e');
+      print(
+          '错误：getPositionName计算失败: row=${position.row}, col=${position.col}, 错误: $e');
       return '计算错误(${position.row},${position.col})';
     }
   }
