@@ -1,4 +1,6 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io' show Platform;
 import 'settings_service.dart';
 
 /// 音效播放服务
@@ -22,23 +24,78 @@ class SoundService {
   /// 当前音量 (0.0 - 1.0)
   double get volume => _volume;
 
+  /// 检查当前平台是否支持音效
+  bool _isPlatformSupported() {
+    if (kIsWeb) return true;
+
+    try {
+      final platform = Platform.operatingSystem;
+      // ohos平台目前不支持audioplayers插件
+      if (platform == 'ohos') {
+        if (kDebugMode) {
+          print('SoundService: 检测到ohos平台，audioplayers插件暂不支持');
+        }
+        return false;
+      }
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        print('SoundService: 平台检测失败: $e');
+      }
+      return false;
+    }
+  }
+
   /// 初始化音效服务
   Future<void> initialize() async {
     try {
+      // 检测平台信息
+      String platformInfo = 'Unknown';
+      if (!kIsWeb) {
+        try {
+          platformInfo = Platform.operatingSystem;
+        } catch (e) {
+          platformInfo = 'Platform detection failed: $e';
+        }
+      } else {
+        platformInfo = 'Web';
+      }
+
+      if (kDebugMode) {
+        print('SoundService: 开始初始化音效服务，平台: $platformInfo');
+      }
+
+      // 检查平台支持
+      if (!_isPlatformSupported()) {
+        _isInitialized = false;
+        if (kDebugMode) {
+          print('SoundService: 当前平台($platformInfo)不支持音效功能');
+        }
+        return;
+      }
+
       _audioPlayer = AudioPlayer();
 
       // 尝试设置音量来测试插件是否正常工作
       await _audioPlayer.setVolume(_volume);
       _isInitialized = true;
-      print('SoundService: 音效服务已初始化');
+
+      if (kDebugMode) {
+        print('SoundService: 音效服务已初始化成功，平台: $platformInfo');
+      }
     } catch (e) {
-      print('SoundService: 初始化失败 - $e');
+      if (kDebugMode) {
+        print('SoundService: 初始化失败 - $e');
+        print('SoundService: 错误详情: ${e.toString()}');
+      }
       _isInitialized = false;
 
       // 如果是插件未找到的错误，我们不再尝试创建AudioPlayer
       // 直接标记为未初始化，这样其他方法可以安全地处理
       if (e.toString().contains('MissingPluginException')) {
-        print('SoundService: 插件未找到，音效功能将被禁用');
+        if (kDebugMode) {
+          print('SoundService: 插件未找到，音效功能将被禁用');
+        }
       }
     }
   }
@@ -77,7 +134,9 @@ class SoundService {
     _volume = volume;
     if (_isInitialized) {
       await _audioPlayer.setVolume(_isMuted ? 0.0 : _volume);
-      print('SoundService: 音量设置为 ${_isMuted ? 0.0 : _volume}');
+      if (kDebugMode) {
+        print('SoundService: 音量设置为 ${_isMuted ? 0.0 : _volume}');
+      }
     }
   }
 
@@ -86,7 +145,9 @@ class SoundService {
     _isMuted = true;
     if (_isInitialized) {
       await _audioPlayer.setVolume(0.0);
-      print('SoundService: 已静音');
+      if (kDebugMode) {
+        print('SoundService: 已静音');
+      }
     }
   }
 
@@ -95,7 +156,9 @@ class SoundService {
     _isMuted = false;
     if (_isInitialized) {
       await _audioPlayer.setVolume(_volume);
-      print('SoundService: 已取消静音，音量: $_volume');
+      if (kDebugMode) {
+        print('SoundService: 已取消静音，音量: $_volume');
+      }
     }
   }
 
@@ -114,39 +177,70 @@ class SoundService {
       if (_isInitialized) {
         await _audioPlayer.dispose();
         _isInitialized = false;
-        print('SoundService: 资源已释放');
+        if (kDebugMode) {
+          print('SoundService: 资源已释放');
+        }
       }
     } catch (e) {
-      print('SoundService: 释放资源失败 - $e');
+      if (kDebugMode) {
+        print('SoundService: 释放资源失败 - $e');
+      }
       _isInitialized = false; // 无论如何都标记为未初始化
     }
   }
 
   /// 播放指定音效文件
   Future<void> _playSound(String assetPath) async {
+    if (kDebugMode) {
+      print('SoundService: 尝试播放音效 - $assetPath');
+      print('SoundService: 状态检查 - 已初始化: $_isInitialized, 已静音: $_isMuted');
+    }
+
     // 如果服务未初始化、已静音，或者AudioPlayer实例不存在，直接返回
     if (!_isInitialized || _isMuted) {
+      if (kDebugMode) {
+        print('SoundService: 跳过播放 - 服务未初始化或已静音');
+      }
       return;
     }
 
     try {
       // 检查用户设置是否启用音效
       final soundEnabled = await SettingsService.getSoundEnabled();
+      if (kDebugMode) {
+        print('SoundService: 用户音效设置: $soundEnabled');
+      }
+
       if (!soundEnabled) {
+        if (kDebugMode) {
+          print('SoundService: 跳过播放 - 用户已禁用音效');
+        }
         return;
       }
 
       // 尝试播放音效
-      await _audioPlayer
-          .play(AssetSource(assetPath.replaceFirst('assets/', '')));
-      print('SoundService: 播放音效 - $assetPath');
+      final assetSource = AssetSource(assetPath.replaceFirst('assets/', ''));
+      if (kDebugMode) {
+        print('SoundService: 开始播放音效文件: ${assetSource.path}');
+      }
+
+      await _audioPlayer.play(assetSource);
+
+      if (kDebugMode) {
+        print('SoundService: 音效播放成功 - $assetPath');
+      }
     } catch (e) {
-      print('SoundService: 播放音效失败 - $assetPath: $e');
+      if (kDebugMode) {
+        print('SoundService: 播放音效失败 - $assetPath: $e');
+        print('SoundService: 错误类型: ${e.runtimeType}');
+      }
 
       // 如果是插件错误，标记服务为未初始化以避免后续尝试
       if (e.toString().contains('MissingPluginException')) {
         _isInitialized = false;
-        print('SoundService: 检测到插件错误，禁用音效功能');
+        if (kDebugMode) {
+          print('SoundService: 检测到插件错误，禁用音效功能');
+        }
       }
     }
   }
