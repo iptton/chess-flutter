@@ -209,7 +209,7 @@ class EndgamePuzzleService {
       endgameType: type,
       boardState: _createPuzzleBoard(type, PuzzleDifficulty.beginner),
       solution: _createPuzzleSolution(type, PuzzleDifficulty.beginner),
-      hints: ['考虑王的位置', '注意兵的推进'],
+      hints: ['仔细考虑王的位置和作用', '密切注意兵的推进路线'],
       evaluation: '这个残局展示了${_getEndgameTypeName(type)}的基本原理',
       source: 'Generated',
       rating: 1200 + index * 10,

@@ -10,6 +10,8 @@ class ChessFormatters {
         return '联网对战';
       case GameMode.faceToFace:
         return '面对面对战';
+      case GameMode.endgamePractice:
+        return '残局练习';
     }
   }
 

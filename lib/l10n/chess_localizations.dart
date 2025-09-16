@@ -22,6 +22,8 @@ class ChessLocalizations {
             return '联网对战';
           case GameMode.faceToFace:
             return '面对面对战';
+          case GameMode.endgamePractice:
+            return '残局练习';
         }
       case 'en':
         switch (gameMode) {
@@ -31,6 +33,8 @@ class ChessLocalizations {
             return 'Online Game';
           case GameMode.faceToFace:
             return 'Face to Face';
+          case GameMode.endgamePractice:
+            return 'Endgame Practice';
         }
       default:
         return getGameModeTitle(gameMode); // 默认使用中文
@@ -88,7 +92,8 @@ class ChessLocalizations {
     final pieceType = getPieceTypeName(move.piece.type);
 
     if (move.capturedPiece != null) {
-      final capturedColor = move.capturedPiece!.color == PieceColor.white ? white : black;
+      final capturedColor =
+          move.capturedPiece!.color == PieceColor.white ? white : black;
       final capturedType = getPieceTypeName(move.capturedPiece!.type);
 
       return locale == 'en'

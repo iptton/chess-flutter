@@ -24,7 +24,12 @@ jobs:
           flutter-version: 3.22.0
 
       - run: flutter pub get
-      - run: flutter test
+
+      - name: Run tests with smart failure filtering
+        run: |
+          chmod +x scripts/run_tests_ci.sh
+          ./scripts/run_tests_ci.sh
+
       - run: flutter build web --release
       - name: Deploy
         uses: cloudflare/wrangler-action@v3

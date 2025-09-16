@@ -36,58 +36,74 @@ packages:
   audioplayers:
     dependency: "direct main"
     description:
-      path: "/Users/zxnap/code/opensource/AI/audioplayers/packages/audioplayers"
-      relative: false
-    source: path
+      path: "packages/audioplayers"
+      ref: HEAD
+      resolved-ref: "4801a9b3f6a791a349b03d1a39281d6a07ed2000"
+      url: "https://github.com/iptton-ai/audioplayers.git"
+    source: git
     version: "6.5.1"
   audioplayers_android:
     dependency: transitive
     description:
-      path: "../code/opensource/AI/audioplayers/packages/audioplayers_android"
-      relative: true
-    source: path
+      path: "packages/audioplayers_android"
+      ref: HEAD
+      resolved-ref: "4801a9b3f6a791a349b03d1a39281d6a07ed2000"
+      url: "https://github.com/iptton-ai/audioplayers.git"
+    source: git
     version: "5.2.1"
   audioplayers_darwin:
     dependency: transitive
     description:
-      path: "../code/opensource/AI/audioplayers/packages/audioplayers_darwin"
-      relative: true
-    source: path
+      path: "packages/audioplayers_darwin"
+      ref: HEAD
+      resolved-ref: "4801a9b3f6a791a349b03d1a39281d6a07ed2000"
+      url: "https://github.com/iptton-ai/audioplayers.git"
+    source: git
     version: "6.3.0"
   audioplayers_linux:
     dependency: transitive
     description:
-      path: "../code/opensource/AI/audioplayers/packages/audioplayers_linux"
-      relative: true
-    source: path
+      path: "packages/audioplayers_linux"
+      ref: HEAD
+      resolved-ref: "4801a9b3f6a791a349b03d1a39281d6a07ed2000"
+      url: "https://github.com/iptton-ai/audioplayers.git"
+    source: git
     version: "4.2.1"
   audioplayers_ohos:
     dependency: transitive
     description:
-      path: "../code/opensource/AI/audioplayers/packages/audioplayers_ohos"
-      relative: true
-    source: path
+      path: "packages/audioplayers_ohos"
+      ref: HEAD
+      resolved-ref: "4801a9b3f6a791a349b03d1a39281d6a07ed2000"
+      url: "https://github.com/iptton-ai/audioplayers.git"
+    source: git
     version: "1.0.0"
   audioplayers_platform_interface:
     dependency: transitive
     description:
-      path: "../code/opensource/AI/audioplayers/packages/audioplayers_platform_interface"
-      relative: true
-    source: path
+      path: "packages/audioplayers_platform_interface"
+      ref: HEAD
+      resolved-ref: "4801a9b3f6a791a349b03d1a39281d6a07ed2000"
+      url: "https://github.com/iptton-ai/audioplayers.git"
+    source: git
     version: "7.1.1"
   audioplayers_web:
     dependency: transitive
     description:
-      path: "../code/opensource/AI/audioplayers/packages/audioplayers_web"
-      relative: true
-    source: path
+      path: "packages/audioplayers_web"
+      ref: HEAD
+      resolved-ref: "4801a9b3f6a791a349b03d1a39281d6a07ed2000"
+      url: "https://github.com/iptton-ai/audioplayers.git"
+    source: git
     version: "5.1.1"
   audioplayers_windows:
     dependency: transitive
     description:
-      path: "../code/opensource/AI/audioplayers/packages/audioplayers_windows"
-      relative: true
-    source: path
+      path: "packages/audioplayers_windows"
+      ref: HEAD
+      resolved-ref: "4801a9b3f6a791a349b03d1a39281d6a07ed2000"
+      url: "https://github.com/iptton-ai/audioplayers.git"
+    source: git
     version: "4.2.1"
   bloc:
     dependency: transitive

@@ -12,6 +12,7 @@ enum GameMode {
   offline, // 单机对战（人机）
   online, // 联网对战
   faceToFace, // 面对面对战
+  endgamePractice, // 残局练习
 }
 
 class GameScreen extends StatelessWidget {

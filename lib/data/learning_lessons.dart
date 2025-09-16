@@ -446,7 +446,7 @@ class LearningLessons {
             highlightPositions: const [
               Position(row: 5, col: 5), // 白马
               Position(row: 3, col: 4), // 叉攻位置
-              Position(row: 2, col: 3), // 黑王
+              Position(row: 1, col: 2), // 黑王
               Position(row: 4, col: 6), // 黑车
             ],
           ),
@@ -926,18 +926,16 @@ class LearningLessons {
     // 白王和黑王
     board[7][4] =
         const ChessPiece(type: PieceType.king, color: PieceColor.white);
-    board[0][4] =
-        const ChessPiece(type: PieceType.king, color: PieceColor.black);
+    board[0][0] = const ChessPiece(
+        type: PieceType.king, color: PieceColor.black); // 黑王在a8
 
     // 白车在a1，可以牵制黑马
     board[7][0] =
         const ChessPiece(type: PieceType.rook, color: PieceColor.white);
 
-    // 黑马在a4，黑王在a8（可以被牵制）
-    board[4][1] =
-        const ChessPiece(type: PieceType.knight, color: PieceColor.black);
-    board[4][0] =
-        const ChessPiece(type: PieceType.king, color: PieceColor.black); // 改为a4
+    // 黑马在a4，在白车和黑王之间（可以被牵制）
+    board[4][0] = const ChessPiece(
+        type: PieceType.knight, color: PieceColor.black); // 黑马在a4
 
     return board;
   }
@@ -1006,14 +1004,14 @@ class LearningLessons {
     // 白王和黑王
     board[7][4] =
         const ChessPiece(type: PieceType.king, color: PieceColor.white);
-    board[2][3] =
-        const ChessPiece(type: PieceType.king, color: PieceColor.black);
+    board[1][2] = const ChessPiece(
+        type: PieceType.king, color: PieceColor.black); // 黑王在c7
 
     // 白马在f3，可以叉攻黑王和黑车
     board[5][5] =
         const ChessPiece(type: PieceType.knight, color: PieceColor.white);
 
-    // 黑车在f4
+    // 黑车在g4，马从e5可以叉攻c7的王和g4的车
     board[4][6] =
         const ChessPiece(type: PieceType.rook, color: PieceColor.black);
 
