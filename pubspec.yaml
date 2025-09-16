@@ -30,7 +30,9 @@ dependencies:
     git:
       url: "https://github.com/iptton-ai/StockfishChessEngineFlutter.git"
   audioplayers:
-    path: /Users/zxnap/code/opensource/AI/audioplayers/packages/audioplayers
+    git:
+      url: "https://github.com/iptton-ai/audioplayers.git"
+      path: "packages/audioplayers"
 
 dev_dependencies:
   flutter_test:
