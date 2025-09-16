@@ -1,6 +1,7 @@
 import { FlutterEngine, Log } from '@ohos/flutter_ohos';
 import FluttertoastPlugin from 'fluttertoast';
 import SharedPreferencesPlugin from 'shared_preferences_ohos';
+import AudioplayersPlugin from 'audioplayers_ohos';
 
 /**
  * Generated file. Do not edit.
@@ -16,6 +17,7 @@ export class GeneratedPluginRegistrant {
     try {
       flutterEngine.getPlugins()?.add(new FluttertoastPlugin());
       flutterEngine.getPlugins()?.add(new SharedPreferencesPlugin());
+      flutterEngine.getPlugins()?.add(new AudioplayersPlugin());
     } catch (e) {
       Log.e(
         TAG,
