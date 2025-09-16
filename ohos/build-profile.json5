@@ -70,18 +70,6 @@
           ]
         }
       ]
-    },
-    {
-      "name": "audioplayers_ohos",
-      "srcPath": "../../code/opensource/AI/audioplayers/packages/audioplayers_ohos/ohos",
-      "targets": [
-        {
-          "name": "default",
-          "applyToProducts": [
-            "default"
-          ]
-        }
-      ]
     }
   ]
 }

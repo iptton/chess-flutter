@@ -24,7 +24,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late AnimationController _backgroundController;
   late AnimationController _slideController;
   late Animation<double> _slideAnimation;
@@ -32,6 +33,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+
+    // 添加生命周期观察者
+    WidgetsBinding.instance.addObserver(this);
 
     // 背景渐变动画控制器 - 使用更平滑的循环
     _backgroundController = AnimationController(
@@ -58,13 +62,49 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     WidgetsBinding.instance
         .addPostFrameCallback((_) => _ensurePrivacyAccepted());
+
+    // 初始设置状态栏
+    WidgetsBinding.instance.addPostFrameCallback((_) => _updateStatusBar());
   }
 
   @override
   void dispose() {
+    // 移除生命周期观察者
+    WidgetsBinding.instance.removeObserver(this);
     _backgroundController.dispose();
     _slideController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // 当应用恢复时重新设置状态栏
+    if (state == AppLifecycleState.resumed) {
+      _updateStatusBar();
+    }
+  }
+
+  /// 更新状态栏颜色
+  void _updateStatusBar() {
+    if (!mounted) return;
+
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 768; // 小屏幕阈值
+
+    // 根据屏幕大小设置状态栏颜色
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarBrightness: isSmallScreen ? Brightness.light : Brightness.dark,
+        statusBarIconBrightness:
+            isSmallScreen ? Brightness.dark : Brightness.light,
+        systemNavigationBarColor:
+            isSmallScreen ? Colors.white : const Color(0xFF667EEA),
+        systemNavigationBarIconBrightness:
+            isSmallScreen ? Brightness.dark : Brightness.light,
+      ),
+    );
   }
 
   Future<void> _ensurePrivacyAccepted() async {
@@ -104,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               gameMode: GameMode.faceToFace,
             ),
           ),
-        );
+        ).then((_) => _updateStatusBar()); // 返回时更新状态栏
         break;
       case 'ai':
         // 显示AI难度选择对话框
@@ -114,16 +154,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const ReplayScreen()),
-        );
+        ).then((_) => _updateStatusBar()); // 返回时更新状态栏
         break;
       case 'learn':
-        Navigator.of(context).pushWithThemeTransition(const LearningHomePage());
+        Navigator.of(context)
+            .pushWithThemeTransition(const LearningHomePage())
+            .then((_) => _updateStatusBar()); // 返回时更新状态栏
         break;
       case 'settings':
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const SettingsScreen()),
-        );
+        ).then((_) => _updateStatusBar()); // 返回时更新状态栏
         break;
     }
   }
@@ -184,6 +226,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       );
 
       print('HomeScreen: 导航完成，结果: $result');
+      // 返回时更新状态栏
+      _updateStatusBar();
     } catch (e, stackTrace) {
       print('HomeScreen: _startAdvancedAIGame发生异常: $e');
       print('HomeScreen: 堆栈跟踪: $stackTrace');
@@ -208,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           allowedPlayer: playerColor,
         ),
       ),
-    );
+    ).then((_) => _updateStatusBar()); // 返回时更新状态栏
   }
 
   @override
@@ -216,19 +260,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final screenSize = MediaQuery.of(context).size;
     final isSmallScreen = screenSize.width < 768; // 小屏幕阈值
 
-    // 根据屏幕大小设置状态栏颜色
-    SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarBrightness: isSmallScreen ? Brightness.light : Brightness.dark,
-        statusBarIconBrightness:
-            isSmallScreen ? Brightness.dark : Brightness.light,
-        systemNavigationBarColor:
-            isSmallScreen ? Colors.white : const Color(0xFF667EEA),
-        systemNavigationBarIconBrightness:
-            isSmallScreen ? Brightness.dark : Brightness.light,
-      ),
-    );
+    // 确保状态栏在每次构建时都是最新的
+    WidgetsBinding.instance.addPostFrameCallback((_) => _updateStatusBar());
 
     return Scaffold(
       body: AnimatedBuilder(

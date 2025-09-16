@@ -40,6 +40,7 @@
 - [x] 学习模式架构修复 - 2025-01-15 - commit a41204c
 - [x] 横屏棋盘布局优化 - 2025-01-15 - commit 29192f6
 - [x] ohos平台音效插件注册修复 - 2025-01-15 - commit e09a44a
+- [x] 菜单首页状态栏颜色更新功能 - 2025-01-16 - commit [待提交]
 
 ## � 进行中 (开始任务即加上，以便中断时可以从这开始)
 
@@ -209,6 +210,23 @@
 - 添加注册：`flutterEngine.getPlugins()?.add(new AudioplayersPlugin());`
 - 保持与其他插件一致的注册模式
 **测试**: 添加ohos音效修复测试验证插件注册和功能正常
+
+#### 菜单首页状态栏颜色更新功能 (commit [待提交])
+**问题**: 菜单首页的状态栏颜色应该在每次从别的页面返回时都重新更新，避免从二级页面回来时状态栏颜色不对
+**解决方案**:
+- 实现WidgetsBindingObserver接口，监听应用生命周期变化
+- 添加专用的`_updateStatusBar()`方法，根据屏幕大小设置状态栏颜色
+- 在initState中添加生命周期观察者和初始状态栏设置
+- 在didChangeAppLifecycleState中监听应用恢复事件，自动重新设置状态栏
+- 在所有导航方法中添加`.then((_) => _updateStatusBar())`回调，确保从其他页面返回时更新状态栏
+- 使用PostFrameCallback确保状态栏更新在UI渲染完成后执行
+**技术实现**:
+- HomeScreen实现WidgetsBindingObserver接口
+- 状态栏颜色逻辑：小屏幕(<768px)使用深色图标配白色背景，大屏幕使用浅色图标配渐变背景
+- 生命周期管理：在dispose中移除观察者，防止内存泄漏
+- 导航回调：Navigator.push().then()模式确保页面返回时状态栏更新
+- 安全检查：使用mounted检查确保组件未销毁时才更新状态栏
+**测试**: 添加状态栏更新测试验证WidgetsBindingObserver实现和功能正常
 
 ### 测试覆盖
 - 所有核心功能都有对应的单元测试

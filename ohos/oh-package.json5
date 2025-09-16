@@ -18,6 +18,7 @@
     "@ohos/flutter_module": "file:./entry",
     "fluttertoast": "file:./har/fluttertoast.har",
     "stockfish_chess_engine": "file:./har/stockfish_chess_engine.har",
-    "audioplayers_ohos": "../../code/opensource/AI/audioplayers/packages/audioplayers_ohos/ohos"
+    "audioplayers_ohos": "file:./har/audioplayers_ohos.har",
+    "path_provider_ohos": "file:./har/path_provider_ohos.har"
   }
 }

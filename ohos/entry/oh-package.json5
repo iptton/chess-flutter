@@ -11,6 +11,7 @@
     "flutter_inappwebview_ohos": "file:../har/flutter_inappwebview_ohos.har",
     "stockfish_chess_engine": "file:../har/stockfish_chess_engine.har",
     "@ohos/flutter_ohos": "har/flutter.har",
-    "audioplayers_ohos": "file:../har/audioplayers_ohos.har"
+    "audioplayers_ohos": "file:../har/audioplayers_ohos.har",
+    "path_provider_ohos": "file:../har/path_provider_ohos.har"
   }
 }
