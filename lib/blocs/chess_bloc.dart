@@ -599,11 +599,13 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     final newLastPawnDoubleMovedNumber =
         Map<PieceColor, int>.from(state.lastPawnDoubleMovedNumber);
 
-    // 修复：升变时不切换玩家，等待用户选择升变类型后再切换
+    // 检查是否是AI移动
+    final isAIMove = state.gameMode == GameMode.offline &&
+        state.aiColor == state.currentPlayer;
 
     emit(state.copyWith(
       board: newBoard,
-      // 修复：不切换currentPlayer，保持当前玩家不变
+      // 修复：不切换currentPlayer，等待用户选择升变类型后再切换
       selectedPosition: null,
       validMoves: [],
       lastPawnDoubleMoved: newLastPawnDoubleMoved,
@@ -616,7 +618,13 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isAIThinking: false, // 清除AI思考状态
     ));
 
-    // 修复：升变时不检查AI移动，等升变完成后再检查
+    // 修复：如果是AI移动，自动选择升变为皇后
+    if (isAIMove) {
+      print('AI升变：自动选择升变为皇后');
+      // 直接处理AI升变，不使用Future.microtask
+      _onPromotePawn(PromotePawn(event.to, PieceType.queen), emit);
+    }
+    // 对于人类玩家，等待UI选择升变类型
   }
 
   void _handleRegularMove(

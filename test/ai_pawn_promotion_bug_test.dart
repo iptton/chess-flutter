@@ -159,6 +159,7 @@ void main() {
         initialPlayer: PieceColor.white,
         gameMode: GameMode.offline,
         aiDifficulty: AIDifficulty.easy,
+        aiColor: PieceColor.white, // 设置AI为白方
       ));
 
       // Wait for AI to make its move (should promote the pawn)
