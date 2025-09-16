@@ -73,6 +73,17 @@ class MovePiece extends ChessEvent {
   List<Object?> get props => [from, to];
 }
 
+class MovePieceWithPromotion extends ChessEvent {
+  final Position from;
+  final Position to;
+  final PieceType promotionType;
+
+  const MovePieceWithPromotion(this.from, this.to, this.promotionType);
+
+  @override
+  List<Object?> get props => [from, to, promotionType];
+}
+
 class PromotePawn extends ChessEvent {
   final Position position;
   final PieceType promotionType;

@@ -25,20 +25,44 @@
 
 ## 修复方案
 
-在 `_handlePawnPromotion` 方法中添加 AI 自动升变逻辑：
+### 🎯 最终解决方案：让 AI 使用 Stockfish 的智能升变决策
 
+经过深入分析，发现 **AI 自动变皇后并不总是最正确的决策**！
+
+**问题重新分析**：
+- Stockfish 在计算最佳移动时已经考虑了所有升变选择
+- 它会返回包含升变类型的完整移动信息（如 `e7e8n` 表示升变为马）
+- 但我们的代码丢失了这个智能决策，强制选择皇后
+
+**正确的修复方案**：
+
+1. **创建新的事件类型**：
 ```dart
-// 检查是否是AI移动
-final isAIMove = state.gameMode == GameMode.offline &&
-    state.aiColor == state.currentPlayer;
+class MovePieceWithPromotion extends ChessEvent {
+  final Position from;
+  final Position to;
+  final PieceType promotionType;
 
-// 修复：如果是AI移动，自动选择升变为皇后
-if (isAIMove) {
-  print('AI升变：自动选择升变为皇后');
-  // 直接处理AI升变，不使用Future.microtask
-  _onPromotePawn(PromotePawn(event.to, PieceType.queen), emit);
+  const MovePieceWithPromotion(this.from, this.to, this.promotionType);
 }
-// 对于人类玩家，等待UI选择升变类型
+```
+
+2. **AI 移动时保留升变信息**：
+```dart
+// 在 _onMakeAIMove 中
+if (aiMove.isPromotion && aiMove.promotionType != null) {
+  add(MovePieceWithPromotion(aiMove.from, aiMove.to, aiMove.promotionType!));
+} else {
+  add(MovePiece(aiMove.from, aiMove.to));
+}
+```
+
+3. **处理带升变类型的移动**：
+```dart
+void _onMovePieceWithPromotion(MovePieceWithPromotion event, Emitter<GameState> emit) {
+  // 验证是AI移动并处理升变
+  _handlePawnPromotionWithType(event, movingPiece, newBoard, emit, event.promotionType);
+}
 ```
 
 ## 修复内容
@@ -77,10 +101,14 @@ if (isAIMove) {
 ## 修复效果
 
 1. **✅ 解决了 AI 升变卡住的问题**
-2. **✅ AI 自动选择升变为皇后**
+2. **✅ AI 使用 Stockfish 的智能升变决策**
+   - 支持升变为皇后、车、象、马
+   - 支持欠升变（Under-promotion）战术
+   - 在特定位置选择最佳升变类型
 3. **✅ 升变后正确切换玩家**
 4. **✅ 游戏流程正常继续**
 5. **✅ 不影响人类玩家的升变体验**
+6. **✅ 保持了 Stockfish 引擎的完整智能**
 
 ## 相关文件
 
@@ -97,11 +125,26 @@ if (isAIMove) {
 4. **卡住** - AI 没有用户界面
 
 ### 修复后的流程：
-1. AI 移动兵到升变位置
-2. `_handlePawnPromotion` 被调用
-3. 检测到是 AI 移动
-4. **自动调用** `_onPromotePawn(PieceType.queen)`
-5. 升变完成，切换玩家
-6. 游戏正常继续
+1. **Stockfish 计算最佳移动**（包含升变类型）
+2. **AI 返回完整移动信息**（如 `e7e8n` 升变为马）
+3. **使用 MovePieceWithPromotion 事件**保留升变类型
+4. **_handlePawnPromotionWithType 被调用**
+5. **使用 Stockfish 建议的升变类型**（皇后/车/象/马）
+6. 升变完成，切换玩家
+7. 游戏正常继续
 
-这个修复确保了 AI 对战中的兵升变能够自动完成，解决了程序停住的问题，同时保持了游戏的流畅性和正确性。
+## 🧠 为什么这个解决方案更好？
+
+### 战术优势：
+- **欠升变（Under-promotion）**：在某些位置升变为马可能形成叉攻
+- **升变为车**：在残局中可能比皇后更有效
+- **升变为象**：在特定位置可能避免僵局
+- **保持 Stockfish 的完整智能**：不丢失引擎的战术计算
+
+### 技术优势：
+- **尊重 Stockfish 的决策**：使用世界顶级引擎的完整智能
+- **支持所有升变类型**：不限制为皇后
+- **保持代码一致性**：AI 和人类使用相同的升变逻辑
+- **未来扩展性**：支持更复杂的升变策略
+
+这个修复不仅解决了程序停住的问题，还提升了 AI 的棋力，让 AI 能够在适当的时候选择最佳的升变类型，而不是盲目地总是升变为皇后。

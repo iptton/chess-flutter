@@ -14,6 +14,7 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     on<InitializeGame>(_onInitializeGame);
     on<SelectPiece>(_onSelectPiece);
     on<MovePiece>(_onMovePiece);
+    on<MovePieceWithPromotion>(_onMovePieceWithPromotion);
     on<PromotePawn>(_onPromotePawn);
     on<UndoMove>(_onUndoMove);
     on<RedoMove>(_onRedoMove);
@@ -317,6 +318,63 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
         newLastPawnDoubleMoved, emit);
   }
 
+  void _onMovePieceWithPromotion(
+      MovePieceWithPromotion event, Emitter<GameState> emit) {
+    // 检查是否是AI移动
+    final isAIMove = state.isAIThinking ||
+        (state.gameMode == GameMode.offline &&
+            state.aiColor == state.currentPlayer);
+
+    if (!isAIMove) {
+      // 人类玩家不应该使用这个事件
+      return;
+    }
+
+    // 验证移动是否合法
+    final piece = state.board[event.from.row][event.from.col];
+    if (piece == null || piece.color != state.currentPlayer) {
+      return;
+    }
+
+    final validMoves = ChessRules.getValidMoves(
+      state.board,
+      event.from,
+      hasKingMoved: state.hasKingMoved,
+      hasRookMoved: state.hasRookMoved,
+      lastPawnDoubleMoved: state.lastPawnDoubleMoved[
+          state.currentPlayer == PieceColor.white
+              ? PieceColor.black
+              : PieceColor.white],
+      lastPawnDoubleMovedNumber: state.lastPawnDoubleMovedNumber[
+          state.currentPlayer == PieceColor.white
+              ? PieceColor.black
+              : PieceColor.white],
+      currentMoveNumber: state.currentMoveNumber,
+    );
+    final isValidMove = validMoves
+        .any((pos) => pos.row == event.to.row && pos.col == event.to.col);
+
+    if (!isValidMove) {
+      return;
+    }
+
+    final movingPiece = state.board[event.from.row][event.from.col]!;
+    final newBoard = List<List<ChessPiece?>>.from(
+        state.board.map((row) => List<ChessPiece?>.from(row)));
+
+    // 检查是否是兵升变
+    if (_isPawnPromotion(movingPiece, MovePiece(event.from, event.to))) {
+      _handlePawnPromotionWithType(
+          event, movingPiece, newBoard, emit, event.promotionType);
+      return;
+    }
+
+    // 如果不是升变移动，按常规处理
+    final capturedPiece = state.board[event.to.row][event.to.col];
+    _handleRegularMove(MovePiece(event.from, event.to), movingPiece,
+        capturedPiece, newBoard, null, emit);
+  }
+
   bool _isCastlingMove(ChessPiece movingPiece, MovePiece event) {
     return movingPiece.type == PieceType.king &&
         (event.from.col - event.to.col).abs() == 2;
@@ -618,13 +676,65 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
       isAIThinking: false, // 清除AI思考状态
     ));
 
-    // 修复：如果是AI移动，自动选择升变为皇后
+    // 修复：如果是AI移动，检查是否有预定的升变类型
     if (isAIMove) {
-      print('AI升变：自动选择升变为皇后');
-      // 直接处理AI升变，不使用Future.microtask
-      _onPromotePawn(PromotePawn(event.to, PieceType.queen), emit);
+      // 检查最后一步移动是否包含升变类型（来自Stockfish）
+      final lastMove = state.lastMove;
+      final promotionType = lastMove?.promotionType ?? PieceType.queen;
+
+      print(
+          'AI升变：使用${promotionType == PieceType.queen ? '皇后' : promotionType == PieceType.rook ? '车' : promotionType == PieceType.bishop ? '象' : '马'}');
+
+      // 直接处理AI升变，使用Stockfish建议的升变类型
+      _onPromotePawn(PromotePawn(event.to, promotionType), emit);
     }
     // 对于人类玩家，等待UI选择升变类型
+  }
+
+  void _handlePawnPromotionWithType(
+      MovePieceWithPromotion event,
+      ChessPiece movingPiece,
+      List<List<ChessPiece?>> newBoard,
+      Emitter<GameState> emit,
+      PieceType promotionType) {
+    // 修复：在升变前保存当前状态，使升变作为整体操作
+    final newUndoStates = List<GameState>.from(state.undoStates)..add(state);
+
+    newBoard[event.to.row][event.to.col] = movingPiece;
+    newBoard[event.from.row][event.from.col] = null;
+
+    final move = ChessMove(
+      from: event.from,
+      to: event.to,
+      piece: movingPiece,
+      isPromotion: true,
+      promotionType: promotionType, // 使用AI指定的升变类型
+    );
+
+    // 创建新的双步兵记录
+    final newLastPawnDoubleMoved =
+        Map<PieceColor, Position?>.from(state.lastPawnDoubleMoved);
+    final newLastPawnDoubleMovedNumber =
+        Map<PieceColor, int>.from(state.lastPawnDoubleMovedNumber);
+
+    emit(state.copyWith(
+      board: newBoard,
+      selectedPosition: null,
+      validMoves: [],
+      lastPawnDoubleMoved: newLastPawnDoubleMoved,
+      lastPawnDoubleMovedNumber: newLastPawnDoubleMovedNumber,
+      currentMoveNumber: state.currentMoveNumber + 1,
+      moveHistory: [...state.moveHistory, move],
+      lastMove: move,
+      undoStates: newUndoStates,
+      redoStates: [], // 清空重做列表
+      isAIThinking: false, // 清除AI思考状态
+    ));
+
+    // 直接处理AI升变，使用指定的升变类型
+    print(
+        'AI升变：使用${promotionType == PieceType.queen ? '皇后' : promotionType == PieceType.rook ? '车' : promotionType == PieceType.bishop ? '象' : '马'}');
+    _onPromotePawn(PromotePawn(event.to, promotionType), emit);
   }
 
   void _handleRegularMove(
@@ -1095,10 +1205,19 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
 
       if (aiMove != null) {
         print('AI找到移动: 从${aiMove.from}到${aiMove.to}');
+        if (aiMove.isPromotion && aiMove.promotionType != null) {
+          print('AI升变移动: 升变为${aiMove.promotionType}');
+        }
         // 使用Future.microtask延迟发送移动事件，避免emitter重复使用
         Future.microtask(() {
           if (!isClosed) {
-            add(MovePiece(aiMove.from, aiMove.to));
+            // 如果是升变移动，保存升变类型信息
+            if (aiMove.isPromotion && aiMove.promotionType != null) {
+              add(MovePieceWithPromotion(
+                  aiMove.from, aiMove.to, aiMove.promotionType!));
+            } else {
+              add(MovePiece(aiMove.from, aiMove.to));
+            }
           }
         });
       } else {
