@@ -39,6 +39,7 @@
 - [x] 设置页面音效功能完善 - 2025-01-15 - commit 2d8d270
 - [x] 学习模式架构修复 - 2025-01-15 - commit a41204c
 - [x] 横屏棋盘布局优化 - 2025-01-15 - commit 29192f6
+- [x] ohos平台音效插件注册修复 - 2025-01-15 - commit e09a44a
 
 ## � 进行中 (开始任务即加上，以便中断时可以从这开始)
 
@@ -194,6 +195,20 @@
 - 动态计算左侧工具栏宽度：`constraints.maxWidth - boardAreaWidth`
 - 保持宽高比判断逻辑：`aspectRatio > 1.5`触发横屏布局
 **测试**: 添加横屏布局测试验证棋盘大小和工具栏缩放效果
+
+#### ohos平台音效插件注册修复 (commit e09a44a)
+**问题**: ohos平台出现MissingPluginException错误，音效功能无法正常工作
+**根本原因**: audioplayers插件没有在ohos平台的插件注册文件中注册
+**解决方案**:
+- 在`ohos/entry/src/main/ets/plugins/GeneratedPluginRegistrant.ets`中添加AudioplayersPlugin导入
+- 在`registerWith`方法中注册AudioplayersPlugin实例
+- 移除了SoundService中可能存在的平台特殊处理逻辑
+- 确保ohos平台与其他平台享有相同的音效功能
+**技术实现**:
+- 添加导入：`import AudioplayersPlugin from 'audioplayers_ohos';`
+- 添加注册：`flutterEngine.getPlugins()?.add(new AudioplayersPlugin());`
+- 保持与其他插件一致的注册模式
+**测试**: 添加ohos音效修复测试验证插件注册和功能正常
 
 ### 测试覆盖
 - 所有核心功能都有对应的单元测试
