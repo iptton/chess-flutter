@@ -28,6 +28,12 @@ class ChessBloc extends Bloc<ChessEvent, GameState> {
     on<SetAIDifficulty>(_onSetAIDifficulty);
   }
 
+  @override
+  Future<void> close() {
+    _chessAI?.dispose();
+    return super.close();
+  }
+
   void _onInitializeGame(InitializeGame event, Emitter<GameState> emit) async {
     if (event.replayGame != null) {
       // 初始化复盘状态

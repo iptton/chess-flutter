@@ -4,9 +4,13 @@ import '../models/learning_models.dart';
 import '../models/chess_models.dart';
 import '../services/learning_service.dart';
 import 'learning_events.dart';
+import '../screens/game_screen.dart';
+import '../services/chess_ai.dart';
+import '../utils/chess_rules.dart';
 
 class LearningBloc extends Bloc<LearningEvent, LearningState> {
   final LearningService _learningService;
+  final ChessAI _chessAI = ChessAI(difficulty: AIDifficulty.hard);
   Timer? _demonstrationTimer;
 
   LearningBloc({LearningService? learningService})
@@ -20,6 +24,7 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
     on<GoToStep>(_onGoToStep);
     on<RestartCurrentStep>(_onRestartCurrentStep);
     on<ExecuteLearningMove>(_onExecuteLearningMove);
+    on<ExecuteAIMoveInternal>(_onExecuteAIMove);
     on<StartDemonstration>(_onStartDemonstration);
     on<StopDemonstration>(_onStopDemonstration);
     on<DemonstrateNextMove>(_onDemonstrateNextMove);
@@ -40,11 +45,15 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
     on<LoadProgress>(_onLoadProgress);
     on<ConfirmStepCompletion>(_onConfirmStepCompletion);
     on<ConfirmLessonCompletion>(_onConfirmLessonCompletion);
+    on<StartAIGameFromPuzzle>(_onStartAIGameFromPuzzle);
+    on<StartPVPGameFromPuzzle>(_onStartPVPGameFromPuzzle);
+    on<ClearNavigation>(_onClearNavigation);
   }
 
   @override
   Future<void> close() {
     _demonstrationTimer?.cancel();
+    _chessAI.dispose();
     return super.close();
   }
 
@@ -226,45 +235,86 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
     _initializeCurrentStep(emit);
   }
 
-  void _onExecuteLearningMove(
+  Future<void> _onExecuteLearningMove(
     ExecuteLearningMove event,
     Emitter<LearningState> emit,
-  ) {
+  ) async {
     final lesson = state.currentLesson;
     final currentStep = lesson?.currentStep;
 
-    if (lesson == null || currentStep == null) return;
+    if (lesson == null || currentStep == null || state.currentBoard == null) return;
     if (currentStep.type != StepType.practice) return;
+
+    final piece = state.currentBoard![event.from.row][event.from.col];
+    if (piece == null) return;
 
     final move = ChessMove(
       from: event.from,
       to: event.to,
-      piece: state.currentBoard?[event.from.row][event.from.col] ??
-          const ChessPiece(type: PieceType.pawn, color: PieceColor.white),
+      piece: piece,
     );
 
-    // 检查移动是否正确
-    final isCorrectMove = _isCorrectMove(move, currentStep);
-
-    if (isCorrectMove) {
-      // 执行移动
-      final newBoard = _executeMove(state.currentBoard!, move);
-      final newMoveHistory = [...state.moveHistory, move];
-
-      emit(state.copyWith(
-        currentBoard: newBoard,
-        moveHistory: newMoveHistory,
-        currentInstruction: currentStep.successMessage ?? '做得很好！',
-      ));
-
-      // 检查是否完成了所有必需的移动
-      if (_isStepCompleted(currentStep, newMoveHistory)) {
-        _completeCurrentStep(emit);
+    if (currentStep.isInteractive) {
+      // 互动模式逻辑
+      final validMoves = ChessRules.getValidMoves(state.currentBoard!, event.from);
+      if (validMoves.any((pos) => pos.row == event.to.row && pos.col == event.to.col)) {
+        final newBoard = _executeMove(state.currentBoard!, move);
+        emit(state.copyWith(
+          currentBoard: newBoard,
+          moveHistory: [...state.moveHistory, move],
+          isWaitingForMove: false, // 用户移动后，等待AI
+        ));
+        // 触发AI移动
+        add(const ExecuteAIMoveInternal());
+      } else {
+        emit(state.copyWith(currentInstruction: '无效移动，请重试。'));
       }
     } else {
+      // 非互动模式逻辑
+      final isCorrectMove = _isCorrectMove(move, currentStep);
+
+      if (isCorrectMove) {
+        final newBoard = _executeMove(state.currentBoard!, move);
+        final newMoveHistory = [...state.moveHistory, move];
+
+        emit(state.copyWith(
+          currentBoard: newBoard,
+          moveHistory: newMoveHistory,
+          currentInstruction: currentStep.successMessage ?? '做得很好！',
+        ));
+
+        if (_isStepCompleted(currentStep, newMoveHistory)) {
+          _completeCurrentStep(emit);
+        }
+      } else {
+        emit(state.copyWith(
+          currentInstruction: currentStep.failureMessage ?? '这个移动不正确，请再试一次。',
+        ));
+      }
+    }
+  }
+
+  Future<void> _onExecuteAIMove(
+    ExecuteAIMoveInternal event,
+    Emitter<LearningState> emit,
+  ) async {
+    final lesson = state.currentLesson;
+    final currentStep = lesson?.currentStep;
+    if (lesson == null || currentStep == null || state.currentBoard == null) return;
+
+    // AI 思考
+    final aiMove = await _chessAI.getBestMove(state.currentBoard!, PieceColor.black);
+
+    if (aiMove != null) {
+      final newBoard = _executeMove(state.currentBoard!, aiMove);
       emit(state.copyWith(
-        currentInstruction: currentStep.failureMessage ?? '这个移动不正确，请再试一次。',
+        currentBoard: newBoard,
+        moveHistory: [...state.moveHistory, aiMove],
+        isWaitingForMove: true, // AI移动后，等待用户
       ));
+    } else {
+      // AI没有移动，可能是将死或和棋
+      _completeCurrentStep(emit);
     }
   }
 
@@ -667,5 +717,44 @@ class LearningBloc extends Bloc<LearningEvent, LearningState> {
 
     // 注意：不再自动重新加载课程列表，避免不必要的异步操作
     // 学习首页会在需要时自动加载课程列表
+  }
+
+  void _onStartAIGameFromPuzzle(
+    StartAIGameFromPuzzle event,
+    Emitter<LearningState> emit,
+  ) {
+    final boardState = state.currentLesson?.currentStep?.boardState;
+    if (boardState == null) return;
+
+    emit(state.copyWith(
+      navigateToGame: NavigateToGame(
+        boardState: boardState,
+        gameMode: GameMode.offline,
+        allowedPlayer: PieceColor.white,
+        aiColor: PieceColor.black,
+      ),
+    ));
+  }
+
+  void _onStartPVPGameFromPuzzle(
+    StartPVPGameFromPuzzle event,
+    Emitter<LearningState> emit,
+  ) {
+    final boardState = state.currentLesson?.currentStep?.boardState;
+    if (boardState == null) return;
+
+    emit(state.copyWith(
+      navigateToGame: NavigateToGame(
+        boardState: boardState,
+        gameMode: GameMode.faceToFace,
+      ),
+    ));
+  }
+
+  void _onClearNavigation(
+    ClearNavigation event,
+    Emitter<LearningState> emit,
+  ) {
+    emit(state.copyWith(clearNavigateToGame: true));
   }
 }

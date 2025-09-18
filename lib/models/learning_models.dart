@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'chess_models.dart';
+import '../screens/game_screen.dart';
 
 /// 学习模式类型
 enum LearningMode {
@@ -34,6 +35,7 @@ class LearningStep extends Equatable {
   final String description;
   final StepType type;
   final StepStatus status;
+  final bool isInteractive; // 新增：是否为互动式练习
   final List<String> instructions;
   final List<List<ChessPiece?>>? boardState;
   final List<Position>? highlightPositions;
@@ -49,6 +51,7 @@ class LearningStep extends Equatable {
     required this.description,
     required this.type,
     this.status = StepStatus.notStarted,
+    this.isInteractive = false, // 默认为非互动式
     this.instructions = const [],
     this.boardState,
     this.highlightPositions,
@@ -65,6 +68,7 @@ class LearningStep extends Equatable {
     String? description,
     StepType? type,
     StepStatus? status,
+    bool? isInteractive,
     List<String>? instructions,
     List<List<ChessPiece?>>? boardState,
     List<Position>? highlightPositions,
@@ -80,6 +84,7 @@ class LearningStep extends Equatable {
       description: description ?? this.description,
       type: type ?? this.type,
       status: status ?? this.status,
+      isInteractive: isInteractive ?? this.isInteractive,
       instructions: instructions ?? this.instructions,
       boardState: boardState ?? this.boardState,
       highlightPositions: highlightPositions ?? this.highlightPositions,
@@ -98,6 +103,7 @@ class LearningStep extends Equatable {
         description,
         type,
         status,
+        isInteractive,
         instructions,
         boardState,
         highlightPositions,
@@ -200,6 +206,7 @@ class LearningState extends Equatable {
   final bool isDemonstrating;
   final bool isStepCompleted; // 新增：步骤完成等待确认状态
   final bool isLessonCompleted; // 新增：课程完成庆祝状态
+  final NavigateToGame? navigateToGame; // 新增：导航目标
 
   const LearningState({
     this.currentLesson,
@@ -215,6 +222,7 @@ class LearningState extends Equatable {
     this.isDemonstrating = false,
     this.isStepCompleted = false, // 新增：默认为false
     this.isLessonCompleted = false, // 新增：默认为false
+    this.navigateToGame,
   });
 
   LearningState copyWith({
@@ -229,14 +237,16 @@ class LearningState extends Equatable {
     String? currentInstruction,
     bool? isWaitingForMove,
     bool? isDemonstrating,
-    bool? isStepCompleted, // 新增
-    bool? isLessonCompleted, // 新增
+    bool? isStepCompleted,
+    bool? isLessonCompleted,
+    NavigateToGame? navigateToGame,
     // 添加显式的null标志
     bool clearCurrentLesson = false,
     bool clearError = false,
     bool clearStartTime = false,
     bool clearCurrentBoard = false,
     bool clearCurrentInstruction = false,
+    bool clearNavigateToGame = false,
   }) {
     return LearningState(
       currentLesson:
@@ -254,8 +264,10 @@ class LearningState extends Equatable {
           : (currentInstruction ?? this.currentInstruction),
       isWaitingForMove: isWaitingForMove ?? this.isWaitingForMove,
       isDemonstrating: isDemonstrating ?? this.isDemonstrating,
-      isStepCompleted: isStepCompleted ?? this.isStepCompleted, // 新增
-      isLessonCompleted: isLessonCompleted ?? this.isLessonCompleted, // 新增
+      isStepCompleted: isStepCompleted ?? this.isStepCompleted,
+      isLessonCompleted: isLessonCompleted ?? this.isLessonCompleted,
+      navigateToGame:
+          clearNavigateToGame ? null : (navigateToGame ?? this.navigateToGame),
     );
   }
 
@@ -272,8 +284,9 @@ class LearningState extends Equatable {
         currentInstruction,
         isWaitingForMove,
         isDemonstrating,
-        isStepCompleted, // 新增
-        isLessonCompleted, // 新增
+        isStepCompleted,
+        isLessonCompleted,
+        navigateToGame,
       ];
 }
 
@@ -531,4 +544,22 @@ class PuzzleStatistics extends Equatable {
         difficultyBreakdown,
         endgameTypeBreakdown,
       ];
+}
+
+/// 导航到游戏屏幕的参数
+class NavigateToGame extends Equatable {
+  final List<List<ChessPiece?>> boardState;
+  final GameMode gameMode;
+  final PieceColor? aiColor;
+  final PieceColor? allowedPlayer;
+
+  const NavigateToGame({
+    required this.boardState,
+    required this.gameMode,
+    this.aiColor,
+    this.allowedPlayer,
+  });
+
+  @override
+  List<Object?> get props => [boardState, gameMode, aiColor, allowedPlayer];
 }

@@ -337,18 +337,18 @@ class LearningLessons {
             boardState: _createPinPracticeBoard(),
             requiredMoves: const [
               ChessMove(
-                from: Position(row: 7, col: 0), // a1车
-                to: Position(row: 4, col: 0), // a4
+                from: Position(row: 5, col: 2), // c3
+                to: Position(row: 6, col: 1), // b2
                 piece:
-                    ChessPiece(type: PieceType.rook, color: PieceColor.white),
+                    ChessPiece(type: PieceType.bishop, color: PieceColor.white),
               ),
             ],
             successMessage: '很好！你成功牵制了对方的马，它现在不能移动了。',
-            failureMessage: '试试用车牵制对方的马，让它无法移动。',
+            failureMessage: '试试将象从 c3 移动到 b2，以牵制黑马。',
             highlightPositions: const [
-              Position(row: 7, col: 0), // 白车
-              Position(row: 4, col: 0), // 目标位置
-              Position(row: 4, col: 1), // 被牵制的马
+              Position(row: 5, col: 2), // 白象 at c3
+              Position(row: 6, col: 1), // 目标位置 b2
+              Position(row: 4, col: 3), // 被牵制的马 at d4
             ],
           ),
           LearningStep(
@@ -763,7 +763,7 @@ class LearningLessons {
     board[0][0] =
         const ChessPiece(type: PieceType.king, color: PieceColor.black);
     // Add some pawns to show blocking
-    board[5][4] =
+    board[5][2] =
         const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
     return board;
   }
@@ -777,7 +777,7 @@ class LearningLessons {
     board[0][0] =
         const ChessPiece(type: PieceType.king, color: PieceColor.black);
     // Add some pieces to show queen's power
-    board[5][5] =
+    board[5][6] =
         const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
     board[4][3] =
         const ChessPiece(type: PieceType.pawn, color: PieceColor.black);
@@ -879,6 +879,9 @@ class LearningLessons {
     board[1][4] = null; // 移除e7兵
     board[3][4] =
         const ChessPiece(type: PieceType.pawn, color: PieceColor.black); // e5
+    board[6][3] = null; // 移除d2兵
+    board[4][3] =
+        const ChessPiece(type: PieceType.pawn, color: PieceColor.white); // d4
     return board;
   }
 
@@ -923,19 +926,21 @@ class LearningLessons {
   /// 创建牵制练习棋盘
   List<List<ChessPiece?>> _createPinPracticeBoard() {
     final board = _createEmptyBoard();
-    // 白王和黑王
+    // 白王
     board[7][4] =
-        const ChessPiece(type: PieceType.king, color: PieceColor.white);
-    board[0][0] = const ChessPiece(
-        type: PieceType.king, color: PieceColor.black); // 黑王在a8
+        const ChessPiece(type: PieceType.king, color: PieceColor.white); // e1
 
-    // 白车在a1，可以牵制黑马
-    board[7][0] =
-        const ChessPiece(type: PieceType.rook, color: PieceColor.white);
+    // 白象在c3
+    board[5][2] =
+        const ChessPiece(type: PieceType.bishop, color: PieceColor.white);
 
-    // 黑马在a4，在白车和黑王之间（可以被牵制）
-    board[4][0] = const ChessPiece(
-        type: PieceType.knight, color: PieceColor.black); // 黑马在a4
+    // 黑马在d4
+    board[4][3] =
+        const ChessPiece(type: PieceType.knight, color: PieceColor.black);
+        
+    // 黑王在f6
+    board[2][5] =
+        const ChessPiece(type: PieceType.king, color: PieceColor.black);
 
     return board;
   }

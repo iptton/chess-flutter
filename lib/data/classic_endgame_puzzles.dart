@@ -29,6 +29,8 @@ class ClassicEndgamePuzzles {
           'e8': 'bK', // 黑王
         }),
         solution: [
+          // The first move is the most critical to start the winning sequence.
+          // The rest of the endgame should be handled by the engine.
           ChessMove(
             from: const Position(row: 7, col: 4), // e1
             to: const Position(row: 6, col: 4), // e2
@@ -52,7 +54,7 @@ class ClassicEndgamePuzzles {
         boardState: _createBoard({
           'a1': 'wK', // 白王
           'd1': 'wQ', // 白后
-          'h1': 'wR', // 白车
+          'g1': 'wR', // 白车
           'h8': 'bK', // 黑王
         }),
         solution: [
@@ -167,7 +169,7 @@ class ClassicEndgamePuzzles {
         solution: [
           ChessMove(
             from: const Position(row: 5, col: 3), // d3
-            to: const Position(row: 3, col: 4), // e5 (马跳到支持位置)
+            to: const Position(row: 4, col: 5), // f4 (马跳到支持位置)
             piece: const ChessPiece(
                 type: PieceType.knight, color: PieceColor.white),
           ),
@@ -447,7 +449,7 @@ class ClassicEndgamePuzzles {
         solution: [
           ChessMove(
             from: const Position(row: 4, col: 3), // d4
-            to: const Position(row: 7, col: 0), // a1
+            to: const Position(row: 7, col: 6), // g1
             piece: const ChessPiece(
                 type: PieceType.queen, color: PieceColor.white),
           ),

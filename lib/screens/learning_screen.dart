@@ -8,6 +8,10 @@ import '../widgets/learning_instruction_panel.dart';
 import '../widgets/learning_progress_bar.dart';
 import '../widgets/learning_step_controls.dart';
 import '../widgets/themed_background.dart';
+import '../models/chess_models.dart';
+import '../services/chess_ai.dart';
+import '../widgets/chess_board.dart';
+import '../screens/game_screen.dart';
 
 class LearningScreen extends StatelessWidget {
   final LearningMode? initialMode;
@@ -44,6 +48,10 @@ class _LearningViewState extends State<LearningView> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<LearningBloc, LearningState>(
+      listenWhen: (previous, current) =>
+          (current.isStepCompleted && !_isStepDialogShowing) ||
+          (current.isLessonCompleted && !_isLessonDialogShowing) ||
+          current.navigateToGame != null,
       listener: (context, state) {
         // 监听步骤完成状态，显示完成对话框
         if (state.isStepCompleted && !_isStepDialogShowing) {
@@ -52,6 +60,23 @@ class _LearningViewState extends State<LearningView> {
         // 监听课程完成状态，显示庆祝对话框
         if (state.isLessonCompleted && !_isLessonDialogShowing) {
           _showLessonCompletionDialog(context, state);
+        }
+        // 监听导航事件
+        if (state.navigateToGame != null) {
+          final navArgs = state.navigateToGame!;
+          // 导航后立即清除状态，避免重复导航
+          context.read<LearningBloc>().add(const ClearNavigation());
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ChessBoard(
+                gameMode: navArgs.gameMode,
+                initialBoard: navArgs.boardState,
+                aiColor: navArgs.aiColor,
+                allowedPlayer: navArgs.allowedPlayer,
+              ),
+            ),
+          );
         }
       },
       builder: (context, state) {
@@ -414,6 +439,53 @@ class _LearningViewState extends State<LearningView> {
                             GoToStep(lesson.steps.length - 1),
                           ),
                     ),
+
+                    // 新增：从谜题开始对战的按钮
+                    if (currentStep?.boardState != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Divider(height: 24),
+                            const Text(
+                              '从当前局面开始',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                context
+                                    .read<LearningBloc>()
+                                    .add(const StartAIGameFromPuzzle());
+                              },
+                              icon: const Icon(Icons.computer),
+                              label: const Text('AI 对战'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue.shade700,
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                context
+                                    .read<LearningBloc>()
+                                    .add(const StartPVPGameFromPuzzle());
+                              },
+                              icon: const Icon(Icons.people),
+                              label: const Text('面对面对战'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green.shade700,
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),

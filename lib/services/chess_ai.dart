@@ -272,11 +272,22 @@ class ChessAI {
     };
   }
 
-  /// 静态方法：获取设备推荐的难度等级
+  /// 获取设备推荐的难度等级
   static List<AIDifficultyLevel> getRecommendedDifficulties(
       [DeviceType? deviceType]) {
     return AIDifficultyStrategy.getRecommendedDifficultiesForDevice(
       deviceType ?? AIDifficultyStrategy.getCurrentDeviceType(),
     );
+  }
+
+  /// 释放AI引擎资源
+  Future<void> dispose() async {
+    print('ChessAI: 正在释放Stockfish引擎资源...');
+    try {
+      await StockfishAdapter.dispose();
+      print('ChessAI: Stockfish引擎已成功释放');
+    } catch (e) {
+      print('ChessAI: 释放Stockfish引擎时发生错误: $e');
+    }
   }
 }

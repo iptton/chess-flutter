@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/learning_models.dart';
 import '../models/chess_models.dart';
 import '../data/learning_lessons.dart';
+import '../data/classic_endgame_puzzles.dart';
 
 class LearningService {
   static final LearningService _instance = LearningService._internal();
@@ -13,6 +15,29 @@ class LearningService {
 
   /// 获取所有可用课程
   Future<List<LearningLesson>> getAvailableLessons() async {
+    // 动态加载残局谜题
+    final endgamePuzzles = ClassicEndgamePuzzles.getAllPuzzles();
+    final puzzleSteps = endgamePuzzles.map((puzzle) {
+      return LearningStep(
+        id: puzzle.id,
+        title: puzzle.title,
+        description: puzzle.description,
+        type: StepType.practice,
+        isInteractive: puzzle.id == 'classic_beginner_1', // 王兵对王设为互动模式
+        boardState: puzzle.boardState,
+        requiredMoves: puzzle.solution,
+        instructions: puzzle.hints ?? [],
+        successMessage: '太棒了！你解决了这个残局谜题。',
+        failureMessage: '再试一次，想想别的策略。',
+        metadata: {
+          'difficulty': puzzle.difficulty.toString(),
+          'endgameType': puzzle.endgameType.toString(),
+        },
+      );
+    }).toList();
+
+    LearningLessons.addPuzzleSteps(puzzleSteps);
+    
     // 减少不必要的延迟，提升用户体验
     await Future.delayed(const Duration(milliseconds: 100));
 

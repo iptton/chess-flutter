@@ -201,3 +201,22 @@ class ConfirmStepCompletion extends LearningEvent {
 class ConfirmLessonCompletion extends LearningEvent {
   const ConfirmLessonCompletion();
 }
+
+/// 从当前谜题局面开始一局AI对战
+class StartAIGameFromPuzzle extends LearningEvent {
+  const StartAIGameFromPuzzle();
+}
+
+/// 从当前谜题局面开始一局面对面对战
+class StartPVPGameFromPuzzle extends LearningEvent {
+  const StartPVPGameFromPuzzle();
+}
+
+/// 清除导航状态
+class ClearNavigation extends LearningEvent {
+  const ClearNavigation();
+}
+
+class ExecuteAIMoveInternal extends LearningEvent {
+  const ExecuteAIMoveInternal();
+}
