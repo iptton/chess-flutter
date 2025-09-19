@@ -16,6 +16,7 @@ import '../services/chess_ai.dart';
 import '../models/chess_models.dart';
 
 import '../utils/ai_difficulty_strategy.dart';
+import '../utils/status_bar_manager.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -88,23 +89,7 @@ class _HomeScreenState extends State<HomeScreen>
   /// 更新状态栏颜色
   void _updateStatusBar() {
     if (!mounted) return;
-
-    final screenSize = MediaQuery.of(context).size;
-    final isSmallScreen = screenSize.width < 768; // 小屏幕阈值
-
-    // 根据屏幕大小设置状态栏颜色
-    SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarBrightness: isSmallScreen ? Brightness.light : Brightness.dark,
-        statusBarIconBrightness:
-            isSmallScreen ? Brightness.dark : Brightness.light,
-        systemNavigationBarColor:
-            isSmallScreen ? Colors.white : const Color(0xFF667EEA),
-        systemNavigationBarIconBrightness:
-            isSmallScreen ? Brightness.dark : Brightness.light,
-      ),
-    );
+    StatusBarManager.setHomeScreenStatusBar(context);
   }
 
   Future<void> _ensurePrivacyAccepted() async {

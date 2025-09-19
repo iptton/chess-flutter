@@ -12,6 +12,7 @@ import '../models/chess_models.dart';
 import '../services/chess_ai.dart';
 import '../widgets/chess_board.dart';
 import '../screens/game_screen.dart';
+import '../utils/status_bar_manager.dart';
 
 class LearningScreen extends StatelessWidget {
   final LearningMode? initialMode;
@@ -23,6 +24,11 @@ class LearningScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 设置学习屏幕状态栏
+    StatusBarManager.setStatusBarDelayed(() {
+      StatusBarManager.setLearningScreenStatusBar();
+    });
+
     return BlocProvider(
       create: (context) => LearningBloc()
         ..add(const LoadAvailableLessons())

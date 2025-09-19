@@ -3,6 +3,7 @@ import '../services/settings_service.dart';
 import '../services/sound_service.dart';
 import '../widgets/privacy_page.dart';
 import '../widgets/themed_background.dart';
+import '../utils/status_bar_manager.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -72,6 +73,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 设置设置屏幕状态栏
+    StatusBarManager.setStatusBarDelayed(() {
+      StatusBarManager.setSettingsScreenStatusBar();
+    });
+
     return Scaffold(
       appBar: const ThemedAppBar(
         title: '设置',

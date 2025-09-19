@@ -14,6 +14,7 @@ import '../services/chess_ai.dart';
 import '../utils/chess_constants.dart';
 import '../utils/chess_formatters.dart';
 import '../services/game_history_service.dart';
+import '../utils/status_bar_manager.dart';
 import 'themed_background.dart';
 
 // 主入口组件
@@ -48,6 +49,11 @@ class ChessBoard extends StatelessWidget {
     print('ChessBoard: build方法被调用');
     print(
         'ChessBoard: gameMode=${gameMode.name}, advancedAI=${advancedAI != null ? advancedAI!.advancedDifficulty.displayName : "null"}');
+
+    // 设置游戏屏幕状态栏
+    StatusBarManager.setStatusBarDelayed(() {
+      StatusBarManager.setGameScreenStatusBar();
+    });
 
     return FutureBuilder<bool>(
       future: SettingsService.getDefaultHintMode(),
