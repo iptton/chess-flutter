@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: '国际象棋',
+      title: '一起下棋',
       theme: _buildCustomTheme(),
       home: const HomeScreen(),
     );

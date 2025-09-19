@@ -4,21 +4,15 @@ import 'package:flutter/services.dart';
 /// 状态栏管理工具类
 /// 统一管理应用中的状态栏颜色设置
 class StatusBarManager {
-  /// 设置主屏幕状态栏（根据屏幕大小自适应）
+  /// 设置主屏幕状态栏（统一深色背景样式）
   static void setHomeScreenStatusBar(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-    final isSmallScreen = screenSize.width < 768; // 小屏幕阈值
-
     SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
+      const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarBrightness: isSmallScreen ? Brightness.light : Brightness.dark,
-        statusBarIconBrightness:
-            isSmallScreen ? Brightness.dark : Brightness.light,
-        systemNavigationBarColor:
-            isSmallScreen ? Colors.white : const Color(0xFF667EEA),
-        systemNavigationBarIconBrightness:
-            isSmallScreen ? Brightness.dark : Brightness.light,
+        statusBarBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: Color(0xFF667EEA),
+        systemNavigationBarIconBrightness: Brightness.light,
       ),
     );
   }

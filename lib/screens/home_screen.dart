@@ -89,7 +89,8 @@ class _HomeScreenState extends State<HomeScreen>
   /// 更新状态栏颜色
   void _updateStatusBar() {
     if (!mounted) return;
-    StatusBarManager.setHomeScreenStatusBar(context);
+    WidgetsBinding.instance.addPostFrameCallback(
+        (_) => StatusBarManager.setHomeScreenStatusBar(context));
   }
 
   Future<void> _ensurePrivacyAccepted() async {
@@ -242,9 +243,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-    final isSmallScreen = screenSize.width < 768; // 小屏幕阈值
-
     // 确保状态栏在每次构建时都是最新的
     WidgetsBinding.instance.addPostFrameCallback((_) => _updateStatusBar());
 
@@ -253,40 +251,34 @@ class _HomeScreenState extends State<HomeScreen>
         animation: _backgroundController,
         builder: (context, child) {
           return Container(
-            decoration: isSmallScreen
-                ? null
-                : BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color.lerp(
-                          const Color(0xFF667EEA),
-                          const Color(0xFF764BA2),
-                          (math.sin(_backgroundController.value * 2 * math.pi) +
-                                  1) /
-                              2,
-                        )!,
-                        Color.lerp(
-                          const Color(0xFF764BA2),
-                          const Color(0xFF667EEA),
-                          (math.sin(_backgroundController.value * 2 * math.pi) +
-                                  1) /
-                              2,
-                        )!,
-                      ],
-                      stops: [
-                        0.3 +
-                            (math.sin(
-                                    _backgroundController.value * 2 * math.pi) *
-                                0.2),
-                        0.7 -
-                            (math.sin(
-                                    _backgroundController.value * 2 * math.pi) *
-                                0.2),
-                      ],
-                    ),
-                  ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color.lerp(
+                    const Color(0xFF667EEA),
+                    const Color(0xFF764BA2),
+                    (math.sin(_backgroundController.value * 2 * math.pi) + 1) /
+                        2,
+                  )!,
+                  Color.lerp(
+                    const Color(0xFF764BA2),
+                    const Color(0xFF667EEA),
+                    (math.sin(_backgroundController.value * 2 * math.pi) + 1) /
+                        2,
+                  )!,
+                ],
+                stops: [
+                  0.3 +
+                      (math.sin(_backgroundController.value * 2 * math.pi) *
+                          0.2),
+                  0.7 -
+                      (math.sin(_backgroundController.value * 2 * math.pi) *
+                          0.2),
+                ],
+              ),
+            ),
             child: Stack(
               children: [
                 // 浮动棋子背景
@@ -525,7 +517,6 @@ class _ChessMenuCardState extends State<ChessMenuCard>
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
-    final isSmallScreen = screenSize.width < 768; // 小屏幕阈值
     final isTablet = screenSize.width >= 768 && screenSize.width < 1024;
     final isDesktop = screenSize.width >= 1024;
     final isLargeDesktop = screenSize.width >= 1440;
@@ -565,16 +556,16 @@ class _ChessMenuCardState extends State<ChessMenuCard>
       constraints: BoxConstraints(maxWidth: cardMaxWidth),
       margin: const EdgeInsets.all(16),
       child: Card(
-        elevation: isSmallScreen ? 0 : 25,
-        shadowColor: isSmallScreen ? null : Colors.black.withOpacity(0.25),
+        elevation: 0, // 移除立体效果
+        shadowColor: Colors.transparent, // 移除阴影
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(32),
           side: BorderSide(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withOpacity(0.2),
             width: 1,
           ),
         ),
-        color: Colors.white.withOpacity(0.95),
+        color: Colors.white.withOpacity(0.7), // 半透明白色背景
         child: ClipRRect(
           borderRadius: BorderRadius.circular(32),
           child: BackdropFilter(
