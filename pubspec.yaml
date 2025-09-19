@@ -1,8 +1,8 @@
 name: testflutter
-description: "A new Flutter project."
+description: "国际象棋学习好伙伴"
 publish_to: 'none'
 
-version: 0.1.7
+version: 0.1.8
 
 environment:
   sdk: '>=3.4.0 <4.0.0'

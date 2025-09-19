@@ -70,6 +70,66 @@
           ]
         }
       ]
+    },
+    {
+      "name": "stockfish_chess_engine",
+      "srcPath": "../../.pub-cache/git/StockfishChessEngineFlutter-d8b7f46376f01af3ae52f59b32911aaf05d4936e/ohos",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "audioplayers_ohos",
+      "srcPath": "../../.pub-cache/git/audioplayers-4801a9b3f6a791a349b03d1a39281d6a07ed2000/packages/audioplayers_ohos/ohos",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "fluttertoast",
+      "srcPath": "../../.pub-cache/git/flutter_fluttertoast-5a752a422345c9223b60dd5e6a0c941ca03fdcbd/ohos",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "path_provider_ohos",
+      "srcPath": "../../.pub-cache/git/flutter_packages-17dc9d4014a4b4bbcfc99ee33cf3006699548f51/packages/path_provider/path_provider_ohos/ohos",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "shared_preferences_ohos",
+      "srcPath": "../../.pub-cache/git/flutter_packages-6bab8b570e33707c0bf0f4f513009327593dca74/packages/shared_preferences/shared_preferences_ohos/ohos",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
     }
   ]
 }

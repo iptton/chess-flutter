@@ -153,24 +153,24 @@ class LearningHomeView extends StatelessWidget {
         double spacing;
 
         if (screenWidth < 600) {
-          // 移动端 - 增加高度以容纳内容
+          // 移动端 - 进一步降低比例以增加高度
           crossAxisCount = 2;
-          childAspectRatio = 0.85; // 降低比例，增加高度
+          childAspectRatio = 0.75; // 进一步降低比例，增加更多高度
           spacing = 16;
         } else if (screenWidth < 900) {
           // 平板
           crossAxisCount = 3;
-          childAspectRatio = 0.95; // 稍微降低比例
+          childAspectRatio = 0.85; // 降低比例
           spacing = 20;
         } else if (screenWidth < 1400) {
           // 桌面
           crossAxisCount = 4;
-          childAspectRatio = 1.0;
+          childAspectRatio = 0.9; // 稍微降低比例
           spacing = 24;
         } else {
           // 大桌面
           crossAxisCount = 5;
-          childAspectRatio = 0.9;
+          childAspectRatio = 0.85; // 降低比例
           spacing = 28;
         }
 
@@ -235,44 +235,56 @@ class LearningHomeView extends StatelessWidget {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    iconMap[lesson.mode] ?? Icons.school,
-                    color: colorMap[lesson.mode] ?? Colors.blue,
-                    size: 32,
-                  ),
-                  const Spacer(),
-                  if (lesson.isCompleted)
-                    const Icon(
-                      Icons.check_circle,
-                      color: Colors.green,
-                      size: 24,
+              // 顶部图标行 - 固定高度
+              SizedBox(
+                height: 32,
+                child: Row(
+                  children: [
+                    Icon(
+                      iconMap[lesson.mode] ?? Icons.school,
+                      color: colorMap[lesson.mode] ?? Colors.blue,
+                      size: 28, // 稍微减小图标尺寸
                     ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                lesson.title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                    const Spacer(),
+                    if (lesson.isCompleted)
+                      const Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 20, // 减小完成图标尺寸
+                      ),
+                  ],
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 8),
-              Text(
-                lesson.description,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
+              // 标题 - 使用 Flexible 允许自适应
+              Flexible(
+                child: Text(
+                  lesson.title,
+                  style: const TextStyle(
+                    fontSize: 14, // 稍微减小字体
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-              const Spacer(),
+              const SizedBox(height: 6),
+              // 描述 - 使用 Flexible 允许自适应
+              Flexible(
+                child: Text(
+                  lesson.description,
+                  style: TextStyle(
+                    fontSize: 11, // 减小描述字体
+                    color: Colors.grey[600],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // 进度条 - 固定在底部
               LinearProgressIndicator(
                 value: lesson.progress,
                 backgroundColor: Colors.grey[300],

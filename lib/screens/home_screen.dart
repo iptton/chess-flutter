@@ -559,7 +559,7 @@ class _ChessMenuCardState extends State<ChessMenuCard>
         elevation: 0, // 移除立体效果
         shadowColor: Colors.transparent, // 移除阴影
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(32),
+          borderRadius: BorderRadius.circular(16),
           side: BorderSide(
             color: Colors.white.withOpacity(0.2),
             width: 1,
@@ -567,7 +567,7 @@ class _ChessMenuCardState extends State<ChessMenuCard>
         ),
         color: Colors.white.withOpacity(0.7), // 半透明白色背景
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(32),
+          borderRadius: BorderRadius.circular(16),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Stack(
@@ -915,14 +915,7 @@ class _MenuButtonState extends State<MenuButton> with TickerProviderStateMixin {
                 height: 56 + widget.buttonPadding * 0.5,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black
-                          .withOpacity(0.1 + _elevationAnimation.value * 0.01),
-                      blurRadius: 4 + _elevationAnimation.value,
-                      offset: Offset(0, 4 + _elevationAnimation.value * 0.5),
-                    ),
-                  ],
+                  // 移除阴影效果
                 ),
                 child: Material(
                   borderRadius: BorderRadius.circular(16),
